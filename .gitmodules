@@ -1,0 +1,9 @@
+[submodule "libs/vst3sdk"]
+	path = libs/vst3sdk
+	url = https://github.com/steinbergmedia/vst3sdk
+[submodule "libs/pugl"]
+	path = libs/pugl
+	url = https://github.com/lv2/pugl
+[submodule "libs/imgui"]
+	path = libs/imgui
+	url = https://github.com/ocornut/imgui

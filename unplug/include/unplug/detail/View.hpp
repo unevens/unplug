@@ -12,18 +12,22 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "imgui.h"
-#include "imgui_impl_opengl2.h" //todo or maybe 3?
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "pugl/gl.hpp"
-#include "pugl/pugl.h"
-#include "pugl/pugl.hpp"
 #include <cassert>
 #include <functional>
 #include <memory>
 
 namespace unplug {
 namespace detail {
+
+/**
+ * The View class implements a Steinberg::CPluginView using a pugl::View.
+ * It manages the lifecycle of the pugl::View has translates VST3 callbacks such as "onSize" and "onKeyDown" to Pugl
+ * events.
+ * The logic to handle the Pugl events is not implemented by this class, but by an EventHandler class, which is then
+ * injected as a template argument (see the files unplug/PluginView.hpp and unplug/DemoView.hpp).
+ * */
 
 template<class EventHandler>
 class View final : public Steinberg::CPluginView
@@ -52,13 +56,24 @@ public:
     eventHandler = std::make_unique<EventHandler>(*this);
     puglView->setEventHandler(*eventHandler);
     puglView->setParentWindow((pugl::NativeView)pParent);
-    puglView->setWindowTitle("Pugl C++ Test");
-    puglView->setDefaultSize(512, 512);
+    puglView->setWindowTitle("Plugin Pugl View");
+    puglView->setDefaultSize(300, 300);
     puglView->setMinSize(64, 64);
     puglView->setMaxSize(1024, 1024);
     puglView->setAspectRatio(1, 1, 16, 9);
     puglView->setBackend(pugl::glBackend());
     puglView->setHint(pugl::ViewHint::resizable, true);
+    puglView->setHint(pugl::ViewHint::samples, 0);
+    puglView->setHint(pugl::ViewHint::doubleBuffer, true);
+    puglView->setHint(pugl::ViewHint::ignoreKeyRepeat, true);
+#ifdef _NDEBUG
+    puglView->setHint(pugl::ViewHint::useDebugContext, false);
+#else
+    puglView->setHint(pugl::ViewHint::useDebugContext, true);
+#endif
+    puglView->setHint(pugl::ViewHint::contextVersionMajor, 2);
+    puglView->setHint(pugl::ViewHint::contextVersionMinor, 0);
+    puglView->setHint(pugl::ViewHint::useCompatProfile, true);
     pugl::Status status = puglView->realize();
     if (status != pugl::Status::success) {
       assert(false);
@@ -88,22 +103,22 @@ public:
       return kResultTrue;
     }
     if (strcmp(type, kPlatformTypeHIView) == 0) {
-      // todo The parent is a WindowRef, should attach a HIViewRef to it.
       return kResultTrue;
     }
     if (strcmp(type, kPlatformTypeNSView) == 0) {
-      // todo The parent is a NSView pointer. should attach a NSView to it.
       return kResultTrue;
     }
     if (strcmp(type, kPlatformTypeX11EmbedWindowID) == 0) {
-      // todo The parent is a X11 Window supporting XEmbed.
       return kResultTrue;
     }
 
     return kResultFalse;
   }
 
-  tresult PLUGIN_API canResize() override { return kResultTrue; }
+  tresult PLUGIN_API canResize() override {
+    //todo
+    return kResultTrue;
+  }
 
   tresult PLUGIN_API checkSizeConstraint(ViewRect* /*rect*/) override
   {
@@ -112,9 +127,21 @@ public:
   }
 
   // todo: send Pugl events?
-  tresult PLUGIN_API onWheel(float /*distance*/) override { return kResultFalse; }
-  tresult PLUGIN_API onKeyDown(char16 /*key*/, int16 /*keyMsg*/, int16 /*modifiers*/) override { return kResultFalse; }
-  tresult PLUGIN_API onKeyUp(char16 /*key*/, int16 /*keyMsg*/, int16 /*modifiers*/) override { return kResultFalse; }
+  tresult PLUGIN_API onWheel(float /*distance*/) override
+  {
+    // todo check
+    return kResultFalse;
+  }
+  tresult PLUGIN_API onKeyDown(char16 /*key*/, int16 /*keyMsg*/, int16 /*modifiers*/) override
+  {
+    // todo check
+    return kResultFalse;
+  }
+  tresult PLUGIN_API onKeyUp(char16 /*key*/, int16 /*keyMsg*/, int16 /*modifiers*/) override
+  {
+    // todo check
+    return kResultFalse;
+  }
 
 private:
   pugl::World world;

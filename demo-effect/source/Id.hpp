@@ -18,8 +18,19 @@
 
 namespace unplug {
 //------------------------------------------------------------------------
-static const Steinberg::FUID kUnPlugDemoEffectProcessorUID(0xDB759B1D, 0x41C65B09, 0xADAD652A, 0x8D6F776A);
-static const Steinberg::FUID kUnPlugDemoEffectControllerUID(0x15E625F1, 0xA5045EBE, 0x9630B4F1, 0x132A7A99);
+static const Steinberg::FUID kUnPlugDemoEffectProcessorUID(0x53624720, 0xA72E4FC2, 0xA4764509, 0xDF0D66D3);
+static const Steinberg::FUID kUnPlugDemoEffectControllerUID(0x3C63C830, 0xE4954F61, 0xBD9F749F, 0xDB7AC21E);
+
+/*
+To generate UUIDs ready to be copy-pasted into the Steinberg::FUID constructor, you can use this code
+
+  FUID fuid;
+  fuid.generate();
+  char8 fuidText[100];
+  fuid.print(fuidText,FUID::kFUID);
+  std::cout << fuidText;
+
+ */
 
 #define UnPlugDemoEffectVST3Category "Fx"
 

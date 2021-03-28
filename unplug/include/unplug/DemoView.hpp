@@ -13,6 +13,7 @@
 
 #pragma once
 #include "unplug/PluginView.hpp"
+#include <array>
 
 namespace unplug {
 
@@ -30,7 +31,15 @@ public:
     // will not handle keep open
   }
 
-private:
+  static bool isSizeSupported(int width, int height) {
+    return true;
+  }
+
+  static bool isResizingAllowed() {
+    return true;
+  }
+
+    private:
   PluginView<ImguiDemoPainter>& unplugView;
 };
 } // namespace detail

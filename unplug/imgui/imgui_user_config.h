@@ -1,3 +1,3 @@
  struct ImGuiContext;
- extern thread_local ImGuiContext* ImGuiPluginContext;
- #define GImGui ImGuiPluginContext
+ extern thread_local ImGuiContext* ImGuiThreadLocalContext;
+ #define GImGui ImGuiThreadLocalContext

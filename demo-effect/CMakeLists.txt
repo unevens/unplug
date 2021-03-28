@@ -76,10 +76,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE pugl)
 
 # Dear ImGui
 add_library(imgui STATIC)
-target_compile_definitions(imgui PUBLIC IMGUI_USER_CONFIG="imgui_user_config.h")
+target_compile_definitions(imgui PUBLIC IMGUI_USER_CONFIG="imgui_user_config.h" IMGUI_DISABLE_OBSOLETE_FUNCTIONS)
 include_directories("${unplug_SOURCE_DIR}/libs/imgui" "${unplug_SOURCE_DIR}/libs/imgui/backends" "${unplug_SOURCE_DIR}/unplug/imgui")
 file(GLOB imgui_src "${unplug_SOURCE_DIR}/libs/imgui/*.cpp")
-file(GLOB imgui_gl "${unplug_SOURCE_DIR}/libs/imgui/backends/imgui_impl_opengl2.cpp" "${unplug_SOURCE_DIR}/unplug/imgui/imgui_plugin_context.cpp")
+file(GLOB imgui_gl "${unplug_SOURCE_DIR}/libs/imgui/backends/imgui_impl_opengl2.cpp" "${unplug_SOURCE_DIR}/unplug/imgui/imgui_tls_context.cpp")
 target_sources(imgui PRIVATE ${imgui_src})
 target_sources(imgui PRIVATE ${imgui_gl})
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui)

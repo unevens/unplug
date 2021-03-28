@@ -17,6 +17,7 @@
 #include <cassert>
 #include <functional>
 #include <memory>
+#include <string>
 
 namespace unplug {
 namespace detail {
@@ -38,11 +39,14 @@ public:
   using ViewRect = Steinberg::ViewRect;
   using char16 = Steinberg::char16;
   using int16 = Steinberg::int16;
+  static constexpr auto kResultTrue = Steinberg::kResultTrue;
+  static constexpr auto kResultFalse = Steinberg::kResultFalse;
 
-  explicit View(const char* className)
+  explicit View(const char* name)
     : world{ pugl::WorldType::module }
+    , name(name)
   {
-    world.setClassName(className);
+    world.setClassName(name);
   }
 
   ~View() {}
@@ -56,11 +60,9 @@ public:
     eventHandler = std::make_unique<EventHandler>(*this);
     puglView->setEventHandler(*eventHandler);
     puglView->setParentWindow((pugl::NativeView)pParent);
-    puglView->setWindowTitle("Plugin Pugl View");
+    puglView->setWindowTitle(name.c_str());
     puglView->setDefaultSize(300, 300);
-    puglView->setMinSize(64, 64);
-    puglView->setMaxSize(1024, 1024);
-    puglView->setAspectRatio(1, 1, 16, 9);
+    puglView->setAspectRatio(0, 0, 0, 0);
     puglView->setBackend(pugl::glBackend());
     puglView->setHint(pugl::ViewHint::resizable, true);
     puglView->setHint(pugl::ViewHint::samples, 0);
@@ -80,7 +82,7 @@ public:
       return kResultFalse;
     }
     puglView->show();
-    return kResultOk;
+    return kResultTrue;
   }
 
   tresult PLUGIN_API removed() override
@@ -92,13 +94,12 @@ public:
 
   tresult PLUGIN_API onSize(ViewRect* newSize) override
   {
-    CPluginView::onSize(newSize);
-    // todo inform puglView? ... emit event?
-    return kResultOk;
+    return CPluginView::onSize(newSize);
   }
 
   tresult PLUGIN_API isPlatformTypeSupported(FIDString type) override
   {
+    using namespace Steinberg;
     if (strcmp(type, kPlatformTypeHWND) == 0) {
       return kResultTrue;
     }
@@ -111,19 +112,19 @@ public:
     if (strcmp(type, kPlatformTypeX11EmbedWindowID) == 0) {
       return kResultTrue;
     }
-
     return kResultFalse;
   }
 
-  tresult PLUGIN_API canResize() override {
-    //todo
-    return kResultTrue;
+  tresult PLUGIN_API canResize() override
+  {
+    bool const isResizable = EventHandler::isResizingAllowed();
+    return isResizable ? kResultTrue : kResultFalse;
   }
 
-  tresult PLUGIN_API checkSizeConstraint(ViewRect* /*rect*/) override
+  tresult PLUGIN_API checkSizeConstraint(ViewRect* rect) override
   {
-    // todo, ask puglView?
-    return kResultTrue;
+    bool const isSizeOk = EventHandler::isSizeSupported(rect->getWidth(), rect->getHeight());
+    return isSizeOk ? kResultTrue : kResultFalse;
   }
 
   // todo: send Pugl events?
@@ -132,11 +133,13 @@ public:
     // todo check
     return kResultFalse;
   }
+
   tresult PLUGIN_API onKeyDown(char16 /*key*/, int16 /*keyMsg*/, int16 /*modifiers*/) override
   {
     // todo check
     return kResultFalse;
   }
+
   tresult PLUGIN_API onKeyUp(char16 /*key*/, int16 /*keyMsg*/, int16 /*modifiers*/) override
   {
     // todo check
@@ -147,6 +150,7 @@ private:
   pugl::World world;
   std::unique_ptr<pugl::View> puglView;
   std::unique_ptr<EventHandler> eventHandler;
+  std::string name;
 };
 
 } // namespace detail

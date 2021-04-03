@@ -41,13 +41,9 @@ public:
     , painter(vstView)
   {}
 
-  static bool isSizeSupported(int width, int height) {
-    return Painter::isSizeSupported(width, height);
-  }
+  static bool isSizeSupported(int width, int height) { return Painter::isSizeSupported(width, height); }
 
-  static bool isResizingAllowed() {
-    return Painter::isResizingAllowed();
-  }
+  static bool isResizingAllowed() { return Painter::isResizingAllowed(); }
 
   void SetCurrentContext()
   {
@@ -68,19 +64,19 @@ public:
 
     io.BackendPlatformName = "imgui_impl_unplug_pugl";
 
-    io.KeyMap[ImGuiKey_LeftArrow] = PUGL_KEY_LEFT;
-    io.KeyMap[ImGuiKey_RightArrow] = PUGL_KEY_RIGHT;
-    io.KeyMap[ImGuiKey_UpArrow] = PUGL_KEY_UP;
-    io.KeyMap[ImGuiKey_DownArrow] = PUGL_KEY_DOWN;
-    io.KeyMap[ImGuiKey_PageUp] = PUGL_KEY_PAGE_UP;
-    io.KeyMap[ImGuiKey_PageDown] = PUGL_KEY_PAGE_DOWN;
-    io.KeyMap[ImGuiKey_Home] = PUGL_KEY_HOME;
-    io.KeyMap[ImGuiKey_End] = PUGL_KEY_END;
-    io.KeyMap[ImGuiKey_Insert] = PUGL_KEY_INSERT;
-    io.KeyMap[ImGuiKey_Delete] = PUGL_KEY_DELETE;
-    io.KeyMap[ImGuiKey_Backspace] = PUGL_KEY_BACKSPACE;
-    io.KeyMap[ImGuiKey_Escape] = PUGL_KEY_ESCAPE;
-    //missing from pugl:
+    io.KeyMap[ImGuiKey_LeftArrow] = convertKeyCode(PUGL_KEY_LEFT);
+    io.KeyMap[ImGuiKey_RightArrow] = convertKeyCode(PUGL_KEY_RIGHT);
+    io.KeyMap[ImGuiKey_UpArrow] = convertKeyCode(PUGL_KEY_UP);
+    io.KeyMap[ImGuiKey_DownArrow] = convertKeyCode(PUGL_KEY_DOWN);
+    io.KeyMap[ImGuiKey_PageUp] = convertKeyCode(PUGL_KEY_PAGE_UP);
+    io.KeyMap[ImGuiKey_PageDown] = convertKeyCode(PUGL_KEY_PAGE_DOWN);
+    io.KeyMap[ImGuiKey_Home] = convertKeyCode(PUGL_KEY_HOME);
+    io.KeyMap[ImGuiKey_End] = convertKeyCode(PUGL_KEY_END);
+    io.KeyMap[ImGuiKey_Insert] = convertKeyCode(PUGL_KEY_INSERT);
+    io.KeyMap[ImGuiKey_Delete] = convertKeyCode(PUGL_KEY_DELETE);
+    io.KeyMap[ImGuiKey_Backspace] = convertKeyCode(PUGL_KEY_BACKSPACE);
+    io.KeyMap[ImGuiKey_Escape] = convertKeyCode(PUGL_KEY_ESCAPE);
+    // missing from pugl:
 #if defined _WIN32
     io.KeyMap[ImGuiKey_Tab] = VK_TAB;
     io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
@@ -96,29 +92,28 @@ public:
 // todo
 #endif
 
-//    io.KeyMap[ImGuiKey_Tab] = VK_TAB;
-//    io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
-//    io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
-//    io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
-//    io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
-//    io.KeyMap[ImGuiKey_PageUp] = VK_PRIOR;
-//    io.KeyMap[ImGuiKey_PageDown] = VK_NEXT;
-//    io.KeyMap[ImGuiKey_Home] = VK_HOME;
-//    io.KeyMap[ImGuiKey_End] = VK_END;
-//    io.KeyMap[ImGuiKey_Insert] = VK_INSERT;
-//    io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
-//    io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
-//    io.KeyMap[ImGuiKey_Space] = VK_SPACE;
-//    io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
-//    io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
-//    io.KeyMap[ImGuiKey_KeyPadEnter] = VK_RETURN;
-//    io.KeyMap[ImGuiKey_A] = 'A';
-//    io.KeyMap[ImGuiKey_C] = 'C';
-//    io.KeyMap[ImGuiKey_V] = 'V';
-//    io.KeyMap[ImGuiKey_X] = 'X';
-//    io.KeyMap[ImGuiKey_Y] = 'Y';
-//    io.KeyMap[ImGuiKey_Z] = 'Z';
-
+    //    io.KeyMap[ImGuiKey_Tab] = VK_TAB;
+    //    io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
+    //    io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
+    //    io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
+    //    io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
+    //    io.KeyMap[ImGuiKey_PageUp] = VK_PRIOR;
+    //    io.KeyMap[ImGuiKey_PageDown] = VK_NEXT;
+    //    io.KeyMap[ImGuiKey_Home] = VK_HOME;
+    //    io.KeyMap[ImGuiKey_End] = VK_END;
+    //    io.KeyMap[ImGuiKey_Insert] = VK_INSERT;
+    //    io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
+    //    io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
+    //    io.KeyMap[ImGuiKey_Space] = VK_SPACE;
+    //    io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
+    //    io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
+    //    io.KeyMap[ImGuiKey_KeyPadEnter] = VK_RETURN;
+    //    io.KeyMap[ImGuiKey_A] = 'A';
+    //    io.KeyMap[ImGuiKey_C] = 'C';
+    //    io.KeyMap[ImGuiKey_V] = 'V';
+    //    io.KeyMap[ImGuiKey_X] = 'X';
+    //    io.KeyMap[ImGuiKey_Y] = 'Y';
+    //    io.KeyMap[ImGuiKey_Z] = 'Z';
 
 #if defined(_WIN32)
     io.ImeWindowHandle = (void*)getPuglView().nativeWindow();
@@ -223,21 +218,23 @@ public:
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+    getPuglView().postRedisplay();
     return pugl::Status::success;
   }
 
   void UpdateModifierKeys(ImGuiIO& io)
   {
-    io.KeyCtrl = io.KeysDown[PUGL_KEY_CTRL_L] || io.KeysDown[PUGL_KEY_CTRL_R];
-    io.KeyShift = io.KeysDown[PUGL_KEY_SHIFT_L] || io.KeysDown[PUGL_KEY_SHIFT_R];
-    io.KeyAlt = io.KeysDown[PUGL_KEY_MENU];
+    io.KeyCtrl = io.KeysDown[convertKeyCode(PUGL_KEY_CTRL_L)] || io.KeysDown[convertKeyCode(PUGL_KEY_CTRL_R)];
+    io.KeyShift = io.KeysDown[convertKeyCode(PUGL_KEY_SHIFT_L)] || io.KeysDown[convertKeyCode(PUGL_KEY_SHIFT_R)];
+    io.KeyAlt = io.KeysDown[convertKeyCode(PUGL_KEY_MENU)];
   }
 
   pugl::Status onEvent(const pugl::KeyPressEvent& event) noexcept
   {
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.KeysDown[event.key] = true;
+    auto imguiKeyCode = convertKeyCode(event.key);
+    io.KeysDown[imguiKeyCode] = true;
     UpdateModifierKeys(io);
     return pugl::Status::success;
   }
@@ -246,7 +243,8 @@ public:
   {
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.KeysDown[event.key] = false;
+    auto imguiKeyCode = convertKeyCode(event.key);
+    io.KeysDown[imguiKeyCode] = false;
     UpdateModifierKeys(io);
     return pugl::Status::success;
   }
@@ -263,7 +261,8 @@ public:
   {
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.MouseDown[event.button] = true;
+    auto imguiButtonCode = convertButtonCode(event.button);
+    io.MouseDown[imguiButtonCode] = true;
     return pugl::Status::success;
   }
 
@@ -271,7 +270,8 @@ public:
   {
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.MouseDown[event.button] = false;
+    auto imguiButtonCode = convertButtonCode(event.button);
+    io.MouseDown[imguiButtonCode] = false;
     return pugl::Status::success;
   }
 
@@ -313,6 +313,23 @@ public:
   pugl::Status onEvent(const pugl::LoopLeaveEvent& event) noexcept { return pugl::Status::success; }
 
   pugl::Status onEvent(const pugl::ClientEvent& event) noexcept { return pugl::Status::success; }
+
+protected:
+  int convertKeyCode(int code) { return code >= 0xE000 ? code - 0xE000 : code; }
+
+  int convertButtonCode(int code)
+  {
+    switch (code) {
+      case 1: // left
+        return 0;
+      case 2: // center
+        return 2;
+      case 3: // right
+        return 1;
+      default: // extra buttons, unused
+        return code - 1;
+    }
+  }
 
 protected:
   View<EventHandler<Painter>>& vstView;

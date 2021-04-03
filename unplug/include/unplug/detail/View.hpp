@@ -49,7 +49,7 @@ public:
     world.setClassName(name);
   }
 
-  ~View() {}
+  ~View() = default;
 
   pugl::View* getPuglView() { return puglView.get(); }
 
@@ -92,26 +92,31 @@ public:
     return CPluginView::removed();
   }
 
-  tresult PLUGIN_API onSize(ViewRect* newSize) override
+  tresult PLUGIN_API onSize(ViewRect* r) override
   {
-    return CPluginView::onSize(newSize);
+    if (puglView) {
+      puglView->setFrame({ (double)r->left, (double)r->top, (double)r->getWidth(), (double)r->getHeight() });
+      puglView->postRedisplay();
+    }
+    return CPluginView::onSize(r);
   }
 
   tresult PLUGIN_API isPlatformTypeSupported(FIDString type) override
   {
     using namespace Steinberg;
-    if (strcmp(type, kPlatformTypeHWND) == 0) {
+
+    if (strcmp(type, kPlatformTypeHWND) == 0)
       return kResultTrue;
-    }
-    if (strcmp(type, kPlatformTypeHIView) == 0) {
+
+    if (strcmp(type, kPlatformTypeHIView) == 0)
       return kResultTrue;
-    }
-    if (strcmp(type, kPlatformTypeNSView) == 0) {
+
+    if (strcmp(type, kPlatformTypeNSView) == 0)
       return kResultTrue;
-    }
-    if (strcmp(type, kPlatformTypeX11EmbedWindowID) == 0) {
+
+    if (strcmp(type, kPlatformTypeX11EmbedWindowID) == 0)
       return kResultTrue;
-    }
+
     return kResultFalse;
   }
 

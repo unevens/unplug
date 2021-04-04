@@ -17,13 +17,13 @@
 
 namespace unplug {
 
-namespace detail {
 class ImguiDemoPainter
 {
 public:
   explicit ImguiDemoPainter(PluginView<ImguiDemoPainter>& unplugView)
     : unplugView(unplugView)
   {}
+
   void paint()
   {
     bool keep_open = true;
@@ -31,12 +31,11 @@ public:
     // will not handle keep open
   }
 
-  static bool isSizeSupported(int width, int height) { return true; }
+  static void adjustSize(int& width, int& height) {}
 
   static bool isResizingAllowed() { return true; }
 
-  // key is unicode, special keys use values from the PuglKey enum
-  bool wantsToHandleKey(uint32_t key) { return true; }
+  static std::array<int, 2> getDefaultSize() { return { { 900, 700 } }; }
 
   // for pugl events whose responses may be implemented here
   template<class EventType>
@@ -48,8 +47,7 @@ public:
 private:
   PluginView<ImguiDemoPainter>& unplugView;
 };
-} // namespace detail
 
-using DemoView = PluginView<detail::ImguiDemoPainter>;
+using DemoView = PluginView<ImguiDemoPainter>;
 
 } // namespace unplug

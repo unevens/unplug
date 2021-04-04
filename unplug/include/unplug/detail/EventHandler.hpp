@@ -16,9 +16,18 @@
 #include "imgui_impl_opengl2.h"
 #include "pluginterfaces/base/keycodes.h"
 #include "unplug/detail/View.hpp"
+#include <array>
 #include <chrono>
 
 namespace unplug {
+
+struct ModifierKeys
+{
+  bool shift = false;
+  bool alt = false;
+  bool control = false;
+};
+
 namespace detail {
 
 /**
@@ -46,9 +55,11 @@ public:
     , painter(vstView)
   {}
 
-  static bool isSizeSupported(int width, int height) { return Painter::isSizeSupported(width, height); }
+  static void adjustSize(int& width, int& height) { return Painter::adjustSize(width, height); }
 
   static bool isResizingAllowed() { return Painter::isResizingAllowed(); }
+
+  static std::array<int, 2> getDefaultSize() { return Painter::getDefaultSize(); }
 
   void SetCurrentContext()
   {
@@ -228,43 +239,66 @@ public:
     io.MouseWheel += dy;
   }
 
-  tresult onKeyEvent(char16 key, int16 keyMsg, int16 modifiers, bool isDown)
+  tresult onKeyEvent(char16 key, int16 keyMsg, int16 modifiersMask, bool isDown)
   {
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
+    if (!io.WantCaptureKeyboard)
+      return kResultFalse;
 
-    bool const isAscii = keyMsg >= Steinberg::VKEY_FIRST_ASCII;
+    auto const modifiers = modifierKeysFromBitmask(modifiersMask);
+    bool const isAscii = key > 0;
     if (isAscii) {
-      if (painter.wantsToHandleKey(key)) {
-        io.KeysDown[key] = isDown;
-        handleModifierKeys(modifiers);
-        return kResultTrue;
-      }
-      else {
-        return kResultFalse;
-      }
+      io.KeysDown[key] = isDown;
+      if (isDown)
+        io.AddInputCharacterUTF16(key);
+      handleModifierKeys(modifiers);
+      return kResultTrue;
     }
-    else {
-      auto const specialKeyCode = convertVirtualKeyCode(keyMsg);
-      if (specialKeyCode > -1) {
-        io.KeysDown[specialKeyCode + 128] = isDown;
+    else { // not ascii
+      auto const numPadKeyCode = convertNumPadKeyCode(keyMsg);
+      if (numPadKeyCode > -1) {
+        io.KeysDown[numPadKeyCode] = isDown;
+        if (isDown)
+          io.AddInputCharacter(numPadKeyCode);
         handleModifierKeys(modifiers);
         return kResultTrue;
       }
-      else {
-        return checkModifierFromVirtualKeyCode(modifiers, isDown);
+      else { // not ASCII, not num pad
+        auto const virtualKeyCode = convertVirtualKeyCode(keyMsg);
+        if (virtualKeyCode > -1) {
+          io.KeysDown[virtualKeyCode + 128] = isDown;
+          if (virtualKeyCode == ImGuiKey_Space && isDown) {
+            io.AddInputCharacter(' ');
+          }
+          handleModifierKeys(modifiers);
+          return kResultTrue;
+        }
+        else { // not ASCII, not num pad, not special key
+          handleModifierKeys(modifiers);
+          return kResultTrue;
+        }
       }
     }
   }
 
 protected:
-  void handleModifierKeys(int16 modifiers)
+  ModifierKeys modifierKeysFromBitmask(int16 mask)
+  {
+    ModifierKeys modifierKeys;
+    modifierKeys.shift = mask & Steinberg::kShiftKey;
+    modifierKeys.alt = mask & Steinberg::kAlternateKey;
+    modifierKeys.control = (mask & Steinberg::kCommandKey) || (mask & Steinberg::kControlKey);
+    return modifierKeys;
+  }
+
+  void handleModifierKeys(ModifierKeys modifiers)
   {
     using namespace Steinberg;
     ImGuiIO& io = ImGui::GetIO();
-    io.KeyCtrl = (modifiers & kCommandKey) || (modifiers & kControlKey);
-    io.KeyShift = modifiers & kShiftKey;
-    io.KeyAlt = modifiers & kAlternateKey;
+    io.KeyCtrl = modifiers.control;
+    io.KeyShift = modifiers.shift;
+    io.KeyAlt = modifiers.alt;
   }
 
   int convertVirtualKeyCode(int16 virtualKeyCode)
@@ -308,22 +342,42 @@ protected:
     }
   }
 
-  tresult checkModifierFromVirtualKeyCode(int16 virtualKeyCode, bool isDown)
+  int convertNumPadKeyCode(int16 virtualKeyCode)
   {
     using namespace Steinberg;
-    ImGuiIO& io = ImGui::GetIO();
     switch (virtualKeyCode) {
-      case KEY_SHIFT:
-        io.KeyShift = isDown;
-        return kResultTrue;
-      case KEY_CONTROL:
-        io.KeyCtrl = isDown;
-        return kResultTrue;
-      case KEY_ALT:
-        io.KeyAlt = isDown;
-        return kResultTrue;
+      case KEY_NUMPAD0:
+        return '0';
+      case KEY_NUMPAD1:
+        return '1';
+      case KEY_NUMPAD2:
+        return '2';
+      case KEY_NUMPAD3:
+        return '3';
+      case KEY_NUMPAD4:
+        return '4';
+      case KEY_NUMPAD5:
+        return '5';
+      case KEY_NUMPAD6:
+        return '6';
+      case KEY_NUMPAD7:
+        return '7';
+      case KEY_NUMPAD8:
+        return '8';
+      case KEY_NUMPAD9:
+        return '9';
+      case KEY_MULTIPLY:
+        return '*';
+      case KEY_ADD:
+        return '+';
+      case KEY_SUBTRACT:
+        return '-';
+      case KEY_DIVIDE:
+        return '/';
+      case KEY_DECIMAL:
+        return '.';
       default:
-        return kResultFalse;
+        return -1;
     }
   }
 

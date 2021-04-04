@@ -61,7 +61,8 @@ public:
     puglView->setEventHandler(*eventHandler);
     puglView->setParentWindow((pugl::NativeView)pParent);
     puglView->setWindowTitle(name.c_str());
-    puglView->setDefaultSize(300, 300);
+    auto const defaultSize = EventHandler::getDefaultSize();
+    puglView->setDefaultSize(defaultSize[0], defaultSize[1]);
     puglView->setAspectRatio(0, 0, 0, 0);
     puglView->setBackend(pugl::glBackend());
     puglView->setHint(pugl::ViewHint::resizable, true);
@@ -82,6 +83,10 @@ public:
       return kResultFalse;
     }
     puglView->show();
+    if (plugFrame){
+      auto viewRect = ViewRect{ 0, 0, defaultSize[0], defaultSize[1] };
+      plugFrame->resizeView(this, &viewRect);
+    }
     return kResultTrue;
   }
 
@@ -128,8 +133,12 @@ public:
 
   tresult PLUGIN_API checkSizeConstraint(ViewRect* rect) override
   {
-    bool const isSizeOk = EventHandler::isSizeSupported(rect->getWidth(), rect->getHeight());
-    return isSizeOk ? kResultTrue : kResultFalse;
+    int width = rect->getWidth();
+    int height = rect->getHeight();
+    EventHandler::adjustSize(width, height);
+    rect->right = rect->left + width;
+    rect->bottom = rect->top + height;
+    return kResultTrue;
   }
 
   tresult PLUGIN_API onWheel(float distance) override

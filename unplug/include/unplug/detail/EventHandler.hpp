@@ -43,6 +43,7 @@ class EventHandler final
 public:
   explicit EventHandler(View<EventHandler<Painter>>& vstView)
     : vstView(vstView)
+    , puglView(*vstView.getPuglView())
     , painter(vstView)
   {}
 
@@ -83,7 +84,7 @@ public:
     io.KeyMap[ImGuiKey_Z] = 'Z';
 
 #if defined(_WIN32)
-    io.ImeWindowHandle = (void*)getPuglView().nativeWindow();
+    io.ImeWindowHandle = (void*)puglView.nativeWindow();
     io.ClipboardUserData = io.ImeWindowHandle;
 #endif
 
@@ -94,7 +95,7 @@ public:
     prevFrameTime = clock::now();
     lastCursor = -1;
 
-    getPuglView().startTimer(redrawTimerId, 1.0 / 60.0);
+    puglView.startTimer(redrawTimerId, 1.0 / 60.0);
 
     return pugl::Status::success;
   }
@@ -104,7 +105,7 @@ public:
     SetCurrentContext();
     ImGui_ImplOpenGL2_Shutdown();
     ImGui::DestroyContext();
-    getPuglView().stopTimer(redrawTimerId);
+    puglView.stopTimer(redrawTimerId);
     return pugl::Status::success;
   }
 
@@ -118,7 +119,7 @@ public:
 
   pugl::Status onEvent(const pugl::UpdateEvent& event)
   {
-    getPuglView().postRedisplay();
+    puglView.postRedisplay();
     return pugl::Status::success;
   }
 
@@ -157,7 +158,7 @@ public:
     ImGuiIO& io = ImGui::GetIO();
     auto imguiButtonCode = convertButtonCode(event.button);
     io.MouseDown[imguiButtonCode] = true;
-    getPuglView().postRedisplay();
+    puglView.postRedisplay();
     return pugl::Status::success;
   }
 
@@ -195,7 +196,7 @@ public:
     ImGuiIO& io = ImGui::GetIO();
     io.MouseWheelH += dx;
     io.MouseWheel += dy;
-    getPuglView().postRedisplay();
+    puglView.postRedisplay();
   }
 
   tresult onKeyEvent(char16 key, int16 keyMsg, int16 modifiersMask, bool isDown)
@@ -212,7 +213,7 @@ public:
       if (isDown)
         io.AddInputCharacterUTF16(key);
       handleModifierKeys(modifiers);
-      getPuglView().postRedisplay();
+      puglView.postRedisplay();
       return kResultTrue;
     }
     else { // not ascii
@@ -222,7 +223,7 @@ public:
         if (isDown)
           io.AddInputCharacter(numPadKeyCode);
         handleModifierKeys(modifiers);
-        getPuglView().postRedisplay();
+        puglView.postRedisplay();
         return kResultTrue;
       }
       else { // not ASCII, not num pad
@@ -233,12 +234,12 @@ public:
             io.AddInputCharacter(' ');
           }
           handleModifierKeys(modifiers);
-          getPuglView().postRedisplay();
+          puglView.postRedisplay();
           return kResultTrue;
         }
         else { // not ASCII, not num pad, not special key
           handleModifierKeys(modifiers);
-          getPuglView().postRedisplay();
+          puglView.postRedisplay();
           return kResultTrue;
         }
       }
@@ -250,7 +251,7 @@ public:
   pugl::Status onEvent(const pugl::TimerEvent& event)
   {
     if (event.id == redrawTimerId) {
-      getPuglView().postRedisplay();
+      puglView.postRedisplay();
       return pugl::Status::success;
     }
     else {
@@ -263,7 +264,7 @@ public:
   {
     isMouseCursorIn = true;
     SetCurrentContext();
-    getPuglView().postRedisplay();
+    puglView.postRedisplay();
     return painter.onEvent(event);
   }
 
@@ -271,7 +272,7 @@ public:
   {
     isMouseCursorIn = false;
     SetCurrentContext();
-    getPuglView().postRedisplay();
+    puglView.postRedisplay();
     return painter.onEvent(event);
   }
 
@@ -375,34 +376,34 @@ private:
     lastCursor = cursor;
     switch (cursor) {
       case ImGuiMouseCursor_None:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
+        puglSetCursor(puglView.cobj(), PUGL_CURSOR_CROSSHAIR);
         break;
       case ImGuiMouseCursor_Arrow:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_ARROW);
+        puglSetCursor(puglView.cobj(), PUGL_CURSOR_ARROW);
         break;
       case ImGuiMouseCursor_TextInput:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CARET);
+        puglSetCursor(puglView.cobj(), PUGL_CURSOR_CARET);
         break;
       case ImGuiMouseCursor_ResizeAll:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
+        puglSetCursor(puglView.cobj(), PUGL_CURSOR_CROSSHAIR);
         break;
       case ImGuiMouseCursor_ResizeNS:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_UP_DOWN);
+        puglSetCursor(puglView.cobj(), PUGL_CURSOR_UP_DOWN);
         break;
       case ImGuiMouseCursor_ResizeEW:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_LEFT_RIGHT);
+        puglSetCursor(puglView.cobj(), PUGL_CURSOR_LEFT_RIGHT);
         break;
       case ImGuiMouseCursor_ResizeNESW:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
+        puglSetCursor(puglView.cobj(), PUGL_CURSOR_CROSSHAIR);
         break;
       case ImGuiMouseCursor_ResizeNWSE:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
+        puglSetCursor(puglView.cobj(), PUGL_CURSOR_CROSSHAIR);
         break;
       case ImGuiMouseCursor_Hand:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_HAND);
+        puglSetCursor(puglView.cobj(), PUGL_CURSOR_HAND);
         break;
       case ImGuiMouseCursor_NotAllowed:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_NO);
+        puglSetCursor(puglView.cobj(), PUGL_CURSOR_NO);
         break;
       default:
         break;
@@ -411,7 +412,7 @@ private:
 
 private:
   View<EventHandler<Painter>>& vstView;
-  pugl::View& getPuglView() { return *vstView.getPuglView(); }
+  pugl::View& puglView;
   ImGuiContext* imguiContext = nullptr;
   Painter painter;
   time_point prevFrameTime;

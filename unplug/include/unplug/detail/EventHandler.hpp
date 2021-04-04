@@ -14,20 +14,12 @@
 #pragma once
 #include "imgui.h"
 #include "imgui_impl_opengl2.h"
-#include "pluginterfaces/base/keycodes.h"
+#include "unplug/detail/Keyboard.hpp"
 #include "unplug/detail/View.hpp"
 #include <array>
 #include <chrono>
 
 namespace unplug {
-
-struct ModifierKeys
-{
-  bool shift = false;
-  bool alt = false;
-  bool control = false;
-};
-
 namespace detail {
 
 /**
@@ -66,18 +58,6 @@ public:
     ImGui::SetCurrentContext(imguiContext);
   }
 
-  pugl::Status onEvent(const pugl::TimerEvent& event)
-  {
-    if (event.id == redrawTimerId) {
-      getPuglView().postRedisplay();
-      return pugl::Status::success;
-    }
-    else {
-      SetCurrentContext();
-      return painter.onEvent(event);
-    }
-  }
-  
   pugl::Status onEvent(const pugl::CreateEvent& event)
   {
     IMGUI_CHECKVERSION();
@@ -140,48 +120,6 @@ public:
   {
     getPuglView().postRedisplay();
     return pugl::Status::success;
-  }
-
-  void SetCursor(ImGuiIO const& io)
-  {
-    ImGuiMouseCursor cursor = io.MouseDrawCursor ? ImGuiMouseCursor_None : ImGui::GetMouseCursor();
-    if (lastCursor == cursor)
-      return;
-    lastCursor = cursor;
-    switch (cursor) {
-      case ImGuiMouseCursor_None:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
-        break;
-      case ImGuiMouseCursor_Arrow:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_ARROW);
-        break;
-      case ImGuiMouseCursor_TextInput:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CARET);
-        break;
-      case ImGuiMouseCursor_ResizeAll:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
-        break;
-      case ImGuiMouseCursor_ResizeNS:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_UP_DOWN);
-        break;
-      case ImGuiMouseCursor_ResizeEW:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_LEFT_RIGHT);
-        break;
-      case ImGuiMouseCursor_ResizeNESW:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
-        break;
-      case ImGuiMouseCursor_ResizeNWSE:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
-        break;
-      case ImGuiMouseCursor_Hand:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_HAND);
-        break;
-      case ImGuiMouseCursor_NotAllowed:
-        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_NO);
-        break;
-      default:
-        break;
-    }
   }
 
   pugl::Status onEvent(const pugl::ExposeEvent& event)
@@ -307,154 +245,32 @@ public:
     }
   }
 
-private:
-  ModifierKeys modifierKeysFromBitmask(int16 mask)
-  {
-    ModifierKeys modifierKeys;
-    modifierKeys.shift = mask & Steinberg::kShiftKey;
-    modifierKeys.alt = mask & Steinberg::kAlternateKey;
-    modifierKeys.control = (mask & Steinberg::kCommandKey) || (mask & Steinberg::kControlKey);
-    return modifierKeys;
-  }
-
-  void handleModifierKeys(ModifierKeys modifiers)
-  {
-    using namespace Steinberg;
-    ImGuiIO& io = ImGui::GetIO();
-    io.KeyCtrl = modifiers.control;
-    io.KeyShift = modifiers.shift;
-    io.KeyAlt = modifiers.alt;
-  }
-
-  int convertVirtualKeyCode(int16 virtualKeyCode)
-  {
-    using namespace Steinberg;
-    switch (virtualKeyCode) {
-      case KEY_BACK:
-        return ImGuiKey_Backspace;
-      case KEY_TAB:
-        return ImGuiKey_Tab;
-      case KEY_RETURN:
-        return ImGuiKey_Enter;
-      case KEY_ESCAPE:
-        return ImGuiKey_Escape;
-      case KEY_SPACE:
-        return ImGuiKey_Space;
-      case KEY_END:
-        return ImGuiKey_End;
-      case KEY_HOME:
-        return ImGuiKey_Home;
-      case KEY_LEFT:
-        return ImGuiKey_LeftArrow;
-      case KEY_UP:
-        return ImGuiKey_UpArrow;
-      case KEY_RIGHT:
-        return ImGuiKey_RightArrow;
-      case KEY_DOWN:
-        return ImGuiKey_DownArrow;
-      case KEY_PAGEUP:
-        return ImGuiKey_PageUp;
-      case KEY_PAGEDOWN:
-        return ImGuiKey_PageDown;
-      case KEY_ENTER:
-        return ImGuiKey_KeyPadEnter;
-      case KEY_INSERT:
-        return ImGuiKey_Insert;
-      case KEY_DELETE:
-        return ImGuiKey_Delete;
-      default:
-        return -1;
-    }
-  }
-
-  int convertNumPadKeyCode(int16 virtualKeyCode)
-  {
-    using namespace Steinberg;
-    switch (virtualKeyCode) {
-      case KEY_NUMPAD0:
-        return '0';
-      case KEY_NUMPAD1:
-        return '1';
-      case KEY_NUMPAD2:
-        return '2';
-      case KEY_NUMPAD3:
-        return '3';
-      case KEY_NUMPAD4:
-        return '4';
-      case KEY_NUMPAD5:
-        return '5';
-      case KEY_NUMPAD6:
-        return '6';
-      case KEY_NUMPAD7:
-        return '7';
-      case KEY_NUMPAD8:
-        return '8';
-      case KEY_NUMPAD9:
-        return '9';
-      case KEY_MULTIPLY:
-        return '*';
-      case KEY_ADD:
-        return '+';
-      case KEY_SUBTRACT:
-        return '-';
-      case KEY_DIVIDE:
-        return '/';
-      case KEY_DECIMAL:
-        return '.';
-      default:
-        return -1;
-    }
-  }
-
-  int convertButtonCode(int code)
-  {
-    switch (code) {
-      case 1: // left
-        return 0;
-      case 2: // center
-        return 2;
-      case 3: // right
-        return 1;
-      default: // extra buttons, unused
-        return code - 1;
-    }
-  }
-
-public:
-  // Pugl events that should not be dispatched
-
-  pugl::Status onEvent(const pugl::KeyPressEvent& event)
-  {
-    // this event should be left to the host, which will call IPluginView::onKeyDown
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::KeyReleaseEvent& event)
-  {
-    // this event should be left to the host, which will call IPluginView::onKeyDown
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::TextEvent& event)
-  {
-    // this event should be left to the host, which will call IPluginView::onKeyUp and IPluginView::onKeyUp
-    return pugl::Status::success;
-  }
-
   // Pugl events that may be handled by the Painter
+
+  pugl::Status onEvent(const pugl::TimerEvent& event)
+  {
+    if (event.id == redrawTimerId) {
+      getPuglView().postRedisplay();
+      return pugl::Status::success;
+    }
+    else {
+      SetCurrentContext();
+      return painter.onEvent(event);
+    }
+  }
 
   pugl::Status onEvent(const pugl::PointerInEvent& event)
   {
-    SetCurrentContext();
     isMouseCursorIn = true;
+    SetCurrentContext();
     getPuglView().postRedisplay();
     return painter.onEvent(event);
   }
 
   pugl::Status onEvent(const pugl::PointerOutEvent& event)
   {
-    SetCurrentContext();
     isMouseCursorIn = false;
+    SetCurrentContext();
     getPuglView().postRedisplay();
     return painter.onEvent(event);
   }
@@ -506,7 +322,93 @@ public:
     SetCurrentContext();
     return painter.onEvent(event);
   }
-  
+
+  // Pugl events that should not be dispatched
+
+  pugl::Status onEvent(const pugl::KeyPressEvent& event)
+  {
+    // this event should be left to the host, which will call IPluginView::onKeyDown
+    return pugl::Status::success;
+  }
+
+  pugl::Status onEvent(const pugl::KeyReleaseEvent& event)
+  {
+    // this event should be left to the host, which will call IPluginView::onKeyDown
+    return pugl::Status::success;
+  }
+
+  pugl::Status onEvent(const pugl::TextEvent& event)
+  {
+    // this event should be left to the host, which will call IPluginView::onKeyUp and IPluginView::onKeyUp
+    return pugl::Status::success;
+  }
+
+private:
+  void handleModifierKeys(ModifierKeys modifiers)
+  {
+    using namespace Steinberg;
+    ImGuiIO& io = ImGui::GetIO();
+    io.KeyCtrl = modifiers.control;
+    io.KeyShift = modifiers.shift;
+    io.KeyAlt = modifiers.alt;
+  }
+
+  int convertButtonCode(int code)
+  {
+    switch (code) {
+      case 1: // left
+        return 0;
+      case 2: // center
+        return 2;
+      case 3: // right
+        return 1;
+      default: // extra buttons, unused
+        return code - 1;
+    }
+  }
+
+  void SetCursor(ImGuiIO const& io)
+  {
+    ImGuiMouseCursor cursor = io.MouseDrawCursor ? ImGuiMouseCursor_None : ImGui::GetMouseCursor();
+    if (lastCursor == cursor)
+      return;
+    lastCursor = cursor;
+    switch (cursor) {
+      case ImGuiMouseCursor_None:
+        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
+        break;
+      case ImGuiMouseCursor_Arrow:
+        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_ARROW);
+        break;
+      case ImGuiMouseCursor_TextInput:
+        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CARET);
+        break;
+      case ImGuiMouseCursor_ResizeAll:
+        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
+        break;
+      case ImGuiMouseCursor_ResizeNS:
+        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_UP_DOWN);
+        break;
+      case ImGuiMouseCursor_ResizeEW:
+        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_LEFT_RIGHT);
+        break;
+      case ImGuiMouseCursor_ResizeNESW:
+        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
+        break;
+      case ImGuiMouseCursor_ResizeNWSE:
+        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_CROSSHAIR);
+        break;
+      case ImGuiMouseCursor_Hand:
+        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_HAND);
+        break;
+      case ImGuiMouseCursor_NotAllowed:
+        puglSetCursor(getPuglView().cobj(), PUGL_CURSOR_NO);
+        break;
+      default:
+        break;
+    }
+  }
+
 private:
   View<EventHandler<Painter>>& vstView;
   pugl::View& getPuglView() { return *vstView.getPuglView(); }

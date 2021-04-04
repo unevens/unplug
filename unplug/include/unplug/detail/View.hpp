@@ -132,23 +132,20 @@ public:
     return isSizeOk ? kResultTrue : kResultFalse;
   }
 
-  // todo: send Pugl events?
-  tresult PLUGIN_API onWheel(float /*distance*/) override
+  tresult PLUGIN_API onWheel(float distance) override
   {
-    // todo check
+    eventHandler->handleScroll(0, distance);
     return kResultFalse;
   }
 
-  tresult PLUGIN_API onKeyDown(char16 /*key*/, int16 /*keyMsg*/, int16 /*modifiers*/) override
+  tresult PLUGIN_API onKeyDown(char16 key, int16 keyMsg, int16 modifiers) override
   {
-    // todo check
-    return kResultFalse;
+    return eventHandler->onKeyEvent(key, keyMsg, modifiers, true);
   }
 
-  tresult PLUGIN_API onKeyUp(char16 /*key*/, int16 /*keyMsg*/, int16 /*modifiers*/) override
+  tresult PLUGIN_API onKeyUp(char16 key, int16 keyMsg, int16 modifiers) override
   {
-    // todo check
-    return kResultFalse;
+    return eventHandler->onKeyEvent(key, keyMsg, modifiers, false);
   }
 
 private:

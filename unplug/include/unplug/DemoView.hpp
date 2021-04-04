@@ -31,15 +31,21 @@ public:
     // will not handle keep open
   }
 
-  static bool isSizeSupported(int width, int height) {
-    return true;
+  static bool isSizeSupported(int width, int height) { return true; }
+
+  static bool isResizingAllowed() { return true; }
+
+  // key is unicode, special keys use values from the PuglKey enum
+  bool wantsToHandleKey(uint32_t key) { return true; }
+
+  // for pugl events whose responses may be implemented here
+  template<class EventType>
+  pugl::Status onEvent(EventType const& event) const noexcept
+  {
+    return pugl::Status::success;
   }
 
-  static bool isResizingAllowed() {
-    return true;
-  }
-
-    private:
+private:
   PluginView<ImguiDemoPainter>& unplugView;
 };
 } // namespace detail

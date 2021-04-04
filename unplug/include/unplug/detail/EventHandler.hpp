@@ -12,9 +12,9 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "View.hpp"
 #include "imgui.h"
 #include "imgui_impl_opengl2.h"
+#include "pluginterfaces/base/keycodes.h"
 #include "unplug/detail/View.hpp"
 #include <chrono>
 
@@ -34,6 +34,11 @@ class EventHandler
 protected:
   using clock = std::chrono::steady_clock;
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
+  using char16 = Steinberg::char16;
+  using int16 = Steinberg::int16;
+  using tresult = Steinberg::tresult;
+  static constexpr auto kResultTrue = Steinberg::kResultTrue;
+  static constexpr auto kResultFalse = Steinberg::kResultFalse;
 
 public:
   explicit EventHandler(View<EventHandler<Painter>>& vstView)
@@ -51,7 +56,7 @@ public:
     ImGui::SetCurrentContext(imguiContext);
   }
 
-  pugl::Status onEvent(const pugl::CreateEvent& event) noexcept
+  pugl::Status onEvent(const pugl::CreateEvent& event)
   {
     IMGUI_CHECKVERSION();
     if (imguiContext == nullptr) {
@@ -64,56 +69,16 @@ public:
 
     io.BackendPlatformName = "imgui_impl_unplug_pugl";
 
-    io.KeyMap[ImGuiKey_LeftArrow] = convertKeyCode(PUGL_KEY_LEFT);
-    io.KeyMap[ImGuiKey_RightArrow] = convertKeyCode(PUGL_KEY_RIGHT);
-    io.KeyMap[ImGuiKey_UpArrow] = convertKeyCode(PUGL_KEY_UP);
-    io.KeyMap[ImGuiKey_DownArrow] = convertKeyCode(PUGL_KEY_DOWN);
-    io.KeyMap[ImGuiKey_PageUp] = convertKeyCode(PUGL_KEY_PAGE_UP);
-    io.KeyMap[ImGuiKey_PageDown] = convertKeyCode(PUGL_KEY_PAGE_DOWN);
-    io.KeyMap[ImGuiKey_Home] = convertKeyCode(PUGL_KEY_HOME);
-    io.KeyMap[ImGuiKey_End] = convertKeyCode(PUGL_KEY_END);
-    io.KeyMap[ImGuiKey_Insert] = convertKeyCode(PUGL_KEY_INSERT);
-    io.KeyMap[ImGuiKey_Delete] = convertKeyCode(PUGL_KEY_DELETE);
-    io.KeyMap[ImGuiKey_Backspace] = convertKeyCode(PUGL_KEY_BACKSPACE);
-    io.KeyMap[ImGuiKey_Escape] = convertKeyCode(PUGL_KEY_ESCAPE);
-    // missing from pugl:
-#if defined _WIN32
-    io.KeyMap[ImGuiKey_Tab] = VK_TAB;
-    io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
-    io.KeyMap[ImGuiKey_Space] = VK_SPACE;
-    io.KeyMap[ImGuiKey_KeyPadEnter] = VK_RETURN;
+    // the first 128 keys are ASCII, then the special characters from the ImGuiKey_ enum
+    for (auto i = 0; i < ImGuiKey_COUNT; ++i) {
+      io.KeyMap[i] = i + 128;
+    }
     io.KeyMap[ImGuiKey_A] = 'A';
     io.KeyMap[ImGuiKey_C] = 'C';
     io.KeyMap[ImGuiKey_V] = 'V';
     io.KeyMap[ImGuiKey_X] = 'X';
     io.KeyMap[ImGuiKey_Y] = 'Y';
     io.KeyMap[ImGuiKey_Z] = 'Z';
-#else
-// todo
-#endif
-
-    //    io.KeyMap[ImGuiKey_Tab] = VK_TAB;
-    //    io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
-    //    io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
-    //    io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
-    //    io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
-    //    io.KeyMap[ImGuiKey_PageUp] = VK_PRIOR;
-    //    io.KeyMap[ImGuiKey_PageDown] = VK_NEXT;
-    //    io.KeyMap[ImGuiKey_Home] = VK_HOME;
-    //    io.KeyMap[ImGuiKey_End] = VK_END;
-    //    io.KeyMap[ImGuiKey_Insert] = VK_INSERT;
-    //    io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
-    //    io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
-    //    io.KeyMap[ImGuiKey_Space] = VK_SPACE;
-    //    io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
-    //    io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
-    //    io.KeyMap[ImGuiKey_KeyPadEnter] = VK_RETURN;
-    //    io.KeyMap[ImGuiKey_A] = 'A';
-    //    io.KeyMap[ImGuiKey_C] = 'C';
-    //    io.KeyMap[ImGuiKey_V] = 'V';
-    //    io.KeyMap[ImGuiKey_X] = 'X';
-    //    io.KeyMap[ImGuiKey_Y] = 'Y';
-    //    io.KeyMap[ImGuiKey_Z] = 'Z';
 
 #if defined(_WIN32)
     io.ImeWindowHandle = (void*)getPuglView().nativeWindow();
@@ -130,7 +95,7 @@ public:
     return pugl::Status::success;
   }
 
-  pugl::Status onEvent(const pugl::DestroyEvent& event) noexcept
+  pugl::Status onEvent(const pugl::DestroyEvent& event)
   {
     SetCurrentContext();
     ImGui_ImplOpenGL2_Shutdown();
@@ -138,7 +103,7 @@ public:
     return pugl::Status::success;
   }
 
-  pugl::Status onEvent(const pugl::ConfigureEvent& event) noexcept
+  pugl::Status onEvent(const pugl::ConfigureEvent& event)
   {
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -146,7 +111,7 @@ public:
     return pugl::Status::success;
   }
 
-  pugl::Status onEvent(const pugl::UpdateEvent& event) noexcept
+  pugl::Status onEvent(const pugl::UpdateEvent& event)
   {
     getPuglView().postRedisplay();
     return pugl::Status::success;
@@ -194,7 +159,7 @@ public:
     }
   }
 
-  pugl::Status onEvent(const pugl::ExposeEvent& event) noexcept
+  pugl::Status onEvent(const pugl::ExposeEvent& event)
   {
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -222,42 +187,7 @@ public:
     return pugl::Status::success;
   }
 
-  void UpdateModifierKeys(ImGuiIO& io)
-  {
-    io.KeyCtrl = io.KeysDown[convertKeyCode(PUGL_KEY_CTRL_L)] || io.KeysDown[convertKeyCode(PUGL_KEY_CTRL_R)];
-    io.KeyShift = io.KeysDown[convertKeyCode(PUGL_KEY_SHIFT_L)] || io.KeysDown[convertKeyCode(PUGL_KEY_SHIFT_R)];
-    io.KeyAlt = io.KeysDown[convertKeyCode(PUGL_KEY_MENU)];
-  }
-
-  pugl::Status onEvent(const pugl::KeyPressEvent& event) noexcept
-  {
-    SetCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    auto imguiKeyCode = convertKeyCode(event.key);
-    io.KeysDown[imguiKeyCode] = true;
-    UpdateModifierKeys(io);
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::KeyReleaseEvent& event) noexcept
-  {
-    SetCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    auto imguiKeyCode = convertKeyCode(event.key);
-    io.KeysDown[imguiKeyCode] = false;
-    UpdateModifierKeys(io);
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::TextEvent& event) noexcept
-  {
-    SetCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.AddInputCharacter(event.character);
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::ButtonPressEvent& event) noexcept
+  pugl::Status onEvent(const pugl::ButtonPressEvent& event)
   {
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -266,7 +196,7 @@ public:
     return pugl::Status::success;
   }
 
-  pugl::Status onEvent(const pugl::ButtonReleaseEvent& event) noexcept
+  pugl::Status onEvent(const pugl::ButtonReleaseEvent& event)
   {
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -275,7 +205,7 @@ public:
     return pugl::Status::success;
   }
 
-  pugl::Status onEvent(const pugl::MotionEvent& event) noexcept
+  pugl::Status onEvent(const pugl::MotionEvent& event)
   {
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -283,39 +213,119 @@ public:
     return pugl::Status::success;
   }
 
-  pugl::Status onEvent(const pugl::ScrollEvent& event) noexcept
+  pugl::Status onEvent(const pugl::ScrollEvent& event)
   {
-    SetCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.MouseWheelH += (float)event.dx;
-    io.MouseWheel += (float)event.dy;
+    // vertical scroll should be handled by the host, horizontal scroll is handled here
+    handleScroll(static_cast<float>(event.dx), static_cast<float>(event.dy));
     return pugl::Status::success;
   }
 
-  pugl::Status onEvent(const pugl::PointerInEvent& event) noexcept { return pugl::Status::success; }
+  void handleScroll(float dx, float dy)
+  {
+    SetCurrentContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.MouseWheelH += dx;
+    io.MouseWheel += dy;
+  }
 
-  pugl::Status onEvent(const pugl::PointerOutEvent& event) noexcept { return pugl::Status::success; }
+  tresult onKeyEvent(char16 key, int16 keyMsg, int16 modifiers, bool isDown)
+  {
+    SetCurrentContext();
+    ImGuiIO& io = ImGui::GetIO();
 
-  pugl::Status onEvent(const pugl::CloseEvent& event) noexcept { return pugl::Status::success; }
-
-  pugl::Status onEvent(const pugl::MapEvent& event) noexcept { return pugl::Status::success; }
-
-  pugl::Status onEvent(const pugl::UnmapEvent& event) noexcept { return pugl::Status::success; }
-
-  pugl::Status onEvent(const pugl::FocusInEvent& event) noexcept { return pugl::Status::success; }
-
-  pugl::Status onEvent(const pugl::FocusOutEvent& event) noexcept { return pugl::Status::success; }
-
-  pugl::Status onEvent(const pugl::TimerEvent& event) noexcept { return pugl::Status::success; }
-
-  pugl::Status onEvent(const pugl::LoopEnterEvent& event) noexcept { return pugl::Status::success; }
-
-  pugl::Status onEvent(const pugl::LoopLeaveEvent& event) noexcept { return pugl::Status::success; }
-
-  pugl::Status onEvent(const pugl::ClientEvent& event) noexcept { return pugl::Status::success; }
+    bool const isAscii = keyMsg >= Steinberg::VKEY_FIRST_ASCII;
+    if (isAscii) {
+      if (painter.wantsToHandleKey(key)) {
+        io.KeysDown[key] = isDown;
+        handleModifierKeys(modifiers);
+        return kResultTrue;
+      }
+      else {
+        return kResultFalse;
+      }
+    }
+    else {
+      auto const specialKeyCode = convertVirtualKeyCode(keyMsg);
+      if (specialKeyCode > -1) {
+        io.KeysDown[specialKeyCode + 128] = isDown;
+        handleModifierKeys(modifiers);
+        return kResultTrue;
+      }
+      else {
+        return checkModifierFromVirtualKeyCode(modifiers, isDown);
+      }
+    }
+  }
 
 protected:
-  int convertKeyCode(int code) { return code >= 0xE000 ? code - 0xE000 : code; }
+  void handleModifierKeys(int16 modifiers)
+  {
+    using namespace Steinberg;
+    ImGuiIO& io = ImGui::GetIO();
+    io.KeyCtrl = (modifiers & kCommandKey) || (modifiers & kControlKey);
+    io.KeyShift = modifiers & kShiftKey;
+    io.KeyAlt = modifiers & kAlternateKey;
+  }
+
+  int convertVirtualKeyCode(int16 virtualKeyCode)
+  {
+    using namespace Steinberg;
+    switch (virtualKeyCode) {
+      case KEY_BACK:
+        return ImGuiKey_Backspace;
+      case KEY_TAB:
+        return ImGuiKey_Tab;
+      case KEY_RETURN:
+        return ImGuiKey_Enter;
+      case KEY_ESCAPE:
+        return ImGuiKey_Escape;
+      case KEY_SPACE:
+        return ImGuiKey_Space;
+      case KEY_END:
+        return ImGuiKey_End;
+      case KEY_HOME:
+        return ImGuiKey_Home;
+      case KEY_LEFT:
+        return ImGuiKey_LeftArrow;
+      case KEY_UP:
+        return ImGuiKey_UpArrow;
+      case KEY_RIGHT:
+        return ImGuiKey_RightArrow;
+      case KEY_DOWN:
+        return ImGuiKey_DownArrow;
+      case KEY_PAGEUP:
+        return ImGuiKey_PageUp;
+      case KEY_PAGEDOWN:
+        return ImGuiKey_PageDown;
+      case KEY_ENTER:
+        return ImGuiKey_KeyPadEnter;
+      case KEY_INSERT:
+        return ImGuiKey_Insert;
+      case KEY_DELETE:
+        return ImGuiKey_Delete;
+      default:
+        return -1;
+    }
+  }
+
+  tresult checkModifierFromVirtualKeyCode(int16 virtualKeyCode, bool isDown)
+  {
+    using namespace Steinberg;
+    ImGuiIO& io = ImGui::GetIO();
+    switch (virtualKeyCode) {
+      case KEY_SHIFT:
+        io.KeyShift = isDown;
+        return kResultTrue;
+      case KEY_CONTROL:
+        io.KeyCtrl = isDown;
+        return kResultTrue;
+      case KEY_ALT:
+        io.KeyAlt = isDown;
+        return kResultTrue;
+      default:
+        return kResultFalse;
+    }
+  }
 
   int convertButtonCode(int code)
   {
@@ -329,6 +339,98 @@ protected:
       default: // extra buttons, unused
         return code - 1;
     }
+  }
+
+public:
+  // Pugl events that should not be dispatched
+
+  pugl::Status onEvent(const pugl::KeyPressEvent& event)
+  {
+    // this event should be left to the host, which will call IPluginView::onKeyDown
+    assert(false);
+    return pugl::Status::success;
+  }
+
+  pugl::Status onEvent(const pugl::KeyReleaseEvent& event)
+  {
+    // this event should be left to the host, which will call IPluginView::onKeyDown
+    assert(false);
+    return pugl::Status::success;
+  }
+
+  pugl::Status onEvent(const pugl::TextEvent& event)
+  {
+    // this event should be left to the host, which will call IPluginView::onKeyUp and IPluginView::onKeyUp
+    assert(false);
+    return pugl::Status::success;
+  }
+
+  // Pugl events that may be handled by the Painter
+
+  pugl::Status onEvent(const pugl::PointerInEvent& event)
+  {
+    SetCurrentContext();
+    return painter.onEvent(event);
+  }
+
+  pugl::Status onEvent(const pugl::PointerOutEvent& event)
+  {
+    SetCurrentContext();
+    return painter.onEvent(event);
+  }
+
+  pugl::Status onEvent(const pugl::CloseEvent& event)
+  {
+    SetCurrentContext();
+    return painter.onEvent(event);
+  }
+
+  pugl::Status onEvent(const pugl::MapEvent& event)
+  {
+    SetCurrentContext();
+    return painter.onEvent(event);
+  }
+
+  pugl::Status onEvent(const pugl::UnmapEvent& event)
+  {
+    SetCurrentContext();
+    return painter.onEvent(event);
+  }
+
+  pugl::Status onEvent(const pugl::FocusInEvent& event)
+  {
+    SetCurrentContext();
+    return painter.onEvent(event);
+  }
+
+  pugl::Status onEvent(const pugl::FocusOutEvent& event)
+  {
+    SetCurrentContext();
+    return painter.onEvent(event);
+  }
+
+  pugl::Status onEvent(const pugl::TimerEvent& event)
+  {
+    SetCurrentContext();
+    return painter.onEvent(event);
+  }
+
+  pugl::Status onEvent(const pugl::LoopEnterEvent& event)
+  {
+    SetCurrentContext();
+    return painter.onEvent(event);
+  }
+
+  pugl::Status onEvent(const pugl::LoopLeaveEvent& event)
+  {
+    SetCurrentContext();
+    return painter.onEvent(event);
+  }
+
+  pugl::Status onEvent(const pugl::ClientEvent& event)
+  {
+    SetCurrentContext();
+    return painter.onEvent(event);
   }
 
 protected:

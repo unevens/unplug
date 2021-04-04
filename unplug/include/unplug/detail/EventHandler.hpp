@@ -38,9 +38,8 @@ namespace detail {
  */
 
 template<class Painter>
-class EventHandler
+class EventHandler final
 {
-protected:
   using clock = std::chrono::steady_clock;
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
   using char16 = Steinberg::char16;
@@ -67,6 +66,18 @@ public:
     ImGui::SetCurrentContext(imguiContext);
   }
 
+  pugl::Status onEvent(const pugl::TimerEvent& event)
+  {
+    if (event.id == redrawTimerId) {
+      getPuglView().postRedisplay();
+      return pugl::Status::success;
+    }
+    else {
+      SetCurrentContext();
+      return painter.onEvent(event);
+    }
+  }
+  
   pugl::Status onEvent(const pugl::CreateEvent& event)
   {
     IMGUI_CHECKVERSION();
@@ -103,6 +114,8 @@ public:
     prevFrameTime = clock::now();
     lastCursor = -1;
 
+    getPuglView().startTimer(redrawTimerId, 1.0 / 60.0);
+
     return pugl::Status::success;
   }
 
@@ -111,6 +124,7 @@ public:
     SetCurrentContext();
     ImGui_ImplOpenGL2_Shutdown();
     ImGui::DestroyContext();
+    getPuglView().stopTimer(redrawTimerId);
     return pugl::Status::success;
   }
 
@@ -194,21 +208,25 @@ public:
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
-    getPuglView().postRedisplay();
     return pugl::Status::success;
   }
 
   pugl::Status onEvent(const pugl::ButtonPressEvent& event)
   {
+    if (!isMouseCursorIn)
+      return pugl::Status::failure;
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
     auto imguiButtonCode = convertButtonCode(event.button);
     io.MouseDown[imguiButtonCode] = true;
+    getPuglView().postRedisplay();
     return pugl::Status::success;
   }
 
   pugl::Status onEvent(const pugl::ButtonReleaseEvent& event)
   {
+    if (!isMouseCursorIn)
+      return pugl::Status::failure;
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
     auto imguiButtonCode = convertButtonCode(event.button);
@@ -218,6 +236,8 @@ public:
 
   pugl::Status onEvent(const pugl::MotionEvent& event)
   {
+    if (!isMouseCursorIn)
+      return pugl::Status::failure;
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
     io.MousePos = { (float)event.x, (float)event.y };
@@ -237,6 +257,7 @@ public:
     ImGuiIO& io = ImGui::GetIO();
     io.MouseWheelH += dx;
     io.MouseWheel += dy;
+    getPuglView().postRedisplay();
   }
 
   tresult onKeyEvent(char16 key, int16 keyMsg, int16 modifiersMask, bool isDown)
@@ -253,6 +274,7 @@ public:
       if (isDown)
         io.AddInputCharacterUTF16(key);
       handleModifierKeys(modifiers);
+      getPuglView().postRedisplay();
       return kResultTrue;
     }
     else { // not ascii
@@ -262,6 +284,7 @@ public:
         if (isDown)
           io.AddInputCharacter(numPadKeyCode);
         handleModifierKeys(modifiers);
+        getPuglView().postRedisplay();
         return kResultTrue;
       }
       else { // not ASCII, not num pad
@@ -272,17 +295,19 @@ public:
             io.AddInputCharacter(' ');
           }
           handleModifierKeys(modifiers);
+          getPuglView().postRedisplay();
           return kResultTrue;
         }
         else { // not ASCII, not num pad, not special key
           handleModifierKeys(modifiers);
+          getPuglView().postRedisplay();
           return kResultTrue;
         }
       }
     }
   }
 
-protected:
+private:
   ModifierKeys modifierKeysFromBitmask(int16 mask)
   {
     ModifierKeys modifierKeys;
@@ -401,21 +426,18 @@ public:
   pugl::Status onEvent(const pugl::KeyPressEvent& event)
   {
     // this event should be left to the host, which will call IPluginView::onKeyDown
-    assert(false);
     return pugl::Status::success;
   }
 
   pugl::Status onEvent(const pugl::KeyReleaseEvent& event)
   {
     // this event should be left to the host, which will call IPluginView::onKeyDown
-    assert(false);
     return pugl::Status::success;
   }
 
   pugl::Status onEvent(const pugl::TextEvent& event)
   {
     // this event should be left to the host, which will call IPluginView::onKeyUp and IPluginView::onKeyUp
-    assert(false);
     return pugl::Status::success;
   }
 
@@ -424,12 +446,16 @@ public:
   pugl::Status onEvent(const pugl::PointerInEvent& event)
   {
     SetCurrentContext();
+    isMouseCursorIn = true;
+    getPuglView().postRedisplay();
     return painter.onEvent(event);
   }
 
   pugl::Status onEvent(const pugl::PointerOutEvent& event)
   {
     SetCurrentContext();
+    isMouseCursorIn = false;
+    getPuglView().postRedisplay();
     return painter.onEvent(event);
   }
 
@@ -463,12 +489,6 @@ public:
     return painter.onEvent(event);
   }
 
-  pugl::Status onEvent(const pugl::TimerEvent& event)
-  {
-    SetCurrentContext();
-    return painter.onEvent(event);
-  }
-
   pugl::Status onEvent(const pugl::LoopEnterEvent& event)
   {
     SetCurrentContext();
@@ -486,14 +506,16 @@ public:
     SetCurrentContext();
     return painter.onEvent(event);
   }
-
-protected:
+  
+private:
   View<EventHandler<Painter>>& vstView;
   pugl::View& getPuglView() { return *vstView.getPuglView(); }
   ImGuiContext* imguiContext = nullptr;
   Painter painter;
   time_point prevFrameTime;
   ImGuiMouseCursor lastCursor = -1;
+  bool isMouseCursorIn = false;
+  static constexpr uintptr_t redrawTimerId = 1;
 };
 
 } // namespace detail

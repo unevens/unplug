@@ -11,9 +11,10 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
+#include "unplug/Vst3DemoView.hpp"
+
 #include "Controller.hpp"
 #include "Id.hpp"
-#include "unplug/DemoView.hpp"
 
 using namespace Steinberg;
 
@@ -85,7 +86,7 @@ UnPlugDemoEffectController::createView(FIDString name)
 {
   // Here the Host wants to open your editor (if you have one)
   if (FIDStringsEqual(name, Vst::ViewType::kEditor)) {
-    auto ui = new unplug::DemoView("UnplugDemo");
+    auto ui = new unplug::vst3::DemoView(this, "UnplugDemo");
     return ui;
   }
   return nullptr;

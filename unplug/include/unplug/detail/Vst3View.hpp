@@ -12,52 +12,57 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "public.sdk/source/vst/vsteditcontroller.h"
+
+#include "Vst3Parameters.hpp"
+#include "public.sdk/source/common/pluginview.h"
 #include "pugl/gl.hpp"
-#include <cassert>
-#include <functional>
 #include <memory>
 #include <string>
 
 namespace unplug {
-namespace detail {
+namespace vst3 {
+
+using FIDString = Steinberg::FIDString;
+using ViewRect = Steinberg::ViewRect;
+using char16 = Steinberg::char16;
+using int16 = Steinberg::int16;
 
 /**
- * The View class implements a Steinberg::CPluginView using a pugl::View.
- * It manages the lifecycle of the pugl::View has translates VST3 callbacks such as "onSize" and "onKeyDown" to Pugl
- * events.
- * The logic to handle the Pugl events is not implemented by this class, but by an EventHandler class, which is then
- * injected as a template argument (see the files unplug/PluginView.hpp and unplug/DemoView.hpp).
+ * The View class implements the Steinberg::IPluginView class that the plugin controller returns to the host
+ * as a result of a call to createView.
+ * We want the UserInterface class of your plugin to be completely decoupled from the VST3 SDK. In order to achieve
+ * this, we use the Pugl library as a crossplatform window system upon which to build user interfaces. Two template
+ * classes are implemented: The View class, which takes care of interfacing VST3 SDK with the Pugl window sytstem, and
+ * more specifically
+ * - manages the lifecycle of the child window
+ * - handles VST3 callbacks related to the window, such as "onSize" and "onKeydown"
+ * - exposes VST3 API to set and get the plugin parameter to the user interface
+ * And an EventHandler class, which takes care of interfacing the UserInterface class of your plugin with the Pugl
+ * window system. In this way, you can write the UserInterface class of your plugin against the API of the EventHandler
+ * class, without depending on the VST3 SDK. The UserInterface class is then supplied to the EventHandler class and then
+ * to the View class through dependency injection - see the files unplug/PluginView.hpp and unplug/DemoView.hpp.
  * */
 
 template<class EventHandler>
 class View final : public Steinberg::CPluginView
 {
 public:
-  using tresult = Steinberg::tresult;
-  using FIDString = Steinberg::FIDString;
-  using ViewRect = Steinberg::ViewRect;
-  using char16 = Steinberg::char16;
-  using int16 = Steinberg::int16;
-  static constexpr auto kResultTrue = Steinberg::kResultTrue;
-  static constexpr auto kResultFalse = Steinberg::kResultFalse;
-
-  explicit View(const char* name)
+  explicit View(EditControllerEx1* controller, const char* name)
     : world{ pugl::WorldType::module }
-    , name(name)
+    , name{ name }
+    , parameters{ controller }
   {
+    controller->addRef();
     world.setClassName(name);
   }
 
   ~View() = default;
 
-  pugl::View* getPuglView() { return puglView.get(); }
-
   tresult PLUGIN_API attached(void* pParent, FIDString type) override
   {
     CPluginView::attached(pParent, type);
     puglView = std::make_unique<pugl::View>(world);
-    eventHandler = std::make_unique<EventHandler>(*this);
+    eventHandler = std::make_unique<EventHandler>(*puglView, parameters);
     puglView->setEventHandler(*eventHandler);
     puglView->setParentWindow((pugl::NativeView)pParent);
     puglView->setWindowTitle(name.c_str());
@@ -83,7 +88,7 @@ public:
       return kResultFalse;
     }
     puglView->show();
-    if (plugFrame){
+    if (plugFrame) {
       auto viewRect = ViewRect{ 0, 0, defaultSize[0], defaultSize[1] };
       plugFrame->resizeView(this, &viewRect);
     }
@@ -162,7 +167,8 @@ private:
   std::unique_ptr<pugl::View> puglView;
   std::unique_ptr<EventHandler> eventHandler;
   std::string name;
+  Parameters parameters;
 };
 
-} // namespace detail
+} // namespace vst3
 } // namespace unplug

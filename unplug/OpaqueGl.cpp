@@ -11,12 +11,26 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#pragma once
-#include "unplug/detail/EventHandler.hpp"
+#include "unplug/detail/OpaqueGl.h"
+
+#ifndef PUGL_NO_INCLUDE_GL_H
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#else
+#ifdef _WIN32
+#include <windows.h>
+#endif
+#include <GL/gl.h>
+#endif
+#endif
 
 namespace unplug {
 
-template<class Painter>
-using PluginView = detail::View<detail::EventHandler<Painter>>;
-
+void
+resizeAndClearViewport(int width, int height)
+{
+  glViewport(0, 0, width, height);
+  glClearColor(0, 0, 0, 1);
+  glClear(GL_COLOR_BUFFER_BIT);
+}
 } // namespace unplug

@@ -62,7 +62,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
 add_library(pugl STATIC)
 include_directories("${unplug_SOURCE_DIR}/libs/pugl/include" "${unplug_SOURCE_DIR}/libs/pugl/src" "${unplug_SOURCE_DIR}/libs/pugl/bindings/cxx/include")
 target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/implementation.c")
-target_compile_definitions(pugl PUBLIC PUGL_STATIC=1)
+target_compile_definitions(pugl PUBLIC PUGL_STATIC=1 PUGL_NO_INCLUDE_GL_H PUGL_NO_INCLUDE_GLU_H)
 if(SMTG_WIN)
 	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/win.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_gl.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_stub.c")
 elseif(SMTG_MAC)
@@ -86,4 +86,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
 
 # Unplug
 include_directories("${unplug_SOURCE_DIR}/unplug/include")
+add_library(unplug-opaque_gl STATIC)
+target_sources(unplug-opaque_gl PRIVATE "${unplug_SOURCE_DIR}/unplug/OpaqueGl.cpp")
+target_link_libraries(${PROJECT_NAME} PRIVATE unplug-opaque_gl)
+
 

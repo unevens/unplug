@@ -12,42 +12,8 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/PluginView.hpp"
-#include <array>
 
 namespace unplug {
-
-class ImguiDemoPainter
-{
-public:
-  explicit ImguiDemoPainter(PluginView<ImguiDemoPainter>& unplugView)
-    : unplugView(unplugView)
-  {}
-
-  void paint()
-  {
-    bool keep_open = true;
-    ImGui::ShowDemoWindow(&keep_open);
-    // will not handle keep open
-  }
-
-  static void adjustSize(int& width, int& height) {}
-
-  static bool isResizingAllowed() { return true; }
-
-  static std::array<int, 2> getDefaultSize() { return { { 900, 700 } }; }
-
-  // for pugl events whose responses may be implemented here
-  template<class EventType>
-  pugl::Status onEvent(EventType const& event) const noexcept
-  {
-    return pugl::Status::success;
-  }
-
-private:
-  PluginView<ImguiDemoPainter>& unplugView;
-};
-
-using DemoView = PluginView<ImguiDemoPainter>;
-
-} // namespace unplug
+void
+resizeAndClearViewport(int width, int height);
+}

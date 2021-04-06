@@ -12,8 +12,8 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "ModifierKeys.h"
 #include "OpaqueGl.h"
-#include "Vst3Keycodes.hpp" //todo move the code that use this to Vst3View
 #include "imgui.h"
 #include "imgui_impl_opengl2.h"
 #include "pugl/gl.hpp"
@@ -190,55 +190,28 @@ public:
     view.postRedisplay();
   }
 
-  // todo parts of this method should be moved into the View class to decouple this code form the VST3 SDK
-  Steinberg::tresult onKeyEvent(Steinberg::char16 key,
-                                Steinberg::int16 keyMsg,
-                                Steinberg::int16 modifiersMask,
-                                bool isDown)
+  bool wantsCaptureKeyboard()
+  {
+    SetCurrentContext();
+    return ImGui::GetIO().WantCaptureKeyboard;
+  }
+
+  void onAsciiKeyEvent(int key, bool isDown)
   {
     SetCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
-    if (!io.WantCaptureKeyboard)
-      return Steinberg::kResultFalse;
+    io.KeysDown[key] = isDown;
+    if (isDown)
+      io.AddInputCharacterUTF16(key);
+  }
 
-    auto const modifiers = modifierKeysFromBitmask(modifiersMask);
-    bool const isAscii = key > 0;
-    if (isAscii) {
-      io.KeysDown[key] = isDown;
-      if (isDown)
-        io.AddInputCharacterUTF16(key);
-      handleModifierKeys(modifiers);
-      view.postRedisplay();
-      return Steinberg::kResultTrue;
-    }
-    else { // not ascii
-      auto const numPadKeyCode = convertNumPadKeyCode(keyMsg);
-      if (numPadKeyCode > -1) {
-        io.KeysDown[numPadKeyCode] = isDown;
-        if (isDown)
-          io.AddInputCharacter(numPadKeyCode);
-        handleModifierKeys(modifiers);
-        view.postRedisplay();
-        return Steinberg::kResultTrue;
-      }
-      else { // not ASCII, not num pad
-        auto const virtualKeyCode = convertVirtualKeyCode(keyMsg);
-        if (virtualKeyCode > -1) {
-          io.KeysDown[virtualKeyCode + 128] = isDown;
-          if (virtualKeyCode == ImGuiKey_Space && isDown) {
-            io.AddInputCharacter(' ');
-          }
-          handleModifierKeys(modifiers);
-          view.postRedisplay();
-          return Steinberg::kResultTrue;
-        }
-        else { // not ASCII, not num pad, not special key
-          handleModifierKeys(modifiers);
-          view.postRedisplay();
-          return Steinberg::kResultTrue;
-        }
-      }
-    }
+  void onNonAsciiKeyEvent(int virtualKeyCode, bool isDown)
+  {
+    SetCurrentContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.KeysDown[virtualKeyCode + 128] = isDown;
+    if (virtualKeyCode == ImGuiKey_Space && isDown)
+      io.AddInputCharacter(' ');
   }
 
   // Pugl events that may be handled by the UserInterface
@@ -339,16 +312,15 @@ public:
     return pugl::Status::success;
   }
 
-private:
   void handleModifierKeys(ModifierKeys modifiers)
   {
-    using namespace Steinberg;
     ImGuiIO& io = ImGui::GetIO();
     io.KeyCtrl = modifiers.control;
     io.KeyShift = modifiers.shift;
     io.KeyAlt = modifiers.alt;
   }
 
+private:
   int convertButtonCode(int code)
   {
     switch (code) {

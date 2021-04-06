@@ -17,12 +17,12 @@
 #include "pluginterfaces/base/keycodes.h"
 
 namespace unplug {
-namespace detail {
+namespace vst3 {
 
-ModifierKeys
+detail::ModifierKeys
 modifierKeysFromBitmask(Steinberg::int16 mask)
 {
-  ModifierKeys modifierKeys;
+  detail::ModifierKeys modifierKeys;
   modifierKeys.shift = mask & Steinberg::kShiftKey;
   modifierKeys.alt = mask & Steinberg::kAlternateKey;
   modifierKeys.control = (mask & Steinberg::kCommandKey) || (mask & Steinberg::kControlKey);

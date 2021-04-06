@@ -14,6 +14,7 @@
 #pragma once
 
 namespace unplug {
+namespace detail {
 
 struct ModifierKeys final
 {
@@ -22,4 +23,5 @@ struct ModifierKeys final
   bool control = false;
 };
 
+} // namespace detail
 } // namespace unplug

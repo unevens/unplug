@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "Vst3Keycodes.hpp"
 #include "Vst3Parameters.hpp"
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/gl.hpp"
@@ -153,12 +154,50 @@ public:
 
   tresult PLUGIN_API onKeyDown(char16 key, int16 keyMsg, int16 modifiers) override
   {
-    return eventHandler->onKeyEvent(key, keyMsg, modifiers, true);
+    return onKeyEvent(key, keyMsg, modifiers, true);
   }
 
   tresult PLUGIN_API onKeyUp(char16 key, int16 keyMsg, int16 modifiers) override
   {
-    return eventHandler->onKeyEvent(key, keyMsg, modifiers, false);
+    return onKeyEvent(key, keyMsg, modifiers, false);
+  }
+
+private:
+  Steinberg::tresult onKeyEvent(Steinberg::char16 key,
+                                Steinberg::int16 keyMsg,
+                                Steinberg::int16 modifiersMask,
+                                bool isDown)
+  {
+    if (!eventHandler->wantsCaptureKeyboard())
+      return Steinberg::kResultFalse;
+
+    auto const modifiers = modifierKeysFromBitmask(modifiersMask);
+    bool const isAscii = key > 0;
+    if (isAscii) {
+      eventHandler->onAsciiKeyEvent(key, isDown);
+      eventHandler->handleModifierKeys(modifiers);
+      return Steinberg::kResultTrue;
+    }
+    else { // not ascii
+      auto const numPadKeyCode = convertNumPadKeyCode(keyMsg);
+      if (numPadKeyCode > -1) {
+        eventHandler->onAsciiKeyEvent(numPadKeyCode, isDown);
+        eventHandler->handleModifierKeys(modifiers);
+        return Steinberg::kResultTrue;
+      }
+      else { // not ASCII, not num pad
+        auto const virtualKeyCode = convertVirtualKeyCode(keyMsg);
+        if (virtualKeyCode > -1) {
+          eventHandler->onNonAsciiKeyEvent(virtualKeyCode, isDown);
+          eventHandler->handleModifierKeys(modifiers);
+          return Steinberg::kResultTrue;
+        }
+        else { // not ASCII, not num pad, not special key
+          eventHandler->handleModifierKeys(modifiers);
+          return Steinberg::kResultTrue;
+        }
+      }
+    }
   }
 
 private:

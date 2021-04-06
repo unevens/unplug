@@ -90,6 +90,11 @@ public:
     io.KeyAlt = modifiers.alt;
   }
 
+  bool getParameterAtCoordinates(int x, int y, int& parameterTag)
+  {
+    return ui.getParameterAtCoordinates(x, y, parameterTag);
+  }
+
   pugl::Status onEvent(const pugl::CreateEvent& event)
   {
     IMGUI_CHECKVERSION();

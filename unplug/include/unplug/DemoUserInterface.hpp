@@ -43,7 +43,9 @@ public:
 
   static std::array<int, 2> getDefaultSize() { return { { 900, 700 } }; }
 
-  std::array<float, 4> getBackgroundColor() { return { { 0, 0,0, 1 } }; }
+  std::array<float, 4> getBackgroundColor() const { return { { 0, 0, 0, 1 } }; }
+
+  bool getParameterAtCoordinates(int x, int y, int& parameterTag) const { return false; }
 
   // for pugl events whose responses may be implemented here
   template<class EventType>

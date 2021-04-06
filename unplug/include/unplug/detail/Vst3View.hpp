@@ -14,6 +14,7 @@
 #pragma once
 #include "Vst3Keycodes.hpp"
 #include "Vst3Parameters.hpp"
+#include "pluginterfaces/vst/ivstplugview.h"
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/gl.hpp"
 #include <memory>
@@ -27,6 +28,8 @@ using FIDString = Steinberg::FIDString;
 using ViewRect = Steinberg::ViewRect;
 using char16 = Steinberg::char16;
 using int16 = Steinberg::int16;
+using int32 = Steinberg::int32;
+using ParamID = Steinberg::Vst::ParamID;
 
 /**
  * The View class implements the Steinberg::IPluginView class that the plugin controller returns to the host
@@ -45,9 +48,19 @@ using int16 = Steinberg::int16;
  * */
 
 template<class EventHandler>
-class View final : public Steinberg::CPluginView
+class View final
+  : public Steinberg::CPluginView
+  , public Steinberg::Vst::IParameterFinder
 {
 public:
+  DELEGATE_REFCOUNT(Steinberg::CPluginView)
+
+  tresult queryInterface(const char* iid, void** obj) override
+  {
+    QUERY_INTERFACE(iid, obj, Steinberg::Vst::IParameterFinder::iid, Steinberg::Vst::IParameterFinder)
+    return Steinberg::CPluginView::queryInterface(iid, obj);
+  }
+
   explicit View(EditControllerEx1* controller, const char* name)
     : world{ pugl::WorldType::module }
     , name{ name }
@@ -58,6 +71,21 @@ public:
   }
 
   ~View() = default;
+
+  tresult PLUGIN_API findParameter(int32 xPos, int32 yPos, ParamID& resultTag) override
+  {
+    if (eventHandler) {
+      int tag = 0;
+      if (eventHandler->getParameterAtCoordinates(xPos, yPos, tag)) {
+        resultTag = tag;
+        return kResultTrue;
+      }
+      else {
+        return kResultFalse;
+      }
+    }
+    return kResultFalse;
+  }
 
   tresult PLUGIN_API attached(void* pParent, FIDString type) override
   {

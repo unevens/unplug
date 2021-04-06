@@ -49,10 +49,45 @@ public:
 
   static std::array<int, 2> getDefaultSize() { return UserInterface::getDefaultSize(); }
 
-  void SetCurrentContext()
+  void handleScroll(float dx, float dy)
   {
-    assert(imguiContext);
-    ImGui::SetCurrentContext(imguiContext);
+    setCurrentContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.MouseWheelH += dx;
+    io.MouseWheel += dy;
+    view.postRedisplay();
+  }
+
+  bool wantsCaptureKeyboard()
+  {
+    setCurrentContext();
+    return ImGui::GetIO().WantCaptureKeyboard;
+  }
+
+  void onAsciiKeyEvent(int key, bool isDown)
+  {
+    setCurrentContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.KeysDown[key] = isDown;
+    if (isDown)
+      io.AddInputCharacterUTF16(key);
+  }
+
+  void onNonAsciiKeyEvent(int virtualKeyCode, bool isDown)
+  {
+    setCurrentContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.KeysDown[virtualKeyCode + 128] = isDown;
+    if (virtualKeyCode == ImGuiKey_Space && isDown)
+      io.AddInputCharacter(' ');
+  }
+
+  void handleModifierKeys(ModifierKeys modifiers)
+  {
+    ImGuiIO& io = ImGui::GetIO();
+    io.KeyCtrl = modifiers.control;
+    io.KeyShift = modifiers.shift;
+    io.KeyAlt = modifiers.alt;
   }
 
   pugl::Status onEvent(const pugl::CreateEvent& event)
@@ -60,7 +95,7 @@ public:
     IMGUI_CHECKVERSION();
     if (imguiContext == nullptr) {
       imguiContext = ImGui::CreateContext();
-      SetCurrentContext();
+      setCurrentContext();
     }
     ImGuiIO& io = ImGui::GetIO();
     // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
@@ -98,7 +133,7 @@ public:
 
   pugl::Status onEvent(const pugl::DestroyEvent& event)
   {
-    SetCurrentContext();
+    setCurrentContext();
     ImGui_ImplOpenGL2_Shutdown();
     ImGui::DestroyContext();
     view.stopTimer(redrawTimerId);
@@ -107,7 +142,7 @@ public:
 
   pugl::Status onEvent(const pugl::ConfigureEvent& event)
   {
-    SetCurrentContext();
+    setCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = { (float)event.width, (float)event.height };
     return pugl::Status::success;
@@ -121,7 +156,7 @@ public:
 
   pugl::Status onEvent(const pugl::ExposeEvent& event)
   {
-    SetCurrentContext();
+    setCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
 
     // time
@@ -130,7 +165,7 @@ public:
     io.DeltaTime = duration_cast<duration<float>>(time - prevFrameTime).count();
     prevFrameTime = time;
 
-    SetCursor(io);
+    setCursor(io);
 
     ImGui_ImplOpenGL2_NewFrame();
     ImGui::NewFrame();
@@ -146,7 +181,7 @@ public:
   {
     if (!isMouseCursorIn)
       return pugl::Status::failure;
-    SetCurrentContext();
+    setCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
     auto imguiButtonCode = convertButtonCode(event.button);
     io.MouseDown[imguiButtonCode] = true;
@@ -158,7 +193,7 @@ public:
   {
     if (!isMouseCursorIn)
       return pugl::Status::failure;
-    SetCurrentContext();
+    setCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
     auto imguiButtonCode = convertButtonCode(event.button);
     io.MouseDown[imguiButtonCode] = false;
@@ -169,7 +204,7 @@ public:
   {
     if (!isMouseCursorIn)
       return pugl::Status::failure;
-    SetCurrentContext();
+    setCurrentContext();
     ImGuiIO& io = ImGui::GetIO();
     io.MousePos = { (float)event.x, (float)event.y };
     return pugl::Status::success;
@@ -181,39 +216,6 @@ public:
     return pugl::Status::success;
   }
 
-  void handleScroll(float dx, float dy)
-  {
-    SetCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.MouseWheelH += dx;
-    io.MouseWheel += dy;
-    view.postRedisplay();
-  }
-
-  bool wantsCaptureKeyboard()
-  {
-    SetCurrentContext();
-    return ImGui::GetIO().WantCaptureKeyboard;
-  }
-
-  void onAsciiKeyEvent(int key, bool isDown)
-  {
-    SetCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.KeysDown[key] = isDown;
-    if (isDown)
-      io.AddInputCharacterUTF16(key);
-  }
-
-  void onNonAsciiKeyEvent(int virtualKeyCode, bool isDown)
-  {
-    SetCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.KeysDown[virtualKeyCode + 128] = isDown;
-    if (virtualKeyCode == ImGuiKey_Space && isDown)
-      io.AddInputCharacter(' ');
-  }
-
   // Pugl events that may be handled by the UserInterface
 
   pugl::Status onEvent(const pugl::TimerEvent& event)
@@ -223,7 +225,7 @@ public:
       return pugl::Status::success;
     }
     else {
-      SetCurrentContext();
+      setCurrentContext();
       return ui.onEvent(event);
     }
   }
@@ -231,7 +233,7 @@ public:
   pugl::Status onEvent(const pugl::PointerInEvent& event)
   {
     isMouseCursorIn = true;
-    SetCurrentContext();
+    setCurrentContext();
     view.postRedisplay();
     return ui.onEvent(event);
   }
@@ -239,56 +241,56 @@ public:
   pugl::Status onEvent(const pugl::PointerOutEvent& event)
   {
     isMouseCursorIn = false;
-    SetCurrentContext();
+    setCurrentContext();
     view.postRedisplay();
     return ui.onEvent(event);
   }
 
   pugl::Status onEvent(const pugl::CloseEvent& event)
   {
-    SetCurrentContext();
+    setCurrentContext();
     return ui.onEvent(event);
   }
 
   pugl::Status onEvent(const pugl::MapEvent& event)
   {
-    SetCurrentContext();
+    setCurrentContext();
     return ui.onEvent(event);
   }
 
   pugl::Status onEvent(const pugl::UnmapEvent& event)
   {
-    SetCurrentContext();
+    setCurrentContext();
     return ui.onEvent(event);
   }
 
   pugl::Status onEvent(const pugl::FocusInEvent& event)
   {
-    SetCurrentContext();
+    setCurrentContext();
     return ui.onEvent(event);
   }
 
   pugl::Status onEvent(const pugl::FocusOutEvent& event)
   {
-    SetCurrentContext();
+    setCurrentContext();
     return ui.onEvent(event);
   }
 
   pugl::Status onEvent(const pugl::LoopEnterEvent& event)
   {
-    SetCurrentContext();
+    setCurrentContext();
     return ui.onEvent(event);
   }
 
   pugl::Status onEvent(const pugl::LoopLeaveEvent& event)
   {
-    SetCurrentContext();
+    setCurrentContext();
     return ui.onEvent(event);
   }
 
   pugl::Status onEvent(const pugl::ClientEvent& event)
   {
-    SetCurrentContext();
+    setCurrentContext();
     return ui.onEvent(event);
   }
 
@@ -312,15 +314,13 @@ public:
     return pugl::Status::success;
   }
 
-  void handleModifierKeys(ModifierKeys modifiers)
+private:
+  void setCurrentContext()
   {
-    ImGuiIO& io = ImGui::GetIO();
-    io.KeyCtrl = modifiers.control;
-    io.KeyShift = modifiers.shift;
-    io.KeyAlt = modifiers.alt;
+    assert(imguiContext);
+    ImGui::SetCurrentContext(imguiContext);
   }
 
-private:
   int convertButtonCode(int code)
   {
     switch (code) {
@@ -335,7 +335,7 @@ private:
     }
   }
 
-  void SetCursor(ImGuiIO const& io)
+  void setCursor(ImGuiIO const& io)
   {
     ImGuiMouseCursor cursor = io.MouseDrawCursor ? ImGuiMouseCursor_None : ImGui::GetMouseCursor();
     if (lastCursor == cursor)

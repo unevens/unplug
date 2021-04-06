@@ -13,7 +13,6 @@
 
 #include "unplug/detail/OpaqueGl.h"
 
-#ifndef PUGL_NO_INCLUDE_GL_H
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #else
@@ -21,7 +20,6 @@
 #include <windows.h>
 #endif
 #include <GL/gl.h>
-#endif
 #endif
 
 namespace unplug {

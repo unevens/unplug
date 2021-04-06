@@ -12,9 +12,9 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include <array>
-#include "pugl/pugl.hpp"
 #include "imgui.h"
+#include "pugl/pugl.hpp"
+#include <array>
 
 namespace unplug {
 
@@ -23,7 +23,7 @@ namespace unplug {
  * */
 
 template<class Parameters>
-class DemoUserInterface
+class DemoUserInterface final
 {
 public:
   explicit DemoUserInterface(Parameters& parameters)

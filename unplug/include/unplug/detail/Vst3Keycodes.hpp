@@ -12,18 +12,11 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "ModifierKeys.h"
 #include "imgui.h"
 #include "pluginterfaces/base/keycodes.h"
 
 namespace unplug {
-
-struct ModifierKeys
-{
-  bool shift = false;
-  bool alt = false;
-  bool control = false;
-};
-
 namespace detail {
 
 ModifierKeys
@@ -117,5 +110,6 @@ convertNumPadKeyCode(Steinberg::int16 virtualKeyCode)
       return -1;
   }
 }
+
 } // namespace detail
 } // namespace unplug

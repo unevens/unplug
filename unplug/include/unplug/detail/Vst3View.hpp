@@ -12,7 +12,6 @@
 //------------------------------------------------------------------------
 
 #pragma once
-
 #include "Vst3Parameters.hpp"
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/gl.hpp"

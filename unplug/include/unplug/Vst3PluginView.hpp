@@ -16,8 +16,10 @@
 #include "unplug/detail/Vst3View.hpp"
 
 namespace unplug {
-namespace vst3{
+namespace vst3 {
+
 template<template<class> class UserInterface>
 using PluginView = View<detail::EventHandler<UserInterface<Parameters>, Parameters>>;
+
 }
 } // namespace unplug

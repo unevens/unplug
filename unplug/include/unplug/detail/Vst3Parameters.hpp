@@ -20,13 +20,12 @@ namespace unplug {
 namespace vst3 {
 
 using EditControllerEx1 = Steinberg::Vst::EditControllerEx1;
-using ParamID = Steinberg::Vst::ParamID;
 using ParamValue = Steinberg::Vst::ParamValue;
 using tresult = Steinberg::tresult;
 static constexpr auto kResultTrue = Steinberg::kResultTrue;
 static constexpr auto kResultFalse = Steinberg::kResultFalse;
 
-class Parameters
+class Parameters final
 {
 public:
   explicit Parameters(EditControllerEx1* controller)
@@ -37,11 +36,11 @@ public:
 
   ~Parameters() { controller->release(); }
 
-  double get(ParamID tag) { return controller->getParamNormalized(tag); }
+  double get(int tag) { return controller->getParamNormalized(tag); }
 
-  bool set(ParamID tag, double value)
+  bool set(int tag, double value)
   {
-    auto editedIter = paramsBeingEdited.find(tag);
+    auto const editedIter = paramsBeingEdited.find(tag);
     if (editedIter == paramsBeingEdited.end()) {
       assert(false);
       return false;
@@ -49,9 +48,9 @@ public:
     return controller->performEdit(tag, value) == kResultTrue;
   }
 
-  bool beginEdit(ParamID tag)
+  bool beginEdit(int tag)
   {
-    auto editedIter = paramsBeingEdited.find(tag);
+    auto const editedIter = paramsBeingEdited.find(tag);
     if (editedIter != paramsBeingEdited.end()) {
       assert(false);
       return true;
@@ -65,7 +64,7 @@ public:
     }
   }
 
-  bool endEdit(ParamID tag)
+  bool endEdit(int tag)
   {
     auto editedIter = paramsBeingEdited.find(tag);
     if (editedIter == paramsBeingEdited.end()) {
@@ -83,7 +82,7 @@ public:
 
 private:
   EditControllerEx1* controller;
-  std::unordered_set<ParamID> paramsBeingEdited;
+  std::unordered_set<int> paramsBeingEdited;
 };
 
 } // namespace vst3

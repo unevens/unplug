@@ -15,7 +15,11 @@
 
 namespace unplug {
 
-void
-resizeAndClearViewport(int width, int height);
+struct ModifierKeys final
+{
+  bool shift = false;
+  bool alt = false;
+  bool control = false;
+};
 
-}
+} // namespace unplug

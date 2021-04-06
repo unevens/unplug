@@ -17,6 +17,8 @@
 
 namespace unplug {
 namespace vst3 {
+
 using DemoView = PluginView<DemoUserInterface>;
+
 }
 } // namespace unplug

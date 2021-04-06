@@ -19,7 +19,7 @@ namespace unplug {
 namespace vst3 {
 
 template<template<class> class UserInterface>
-using PluginView = View<detail::EventHandler<UserInterface<Parameters>, Parameters>>;
+using PluginView = detail::View<unplug::detail::EventHandler<UserInterface<detail::Parameters>, detail::Parameters>>;
 
 }
 } // namespace unplug

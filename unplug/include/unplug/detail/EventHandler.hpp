@@ -171,7 +171,7 @@ public:
     ImGui::NewFrame();
     ui.paint();
     ImGui::Render();
-    resizeAndClearViewport(io.DisplaySize.x, io.DisplaySize.y);
+    resizeAndClearViewport(io.DisplaySize.x, io.DisplaySize.y, ui.getBackgroundColor());
 
     ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
     return pugl::Status::success;

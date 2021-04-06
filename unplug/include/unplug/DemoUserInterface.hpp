@@ -43,6 +43,8 @@ public:
 
   static std::array<int, 2> getDefaultSize() { return { { 900, 700 } }; }
 
+  std::array<float, 4> getBackgroundColor() { return { { 0, 0,0, 1 } }; }
+
   // for pugl events whose responses may be implemented here
   template<class EventType>
   pugl::Status onEvent(EventType const& event) const noexcept

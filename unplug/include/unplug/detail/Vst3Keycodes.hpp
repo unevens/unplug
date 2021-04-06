@@ -18,11 +18,12 @@
 
 namespace unplug {
 namespace vst3 {
+namespace detail {
 
-detail::ModifierKeys
+unplug::detail::ModifierKeys
 modifierKeysFromBitmask(Steinberg::int16 mask)
 {
-  detail::ModifierKeys modifierKeys;
+  unplug::detail::ModifierKeys modifierKeys;
   modifierKeys.shift = mask & Steinberg::kShiftKey;
   modifierKeys.alt = mask & Steinberg::kAlternateKey;
   modifierKeys.control = (mask & Steinberg::kCommandKey) || (mask & Steinberg::kControlKey);
@@ -112,4 +113,5 @@ convertNumPadKeyCode(Steinberg::int16 virtualKeyCode)
 }
 
 } // namespace detail
+} // namespace vst3
 } // namespace unplug

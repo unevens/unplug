@@ -14,10 +14,12 @@
 #pragma once
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include <cassert>
+#include <codecvt>
 #include <unordered_set>
 
 namespace unplug {
 namespace vst3 {
+namespace detail {
 
 using EditControllerEx1 = Steinberg::Vst::EditControllerEx1;
 using ParamValue = Steinberg::Vst::ParamValue;
@@ -80,10 +82,31 @@ public:
     }
   }
 
+  bool convertToText(int tag, double value, std::string& result)
+  {
+    Steinberg::Vst::String128 text;
+    if (controller->getParamStringByValue(tag, value, text) == kResultTrue) {
+      std::wstring_convert<std::codecvt<char16_t, char, std::mbstate_t>, char16_t> convert;
+      result = convert.to_bytes(reinterpret_cast<const char16_t*>(text));
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  bool convertFromText(int tag, double& value, std::string const& text)
+  {
+    std::wstring_convert<std::codecvt<char16_t, char, std::mbstate_t>, char16_t> convert;
+    std::u16string textUtf16 = convert.from_bytes(text);
+    return controller->getParamValueByString(tag, (Steinberg::Vst::TChar*)textUtf16.c_str(), value) == kResultTrue;
+  }
+
 private:
   EditControllerEx1* controller;
   std::unordered_set<int> paramsBeingEdited;
 };
 
+} // namespace detail
 } // namespace vst3
 } // namespace unplug

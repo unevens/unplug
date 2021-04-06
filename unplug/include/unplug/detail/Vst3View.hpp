@@ -21,6 +21,7 @@
 
 namespace unplug {
 namespace vst3 {
+namespace detail {
 
 using FIDString = Steinberg::FIDString;
 using ViewRect = Steinberg::ViewRect;
@@ -208,5 +209,6 @@ private:
   Parameters parameters;
 };
 
+} // namespace detail
 } // namespace vst3
 } // namespace unplug

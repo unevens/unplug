@@ -25,12 +25,15 @@
 #endif
 
 namespace unplug {
+namespace detail {
 
 void
-resizeAndClearViewport(int width, int height)
+resizeAndClearViewport(float width, float height)
 {
-  glViewport(0, 0, width, height);
+  glViewport(0, 0, static_cast<int>(width), static_cast<int>(height));
   glClearColor(0, 0, 0, 1);
   glClear(GL_COLOR_BUFFER_BIT);
 }
+
+} // namespace detail
 } // namespace unplug

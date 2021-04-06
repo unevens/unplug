@@ -14,8 +14,10 @@
 #pragma once
 
 namespace unplug {
+namespace detail {
 
 void
-resizeAndClearViewport(int width, int height);
+resizeAndClearViewport(float width, float height);
 
 }
+} // namespace unplug

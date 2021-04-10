@@ -17,6 +17,7 @@
 #include "pluginterfaces/vst/ivstplugview.h"
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/gl.hpp"
+#include "unplug/ViewPersistentData.hpp"
 #include <memory>
 #include <string>
 
@@ -61,12 +62,12 @@ public:
     return Steinberg::CPluginView::queryInterface(iid, obj);
   }
 
-  explicit View(EditControllerEx1* controller, const char* name)
+  View(EditControllerEx1& controller, ViewPersistentData& persistentData, const char* name)
     : world{ pugl::WorldType::module }
     , name{ name }
     , parameters{ controller }
+    , persistentData{ persistentData }
   {
-    controller->addRef();
     world.setClassName(name);
   }
 
@@ -191,6 +192,11 @@ public:
     return onKeyEvent(key, keyMsg, modifiers, false);
   }
 
+  static void initializePersistentData(ViewPersistentData& presistentData)
+  {
+    return EventHandler::initializePersistentData(presistentData);
+  }
+
 private:
   Steinberg::tresult onKeyEvent(Steinberg::char16 key,
                                 Steinberg::int16 keyMsg,
@@ -232,6 +238,7 @@ private:
   std::unique_ptr<EventHandler> eventHandler;
   std::string name;
   Parameters parameters;
+  ViewPersistentData& persistentData;
 };
 
 } // namespace detail

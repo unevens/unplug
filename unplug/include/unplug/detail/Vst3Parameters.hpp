@@ -30,15 +30,15 @@ static constexpr auto kResultFalse = Steinberg::kResultFalse;
 class Parameters final
 {
 public:
-  explicit Parameters(EditControllerEx1* controller)
+  explicit Parameters(EditControllerEx1& controller)
     : controller(controller)
   {
-    controller->addRef();
+    controller.addRef();
   }
 
-  ~Parameters() { controller->release(); }
+  ~Parameters() { controller.release(); }
 
-  double get(int tag) { return controller->getParamNormalized(tag); }
+  double get(int tag) { return controller.getParamNormalized(tag); }
 
   bool set(int tag, double value)
   {
@@ -47,7 +47,7 @@ public:
       assert(false);
       return false;
     }
-    return controller->performEdit(tag, value) == kResultTrue;
+    return controller.performEdit(tag, value) == kResultTrue;
   }
 
   bool beginEdit(int tag)
@@ -57,7 +57,7 @@ public:
       assert(false);
       return true;
     }
-    if (controller->beginEdit(tag) == kResultTrue) {
+    if (controller.beginEdit(tag) == kResultTrue) {
       paramsBeingEdited.insert(tag);
       return true;
     }
@@ -73,7 +73,7 @@ public:
       assert(false);
       return false;
     }
-    if (controller->endEdit(tag) == kResultTrue) {
+    if (controller.endEdit(tag) == kResultTrue) {
       paramsBeingEdited.insert(tag);
       return true;
     }
@@ -85,7 +85,7 @@ public:
   bool convertToText(int tag, double value, std::string& result)
   {
     Steinberg::Vst::String128 text;
-    if (controller->getParamStringByValue(tag, value, text) == kResultTrue) {
+    if (controller.getParamStringByValue(tag, value, text) == kResultTrue) {
       std::wstring_convert<std::codecvt<char16_t, char, std::mbstate_t>, char16_t> convert;
       result = convert.to_bytes(reinterpret_cast<const char16_t*>(text));
       return true;
@@ -99,11 +99,11 @@ public:
   {
     std::wstring_convert<std::codecvt<char16_t, char, std::mbstate_t>, char16_t> convert;
     std::u16string textUtf16 = convert.from_bytes(text);
-    return controller->getParamValueByString(tag, (Steinberg::Vst::TChar*)textUtf16.c_str(), value) == kResultTrue;
+    return controller.getParamValueByString(tag, (Steinberg::Vst::TChar*)textUtf16.c_str(), value) == kResultTrue;
   }
 
 private:
-  EditControllerEx1* controller;
+  EditControllerEx1& controller;
   std::unordered_set<int> paramsBeingEdited;
 };
 

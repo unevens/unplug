@@ -13,12 +13,15 @@
 
 #include "Controller.hpp"
 #include "Id.hpp"
+#include "base/source/fstreamer.h"
 #include "unplug/ParameterSettings.hpp"
 #include "unplug/Vst3DemoView.hpp"
 
 using namespace Steinberg;
 
 namespace unplug {
+
+using ViewClass = vst3::DemoView;
 
 tresult PLUGIN_API
 UnPlugDemoEffectController::initialize(FUnknown* context)
@@ -28,6 +31,7 @@ UnPlugDemoEffectController::initialize(FUnknown* context)
     return result;
   }
 
+  ViewClass::initializePersistentData(persistentData);
 
   return result;
 }
@@ -35,7 +39,6 @@ UnPlugDemoEffectController::initialize(FUnknown* context)
 tresult PLUGIN_API
 UnPlugDemoEffectController::terminate()
 {
-
   return EditControllerEx1::terminate();
 }
 
@@ -52,17 +55,34 @@ UnPlugDemoEffectController::setComponentState(IBStream* state)
 tresult PLUGIN_API
 UnPlugDemoEffectController::setState(IBStream* state)
 {
-  // Here you get the state of the controller
-
+  // used to load ui-only data
+  IBStreamer streamer(state, kLittleEndian);
+  auto const loadInteger = [&](int64_t& x) { return streamer.readInt64(x); };
+  auto const loadIntegerArray = [&](int64_t* x, int64_t size) {
+    return streamer.readInt64Array(x, static_cast<int>(size));
+  };
+  auto const loadDoubleArray = [&](double* x, int64_t size) {
+    return streamer.readDoubleArray(x, static_cast<int>(size));
+  };
+  auto const loadBytes = [&](void* x, int64_t size) { return streamer.readRaw(x, static_cast<int>(size)); };
+  persistentData.load(loadInteger, loadIntegerArray, loadDoubleArray, loadBytes);
   return kResultTrue;
 }
 
 tresult PLUGIN_API
 UnPlugDemoEffectController::getState(IBStream* state)
 {
-  // Here you are asked to deliver the state of the controller (if needed)
-  // Note: the real state of your plug-in is saved in the processor
-
+  // used to save ui-only data
+  IBStreamer streamer(state, kLittleEndian);
+  auto const saveInteger = [&](int64_t const& x) { return streamer.writeInt64(x); };
+  auto const saveIntegerArray = [&](int64_t const* x, int64_t size) {
+    return streamer.writeInt64Array(x, static_cast<int>(size));
+  };
+  auto const saveDoubleArray = [&](double const* x, int64_t size) {
+    return streamer.writeDoubleArray(x, static_cast<int>(size));
+  };
+  auto const saveBytes = [&](void const* x, int64_t size) { return streamer.writeRaw(x, static_cast<int>(size)); };
+  persistentData.save(saveInteger, saveIntegerArray, saveDoubleArray, saveBytes);
   return kResultTrue;
 }
 
@@ -70,7 +90,7 @@ IPlugView* PLUGIN_API
 UnPlugDemoEffectController::createView(FIDString name)
 {
   if (FIDStringsEqual(name, Vst::ViewType::kEditor)) {
-    auto ui = new unplug::vst3::DemoView(this, "UnPlugDemoEffect");
+    auto ui = new ViewClass(*this, persistentData, "UnPlugDemoEffect");
     return ui;
   }
   return nullptr;

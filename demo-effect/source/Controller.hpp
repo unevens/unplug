@@ -14,6 +14,8 @@
 #pragma once
 
 #include "public.sdk/source/vst/vsteditcontroller.h"
+#include "unplug/ViewPersistentData.hpp"
+#include <memory>
 
 namespace unplug {
 
@@ -51,6 +53,9 @@ public:
   Steinberg::tresult PLUGIN_API getParamValueByString(Steinberg::Vst::ParamID tag,
                                                       Steinberg::Vst::TChar* string,
                                                       Steinberg::Vst::ParamValue& valueNormalized) SMTG_OVERRIDE;
+
+private:
+  ViewPersistentData persistentData;
 
   //---Interface---------
   DEFINE_INTERFACES

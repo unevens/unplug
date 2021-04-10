@@ -49,6 +49,11 @@ public:
 
   static std::array<int, 2> getDefaultSize() { return UserInterface::getDefaultSize(); }
 
+  static void initializePersistentData(ViewPersistentData& presistentData)
+  {
+    return UserInterface::initializePersistentData(presistentData);
+  }
+
   void handleScroll(float dx, float dy)
   {
     setCurrentContext();

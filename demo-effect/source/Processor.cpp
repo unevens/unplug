@@ -26,7 +26,7 @@ UnPlugDemoEffectProcessor::UnPlugDemoEffectProcessor()
   setControllerClass(kUnPlugDemoEffectControllerUID);
 }
 
-UnPlugDemoEffectProcessor::~UnPlugDemoEffectProcessor() {}
+UnPlugDemoEffectProcessor::~UnPlugDemoEffectProcessor() = default;
 
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::initialize(FUnknown* context)
@@ -49,10 +49,6 @@ UnPlugDemoEffectProcessor::initialize(FUnknown* context)
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::terminate()
 {
-  // Here the Plug-in will be de-instanciated, last possibility to remove some
-  // memory!
-
-  //---do not forget to call parent ------
   return AudioEffect::terminate();
 }
 
@@ -115,7 +111,6 @@ UnPlugDemoEffectProcessor::setProcessing(Steinberg::TBool state)
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::canProcessSampleSize(int32 symbolicSampleSize)
 {
-  // by default kSample32 is supported
   if (symbolicSampleSize == Vst::kSample32)
     return kResultTrue;
 

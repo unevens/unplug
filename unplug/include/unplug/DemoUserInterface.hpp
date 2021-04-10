@@ -43,6 +43,8 @@ public:
 
   static std::array<int, 2> getDefaultSize() { return { { 900, 700 } }; }
 
+  static void initializePersistentData(ViewPersistentData& presistentData) {}
+
   std::array<float, 4> getBackgroundColor() const { return { { 0, 0, 0, 1 } }; }
 
   bool getParameterAtCoordinates(int x, int y, int& parameterTag) const { return false; }

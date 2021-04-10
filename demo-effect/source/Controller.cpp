@@ -14,7 +14,6 @@
 #include "Controller.hpp"
 #include "Id.hpp"
 #include "base/source/fstreamer.h"
-#include "unplug/ParameterSettings.hpp"
 #include "unplug/Vst3DemoView.hpp"
 
 using namespace Steinberg;

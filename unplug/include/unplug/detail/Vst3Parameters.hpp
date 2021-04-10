@@ -14,7 +14,6 @@
 #pragma once
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include <cassert>
-#include <codecvt>
 #include <unordered_set>
 
 namespace unplug {
@@ -30,8 +29,6 @@ static constexpr auto kResultFalse = Steinberg::kResultFalse;
 
 class Parameters final
 {
-  using StringConverter = std::wstring_convert<std::codecvt<char16_t, char, std::mbstate_t>, char16_t>;
-
 public:
   explicit Parameters(EditControllerEx1& controller)
     : controller(controller)
@@ -151,12 +148,11 @@ public:
     }
   }
 
-  bool convertToText(int tag, double value, std::string& result)
+  bool convertToText(int tag, double value, std::wstring& result)
   {
     Steinberg::Vst::String128 text;
     if (controller.getParamStringByValue(tag, value, text) == kResultTrue) {
-      StringConverter convert;
-      result = convert.to_bytes(reinterpret_cast<const char16_t*>(text));
+      result = text;
       return true;
     }
     else {
@@ -164,19 +160,16 @@ public:
     }
   }
 
-  bool convertFromText(int tag, double& value, std::string const& text)
+  bool convertFromText(int tag, double& value, std::wstring const& text)
   {
-    StringConverter convert;
-    std::u16string textUtf16 = convert.from_bytes(text);
-    return controller.getParamValueByString(tag, (Steinberg::Vst::TChar*)textUtf16.c_str(), value) == kResultTrue;
+    return controller.getParamValueByString(tag, (Steinberg::Vst::TChar*)text.c_str(), value) == kResultTrue;
   }
 
-  bool getName(int tag, std::string& result)
+  bool getName(int tag, std::wstring& result)
   {
     ParameterInfo info;
     if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
-      StringConverter convert;
-      result = convert.to_bytes(reinterpret_cast<const char16_t*>(info.title));
+      result = info.title;
       return true;
     }
     else {
@@ -184,12 +177,11 @@ public:
     }
   }
 
-  bool getMeasureUnit(int tag, std::string& result)
+  bool getMeasureUnit(int tag, std::wstring& result)
   {
     ParameterInfo info;
     if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
-      StringConverter convert;
-      result = convert.to_bytes(reinterpret_cast<const char16_t*>(info.units));
+      result = info.units;
       return true;
     }
     else {

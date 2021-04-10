@@ -8,9 +8,6 @@ set(unplug_plugin_version 1.0.0)
 set(unplug_SOURCE_DIR "${CMAKE_SOURCE_DIR}/..")
 
 # C++ global config
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
-set(CMAKE_CXX_EXTENSIONS FALSE)
 if(WIN32)
 	add_compile_options("/EHsc")
 	ADD_DEFINITIONS(-DUNICODE)
@@ -26,6 +23,12 @@ project(${unplug_plugin_name} VERSION ${unplug_plugin_version})
 set(SMTG_VSTGUI_ROOT "${vst3sdk_SOURCE_DIR}")
 add_subdirectory(${vst3sdk_SOURCE_DIR} "${PROJECT_BINARY_DIR}/vst3sdk")
 smtg_enable_vst3_sdk()
+
+# reset to c++17 (vst sdk set it to c++14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_CXX_EXTENSIONS FALSE)
+
 file(GLOB_RECURSE src "${CMAKE_SOURCE_DIR}/source/*")
 smtg_add_vst3plugin(${PROJECT_NAME} ${src})
 if(SMTG_ADD_VSTGUI)

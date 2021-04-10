@@ -23,7 +23,6 @@ namespace unplug {
 
 UnPlugDemoEffectProcessor::UnPlugDemoEffectProcessor()
 {
-  //--- set the wanted controller for our processor
   setControllerClass(kUnPlugDemoEffectControllerUID);
 }
 
@@ -32,11 +31,7 @@ UnPlugDemoEffectProcessor::~UnPlugDemoEffectProcessor() {}
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::initialize(FUnknown* context)
 {
-  // Here the Plug-in will be instanciated
-
-  //---always initialize the parent-------
   tresult result = AudioEffect::initialize(context);
-  // if everything Ok, continue
   if (result != kResultOk) {
     return result;
   }
@@ -64,8 +59,7 @@ UnPlugDemoEffectProcessor::terminate()
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::setActive(TBool state)
 {
-  //--- called when the Plug-in is enable/disable (On/Off) -----
-  return AudioEffect::setActive(state);
+  return kResultOk;
 }
 
 tresult PLUGIN_API
@@ -99,8 +93,23 @@ UnPlugDemoEffectProcessor::process(Vst::ProcessData& data)
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup& newSetup)
 {
-  //--- called before any processing ----
-  return AudioEffect::setupProcessing(newSetup);
+  // called from the non-realtime thread.
+  // the newSetup object contains information such as the maximum number of samples per audio block and the sample rate
+  tresult result = AudioEffect::setupProcessing(newSetup);
+  if (result != kResultOk) {
+    return result;
+  }
+
+  return kResultOk;
+}
+
+Steinberg::tresult
+UnPlugDemoEffectProcessor::setProcessing(Steinberg::TBool state)
+{
+  // may be called by both the realtime thread and the non realtime thread
+  // it is called before the processing starts with state = true, and after it stops with state = false
+  // it is used to reset the internal state of the plugin, as in cleaning any delay buffer and any filter memory
+  return kResultOk;
 }
 
 tresult PLUGIN_API
@@ -110,9 +119,8 @@ UnPlugDemoEffectProcessor::canProcessSampleSize(int32 symbolicSampleSize)
   if (symbolicSampleSize == Vst::kSample32)
     return kResultTrue;
 
-  // disable the following comment if your processing support kSample64
-  /* if (symbolicSampleSize == Vst::kSample64)
-          return kResultTrue; */
+  if (symbolicSampleSize == Vst::kSample64)
+    return kResultTrue;
 
   return kResultFalse;
 }

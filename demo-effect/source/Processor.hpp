@@ -43,6 +43,9 @@ public:
   /** Will be called before any process call */
   Steinberg::tresult PLUGIN_API setupProcessing(Steinberg::Vst::ProcessSetup& newSetup) SMTG_OVERRIDE;
 
+  /** Will be called before and after any process call */
+  Steinberg::tresult PLUGIN_API setProcessing (Steinberg::TBool state) SMTG_OVERRIDE;
+
   /** Asks if a given sample size is supported see SymbolicSampleSizes. */
   Steinberg::tresult PLUGIN_API canProcessSampleSize(Steinberg::int32 symbolicSampleSize) SMTG_OVERRIDE;
 

@@ -11,46 +11,34 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#include "unplug/Vst3DemoView.hpp"
-
 #include "Controller.hpp"
 #include "Id.hpp"
+#include "unplug/ParameterSettings.hpp"
+#include "unplug/Vst3DemoView.hpp"
 
 using namespace Steinberg;
 
 namespace unplug {
 
-//------------------------------------------------------------------------
-// charlieController Implementation
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectController::initialize(FUnknown* context)
 {
-  // Here the Plug-in will be instanciated
-
-  //---do not forget to call parent ------
   tresult result = EditControllerEx1::initialize(context);
   if (result != kResultOk) {
     return result;
   }
 
-  // Here you could register some parameters
 
   return result;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectController::terminate()
 {
-  // Here the Plug-in will be de-instanciated, last possibility to remove some
-  // memory!
 
-  //---do not forget to call parent ------
   return EditControllerEx1::terminate();
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectController::setComponentState(IBStream* state)
 {
@@ -61,7 +49,6 @@ UnPlugDemoEffectController::setComponentState(IBStream* state)
   return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectController::setState(IBStream* state)
 {
@@ -70,7 +57,6 @@ UnPlugDemoEffectController::setState(IBStream* state)
   return kResultTrue;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectController::getState(IBStream* state)
 {
@@ -80,19 +66,16 @@ UnPlugDemoEffectController::getState(IBStream* state)
   return kResultTrue;
 }
 
-//------------------------------------------------------------------------
 IPlugView* PLUGIN_API
 UnPlugDemoEffectController::createView(FIDString name)
 {
-  // Here the Host wants to open your editor (if you have one)
   if (FIDStringsEqual(name, Vst::ViewType::kEditor)) {
-    auto ui = new unplug::vst3::DemoView(this, "UnplugDemo");
+    auto ui = new unplug::vst3::DemoView(this, "UnPlugDemoEffect");
     return ui;
   }
   return nullptr;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectController::setParamNormalized(Vst::ParamID tag, Vst::ParamValue value)
 {
@@ -101,7 +84,6 @@ UnPlugDemoEffectController::setParamNormalized(Vst::ParamID tag, Vst::ParamValue
   return result;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectController::getParamStringByValue(Vst::ParamID tag,
                                                   Vst::ParamValue valueNormalized,
@@ -112,7 +94,6 @@ UnPlugDemoEffectController::getParamStringByValue(Vst::ParamID tag,
   return EditControllerEx1::getParamStringByValue(tag, valueNormalized, string);
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectController::getParamValueByString(Vst::ParamID tag,
                                                   Vst::TChar* string,
@@ -123,5 +104,4 @@ UnPlugDemoEffectController::getParamValueByString(Vst::ParamID tag,
   return EditControllerEx1::getParamValueByString(tag, string, valueNormalized);
 }
 
-//------------------------------------------------------------------------
 } // namespace unplug

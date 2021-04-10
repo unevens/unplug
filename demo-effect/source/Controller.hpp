@@ -17,17 +17,12 @@
 
 namespace unplug {
 
-//------------------------------------------------------------------------
-//  UnPlugDemoEffectController
-//------------------------------------------------------------------------
-class UnPlugDemoEffectController : public Steinberg::Vst::EditControllerEx1
+class UnPlugDemoEffectController final : public Steinberg::Vst::EditControllerEx1
 {
 public:
-  //------------------------------------------------------------------------
   UnPlugDemoEffectController() = default;
   ~UnPlugDemoEffectController() SMTG_OVERRIDE = default;
 
-  // Create function
   static Steinberg::FUnknown* createInstance(void* /*context*/)
   {
     return (Steinberg::Vst::IEditController*)new UnPlugDemoEffectController;
@@ -63,10 +58,6 @@ public:
   // DEF_INTERFACE (Vst::IXXX)
   END_DEFINE_INTERFACES(EditController)
   DELEGATE_REFCOUNT(EditController)
-
-  //------------------------------------------------------------------------
-protected:
 };
 
-//------------------------------------------------------------------------
 } // namespace unplug

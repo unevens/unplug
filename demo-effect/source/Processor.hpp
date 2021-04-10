@@ -17,16 +17,12 @@
 
 namespace unplug {
 
-//------------------------------------------------------------------------
-//  UnPlugDemoEffectProcessor
-//------------------------------------------------------------------------
-class UnPlugDemoEffectProcessor : public Steinberg::Vst::AudioEffect
+class UnPlugDemoEffectProcessor final : public Steinberg::Vst::AudioEffect
 {
 public:
   UnPlugDemoEffectProcessor();
   ~UnPlugDemoEffectProcessor() SMTG_OVERRIDE;
 
-  // Create function
   static Steinberg::FUnknown* createInstance(void* /*context*/)
   {
     return (Steinberg::Vst::IAudioProcessor*)new UnPlugDemoEffectProcessor;
@@ -57,9 +53,6 @@ public:
   Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream* state) SMTG_OVERRIDE;
   Steinberg::tresult PLUGIN_API getState(Steinberg::IBStream* state) SMTG_OVERRIDE;
 
-  //------------------------------------------------------------------------
-protected:
 };
 
-//------------------------------------------------------------------------
 } // namespace unplug

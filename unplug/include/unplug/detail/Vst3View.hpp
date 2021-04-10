@@ -205,28 +205,25 @@ private:
     if (isAscii) {
       eventHandler->onAsciiKeyEvent(key, isDown);
       eventHandler->handleModifierKeys(modifiers);
-      return Steinberg::kResultTrue;
     }
-    else { // not ascii
+    else { // not ASCII
       auto const numPadKeyCode = convertNumPadKeyCode(keyMsg);
       if (numPadKeyCode > -1) {
         eventHandler->onAsciiKeyEvent(numPadKeyCode, isDown);
         eventHandler->handleModifierKeys(modifiers);
-        return Steinberg::kResultTrue;
       }
       else { // not ASCII, not num pad
         auto const virtualKeyCode = convertVirtualKeyCode(keyMsg);
         if (virtualKeyCode > -1) {
           eventHandler->onNonAsciiKeyEvent(virtualKeyCode, isDown);
           eventHandler->handleModifierKeys(modifiers);
-          return Steinberg::kResultTrue;
         }
         else { // not ASCII, not num pad, not special key
           eventHandler->handleModifierKeys(modifiers);
-          return Steinberg::kResultTrue;
         }
       }
     }
+    return Steinberg::kResultTrue;
   }
 
 private:

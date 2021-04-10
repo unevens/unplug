@@ -20,19 +20,15 @@
 using namespace Steinberg;
 
 namespace unplug {
-//------------------------------------------------------------------------
-// UnPlugDemoEffectProcessor
-//------------------------------------------------------------------------
+
 UnPlugDemoEffectProcessor::UnPlugDemoEffectProcessor()
 {
   //--- set the wanted controller for our processor
   setControllerClass(kUnPlugDemoEffectControllerUID);
 }
 
-//------------------------------------------------------------------------
 UnPlugDemoEffectProcessor::~UnPlugDemoEffectProcessor() {}
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::initialize(FUnknown* context)
 {
@@ -55,7 +51,6 @@ UnPlugDemoEffectProcessor::initialize(FUnknown* context)
   return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::terminate()
 {
@@ -66,7 +61,6 @@ UnPlugDemoEffectProcessor::terminate()
   return AudioEffect::terminate();
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::setActive(TBool state)
 {
@@ -74,7 +68,6 @@ UnPlugDemoEffectProcessor::setActive(TBool state)
   return AudioEffect::setActive(state);
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::process(Vst::ProcessData& data)
 {
@@ -103,7 +96,6 @@ UnPlugDemoEffectProcessor::process(Vst::ProcessData& data)
   return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup& newSetup)
 {
@@ -111,7 +103,6 @@ UnPlugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup& newSetup)
   return AudioEffect::setupProcessing(newSetup);
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::canProcessSampleSize(int32 symbolicSampleSize)
 {
@@ -126,7 +117,6 @@ UnPlugDemoEffectProcessor::canProcessSampleSize(int32 symbolicSampleSize)
   return kResultFalse;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::setState(IBStream* state)
 {
@@ -136,7 +126,6 @@ UnPlugDemoEffectProcessor::setState(IBStream* state)
   return kResultOk;
 }
 
-//------------------------------------------------------------------------
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::getState(IBStream* state)
 {
@@ -146,5 +135,4 @@ UnPlugDemoEffectProcessor::getState(IBStream* state)
   return kResultOk;
 }
 
-//------------------------------------------------------------------------
 } // namespace unplug

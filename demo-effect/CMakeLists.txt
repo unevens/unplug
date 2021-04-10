@@ -68,9 +68,7 @@ if(SMTG_WIN)
 elseif(SMTG_MAC)
 	#todo
 else()
-	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/x11.c")
-	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/x11_gl.c")
-	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/x11_stub.c")
+	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/x11.c" "${unplug_SOURCE_DIR}/libs/pugl/src/x11_gl.c" "${unplug_SOURCE_DIR}/libs/pugl/src/x11_stub.c")
 endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE pugl)
 

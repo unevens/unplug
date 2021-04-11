@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "StringConversion.hpp"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include <cassert>
 #include <unordered_set>
@@ -23,9 +24,19 @@ namespace detail {
 using EditControllerEx1 = Steinberg::Vst::EditControllerEx1;
 using ParamValue = Steinberg::Vst::ParamValue;
 using ParameterInfo = Steinberg::Vst::ParameterInfo;
+using TChar = Steinberg::Vst::TChar;
+using String128 = Steinberg::Vst::String128;
 using tresult = Steinberg::tresult;
 static constexpr auto kResultTrue = Steinberg::kResultTrue;
 static constexpr auto kResultFalse = Steinberg::kResultFalse;
+
+using ToUtf8 = dbj::char_range_to_string;
+
+#if defined(_NATIVE_WCHAR_T_DEFINED) || defined(__MINGW32__)
+using ToVstTChar = dbj::wchar_range_to_string;
+#else
+using ToVstTChar = dbj::u16char_range_to_string;
+#endif
 
 class Parameters final
 {
@@ -148,11 +159,11 @@ public:
     }
   }
 
-  bool convertToText(int tag, double value, std::wstring& result)
+  bool convertToText(int tag, double value, std::string& result)
   {
-    Steinberg::Vst::String128 text;
+    String128 text;
     if (controller.getParamStringByValue(tag, value, text) == kResultTrue) {
-      result = text;
+      result = ToUtf8{}(text);
       return true;
     }
     else {
@@ -160,16 +171,17 @@ public:
     }
   }
 
-  bool convertFromText(int tag, double& value, std::wstring const& text)
+  bool convertFromText(int tag, double& value, std::string const& text)
   {
-    return controller.getParamValueByString(tag, (Steinberg::Vst::TChar*)text.c_str(), value) == kResultTrue;
+    auto text16 = ToVstTChar{}(text);
+    return controller.getParamValueByString(tag, const_cast<TChar*>(text16.c_str()), value) == kResultTrue;
   }
 
-  bool getName(int tag, std::wstring& result)
+  bool getName(int tag, std::string& result)
   {
     ParameterInfo info;
     if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
-      result = info.title;
+      result = ToUtf8{}(info.title);
       return true;
     }
     else {
@@ -177,11 +189,11 @@ public:
     }
   }
 
-  bool getMeasureUnit(int tag, std::wstring& result)
+  bool getMeasureUnit(int tag, std::string& result)
   {
     ParameterInfo info;
     if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
-      result = info.units;
+      result = ToUtf8{}(info.units);
       return true;
     }
     else {

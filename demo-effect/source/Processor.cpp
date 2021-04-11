@@ -36,6 +36,8 @@ UnPlugDemoEffectProcessor::initialize(FUnknown* context)
     return result;
   }
 
+  getParameterInitializer().initializeStorage(parameterStorage);
+
   //--- create Audio IO ------
   addAudioInput(STR16("Stereo In"), Steinberg::Vst::SpeakerArr::kStereo);
   addAudioOutput(STR16("Stereo Out"), Steinberg::Vst::SpeakerArr::kStereo);
@@ -61,27 +63,27 @@ UnPlugDemoEffectProcessor::setActive(TBool state)
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::process(Vst::ProcessData& data)
 {
-  //--- First : Read inputs parameter changes-----------
-
   if (data.inputParameterChanges) {
     int32 numParamsChanged = data.inputParameterChanges->getParameterCount();
     for (int32 index = 0; index < numParamsChanged; index++) {
       if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
+        int32 numPoints = paramQueue->getPointCount();
         Vst::ParamValue value;
         int32 sampleOffset;
-        int32 numPoints = paramQueue->getPointCount();
-        switch (paramQueue->getParameterId()) {}
+        paramQueue->getPoint(numPoints - 1, sampleOffset, value);
+        parameterStorage.setNormalized(index, value);
       }
     }
   }
 
-  //--- Here you have to implement your processing
-
-  auto in = data.inputs[0].channelBuffers32;
-  auto out = data.outputs[0].channelBuffers32;
-
-  for (int c = 0; c < data.inputs[0].numChannels; ++c)
-    std::copy(in[c], in[c] + data.numSamples, out[c]);
+  if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
+    processImpl(
+      data.inputs[0].channelBuffers64, data.outputs[0].channelBuffers64, data.inputs[0].numChannels, data.numSamples);
+  }
+  else {
+    processImpl(
+      data.inputs[0].channelBuffers32, data.outputs[0].channelBuffers32, data.inputs[0].numChannels, data.numSamples);
+  }
 
   return kResultOk;
 }
@@ -89,8 +91,9 @@ UnPlugDemoEffectProcessor::process(Vst::ProcessData& data)
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup& newSetup)
 {
-  // called from the non-realtime thread.
-  // the newSetup object contains information such as the maximum number of samples per audio block and the sample rate
+  // called from the UI Thread.
+  // the newSetup object contains information such as the maximum number of samples per audio block and the sample
+  // rate
   tresult result = AudioEffect::setupProcessing(newSetup);
   if (result != kResultOk) {
     return result;
@@ -102,7 +105,7 @@ UnPlugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup& newSetup)
 Steinberg::tresult
 UnPlugDemoEffectProcessor::setProcessing(Steinberg::TBool state)
 {
-  // may be called by both the realtime thread and the non realtime thread
+  // may be called by both the Processing Thread and the UI thread
   // it is called before the processing starts with state = true, and after it stops with state = false
   // it is used to reset the internal state of the plugin, as in cleaning any delay buffer and any filter memory
   return kResultOk;
@@ -123,19 +126,53 @@ UnPlugDemoEffectProcessor::canProcessSampleSize(int32 symbolicSampleSize)
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::setState(IBStream* state)
 {
-  // called when we load a preset, the model has to be reloaded
+  // loads the state
+  // may be called by either the Processing Thread or the UI Thread
   IBStreamer streamer(state, kLittleEndian);
-
+  for (int i = 0; i < ParamTag::numParams; ++i) {
+    double value;
+    if (!streamer.readDouble(value)) {
+      return kResultFalse;
+    }
+    parameterStorage.set(i, value);
+  }
   return kResultOk;
 }
 
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::getState(IBStream* state)
 {
-  // here we need to save the model
+  // saves the state
+  // may be called by either the Processing Thread or the UI Thread
   IBStreamer streamer(state, kLittleEndian);
-
+  for (int i = 0; i < ParamTag::numParams; ++i) {
+    double const value = parameterStorage.get(i);
+    if (!streamer.writeDouble(value)) {
+      return kResultFalse;
+    }
+  }
   return kResultOk;
+}
+
+template<class SampleType>
+void
+UnPlugDemoEffectProcessor::processImpl(SampleType** in, SampleType** out, int numChannels, int numSamples)
+{
+  auto const gain = parameterStorage.get(ParamTag::gain);
+  bool const bypass = parameterStorage.get(ParamTag::bypass) > 0.0;
+
+  if (bypass) {
+    for (int c = 0; c < numChannels; ++c) {
+      std::copy(in[c], in[c] + numSamples, out[c]);
+    }
+  }
+  else {
+    for (int c = 0; c < numChannels; ++c) {
+      for (int s = 0; s < numSamples; ++s) {
+        out[c][s] = gain * in[c][s];
+      }
+    }
+  }
 }
 
 } // namespace unplug

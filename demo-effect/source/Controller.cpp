@@ -13,7 +13,10 @@
 
 #include "Controller.hpp"
 #include "Id.hpp"
+#include "Parameters.hpp"
 #include "base/source/fstreamer.h"
+#include "pluginterfaces/base/ustring.h"
+#include "unplug/StringConversion.hpp"
 #include "unplug/Vst3DemoView.hpp"
 
 using namespace Steinberg;
@@ -25,6 +28,9 @@ using ViewClass = vst3::DemoView;
 tresult PLUGIN_API
 UnPlugDemoEffectController::initialize(FUnknown* context)
 {
+  using namespace Steinberg;
+  using namespace Steinberg::Vst;
+
   tresult result = EditControllerEx1::initialize(context);
   if (result != kResultOk) {
     return result;
@@ -32,7 +38,53 @@ UnPlugDemoEffectController::initialize(FUnknown* context)
 
   ViewClass::initializePersistentData(persistentData);
 
-  return result;
+  UnitInfo unitInfo;
+  unitInfo.id = kRootUnitId;
+  unitInfo.parentUnitId = Steinberg::Vst::kNoParentUnitId;
+  UString setUnitName(unitInfo.name, 128);
+  setUnitName.fromAscii("Root");
+
+  // todo maybe: add support for preset lists
+
+  auto const initializeParameter = [this, unitId = kRootUnitId](unplug::ParameterDescription const& description) {
+    TString title = ToVstTChar{}(description.name);
+    TString shortTitle = ToVstTChar{}(description.shortName);
+    TString units = ToVstTChar{}(description.measureUnit);
+    auto pUnits = units.empty() ? nullptr : units.c_str();
+    auto pShortTitle = shortTitle.empty() ? nullptr : shortTitle.c_str();
+
+    switch (description.type) {
+      case ParameterDescription::Type::numeric: {
+        int32 flags = description.canBeAutomated ? ParameterInfo::kCanAutomate : ParameterInfo::kNoFlags;
+        auto parameter = new RangeParameter(title.c_str(),
+                                            description.tag,
+                                            pUnits,
+                                            description.min,
+                                            description.max,
+                                            description.defaultValue,
+                                            description.numSteps,
+                                            flags,
+                                            unitId,
+                                            pShortTitle);
+        parameters.addParameter(parameter);
+      } break;
+      case ParameterDescription::Type::list: {
+        int32 flags =
+          ParameterInfo::kIsList | (description.canBeAutomated ? ParameterInfo::kCanAutomate : ParameterInfo::kNoFlags);
+        auto parameter =
+          new StringListParameter(title.c_str(), description.tag, pUnits, flags, unitId, pShortTitle);
+        for (auto& entry : description.labels) {
+          auto label = ToVstTChar{}(entry);
+          parameter->appendString(label.c_str());
+        }
+        parameters.addParameter(parameter);
+      } break;
+    }
+  };
+
+  getParameterInitializer().initializeParameters(initializeParameter);
+
+  return kResultOk;
 }
 
 tresult PLUGIN_API
@@ -44,10 +96,17 @@ UnPlugDemoEffectController::terminate()
 tresult PLUGIN_API
 UnPlugDemoEffectController::setComponentState(IBStream* state)
 {
-  // Here you get the state of the component (Processor part)
+  // loads the dsp state
   if (!state)
     return kResultFalse;
-
+  IBStreamer streamer(state, kLittleEndian);
+  for (int i = 0; i < ParamTag::numParams; ++i) {
+    double value;
+    if (!streamer.readDouble(value))
+      return kResultFalse;
+    auto parameter = parameters.getParameterByIndex(i);
+    setParamNormalized(parameter->getInfo().id, parameter->toNormalized(value));
+  }
   return kResultOk;
 }
 

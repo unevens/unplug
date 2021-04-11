@@ -12,12 +12,12 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "StringConversion.hpp"
+#include "unplug/StringConversion.hpp"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include <cassert>
 #include <unordered_set>
 
-namespace unplug::vst3::detail {
+namespace unplug::vst3 {
 
 using EditControllerEx1 = Steinberg::Vst::EditControllerEx1;
 using ParamValue = Steinberg::Vst::ParamValue;
@@ -28,24 +28,20 @@ using tresult = Steinberg::tresult;
 static constexpr auto kResultTrue = Steinberg::kResultTrue;
 static constexpr auto kResultFalse = Steinberg::kResultFalse;
 
-using ToUtf8 = dbj::char_range_to_string;
+/**
+ * The Parameters class expose the plugin parameters to the user interface.
+ * */
 
-#if defined(_NATIVE_WCHAR_T_DEFINED) || defined(__MINGW32__)
-using ToVstTChar = dbj::wchar_range_to_string;
-#else
-using ToVstTChar = dbj::u16char_range_to_string;
-#endif
-
-class Parameters final
+class ParameterAccess final
 {
 public:
-  explicit Parameters(EditControllerEx1& controller)
+  explicit ParameterAccess(EditControllerEx1& controller)
     : controller(controller)
   {
     controller.addRef();
   }
 
-  ~Parameters() { controller.release(); }
+  ~ParameterAccess() { controller.release(); }
 
   double getValue(int tag)
   {
@@ -264,4 +260,4 @@ private:
   std::unordered_set<int> paramsBeingEdited;
 };
 
-} // namespace unplug::vst3::detail
+} // namespace unplug::vst3

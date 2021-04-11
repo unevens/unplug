@@ -12,12 +12,23 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/detail/EventHandler.hpp"
-#include "unplug/detail/Vst3View.hpp"
+#include "unplug/ParameterStorage.hpp"
 
-namespace unplug::vst3 {
+namespace ParamTag {
+enum
+{
+  gain,
+  bypass,
+  numParams
+};
+}
 
-template<template<class> class UserInterface>
-using PluginView = detail::View<unplug::detail::EventHandler<UserInterface<ParameterAccess>, ParameterAccess>>;
-
-} // namespace unplug
+inline unplug::ParameterInitializer
+getParameterInitializer()
+{
+  using namespace unplug;
+  auto params = ParameterCreator{};
+  params.addParameter(ParameterDescription(ParamTag::gain, "Gain", 0, 1, 1));
+  params.addParameter(ParameterDescription::makeBypassParameter(ParamTag::bypass));
+  return params.done();
+}

@@ -13,7 +13,7 @@
 
 #pragma once
 #include "Vst3Keycodes.hpp"
-#include "Vst3Parameters.hpp"
+#include "Vst3ParameterAccess.hpp"
 #include "pluginterfaces/vst/ivstplugview.h"
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/gl.hpp"
@@ -235,7 +235,7 @@ private:
   std::unique_ptr<pugl::View> puglView;
   std::unique_ptr<EventHandler> eventHandler;
   std::string name;
-  Parameters parameters;
+  ParameterAccess parameters;
   ViewPersistentData& persistentData;
 };
 

@@ -21,9 +21,7 @@
 #include <memory>
 #include <string>
 
-namespace unplug {
-namespace vst3 {
-namespace detail {
+namespace unplug::vst3::detail {
 
 using FIDString = Steinberg::FIDString;
 using ViewRect = Steinberg::ViewRect;
@@ -241,6 +239,4 @@ private:
   ViewPersistentData& persistentData;
 };
 
-} // namespace detail
-} // namespace vst3
 } // namespace unplug

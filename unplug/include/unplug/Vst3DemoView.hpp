@@ -15,10 +15,8 @@
 #include "unplug/DemoUserInterface.hpp"
 #include "unplug/Vst3PluginView.hpp"
 
-namespace unplug {
-namespace vst3 {
+namespace unplug::vst3 {
 
 using DemoView = PluginView<DemoUserInterface>;
 
-}
 } // namespace unplug

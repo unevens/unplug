@@ -16,9 +16,7 @@
 #include "imgui.h"
 #include "pluginterfaces/base/keycodes.h"
 
-namespace unplug {
-namespace vst3 {
-namespace detail {
+namespace unplug::vst3::detail {
 
 unplug::detail::ModifierKeys
 modifierKeysFromBitmask(Steinberg::int16 mask)
@@ -112,6 +110,4 @@ convertNumPadKeyCode(Steinberg::int16 virtualKeyCode)
   }
 }
 
-} // namespace detail
-} // namespace vst3
 } // namespace unplug

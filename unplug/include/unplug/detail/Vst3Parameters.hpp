@@ -17,9 +17,7 @@
 #include <cassert>
 #include <unordered_set>
 
-namespace unplug {
-namespace vst3 {
-namespace detail {
+namespace unplug::vst3::detail {
 
 using EditControllerEx1 = Steinberg::Vst::EditControllerEx1;
 using ParamValue = Steinberg::Vst::ParamValue;
@@ -266,6 +264,4 @@ private:
   std::unordered_set<int> paramsBeingEdited;
 };
 
-} // namespace detail
-} // namespace vst3
-} // namespace unplug
+} // namespace unplug::vst3::detail

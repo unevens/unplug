@@ -41,7 +41,6 @@ DeinitModule()
 }
 
 using namespace Steinberg::Vst;
-using namespace unplug;
 
 //------------------------------------------------------------------------
 //  VST Plug-in Entry

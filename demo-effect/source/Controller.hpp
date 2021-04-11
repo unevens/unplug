@@ -17,8 +17,6 @@
 #include "unplug/ViewPersistentData.hpp"
 #include <memory>
 
-namespace unplug {
-
 class UnPlugDemoEffectController final : public Steinberg::Vst::EditControllerEx1
 {
 public:
@@ -55,7 +53,7 @@ public:
                                                       Steinberg::Vst::ParamValue& valueNormalized) SMTG_OVERRIDE;
 
 private:
-  ViewPersistentData persistentData;
+  unplug::ViewPersistentData persistentData;
 
   //---Interface---------
   DEFINE_INTERFACES
@@ -64,5 +62,3 @@ private:
   END_DEFINE_INTERFACES(EditController)
   DELEGATE_REFCOUNT(EditController)
 };
-
-} // namespace unplug

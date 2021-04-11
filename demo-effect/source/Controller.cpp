@@ -21,13 +21,12 @@
 
 using namespace Steinberg;
 
-namespace unplug {
-
-using ViewClass = vst3::DemoView;
+using ViewClass = unplug::vst3::DemoView;
 
 tresult PLUGIN_API
 UnPlugDemoEffectController::initialize(FUnknown* context)
 {
+  using namespace unplug;
   using namespace Steinberg;
   using namespace Steinberg::Vst;
 
@@ -71,8 +70,7 @@ UnPlugDemoEffectController::initialize(FUnknown* context)
       case ParameterDescription::Type::list: {
         int32 flags =
           ParameterInfo::kIsList | (description.canBeAutomated ? ParameterInfo::kCanAutomate : ParameterInfo::kNoFlags);
-        auto parameter =
-          new StringListParameter(title.c_str(), description.tag, pUnits, flags, unitId, pShortTitle);
+        auto parameter = new StringListParameter(title.c_str(), description.tag, pUnits, flags, unitId, pShortTitle);
         for (auto& entry : description.labels) {
           auto label = ToVstTChar{}(entry);
           parameter->appendString(label.c_str());
@@ -181,5 +179,3 @@ UnPlugDemoEffectController::getParamValueByString(Vst::ParamID tag,
   // specific parameter (without having to set the value!)
   return EditControllerEx1::getParamValueByString(tag, string, valueNormalized);
 }
-
-} // namespace unplug

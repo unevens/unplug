@@ -16,8 +16,6 @@
 #include "Parameters.hpp"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 
-namespace unplug {
-
 class UnPlugDemoEffectProcessor final : public Steinberg::Vst::AudioEffect
 {
 public:
@@ -59,8 +57,7 @@ public:
 
 private:
   unplug::ParameterStorage<ParamTag::numParams> parameterStorage;
+
   template<class SampleType>
   void processImpl(SampleType** in, SampleType** out, int numChannels, int numSamples);
 };
-
-} // namespace unplug

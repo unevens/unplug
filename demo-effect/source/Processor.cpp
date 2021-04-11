@@ -19,8 +19,6 @@
 
 using namespace Steinberg;
 
-namespace unplug {
-
 UnPlugDemoEffectProcessor::UnPlugDemoEffectProcessor()
 {
   setControllerClass(kUnPlugDemoEffectControllerUID);
@@ -174,5 +172,3 @@ UnPlugDemoEffectProcessor::processImpl(SampleType** in, SampleType** out, int nu
     }
   }
 }
-
-} // namespace unplug

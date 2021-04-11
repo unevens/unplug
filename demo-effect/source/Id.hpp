@@ -16,8 +16,6 @@
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/vst/vsttypes.h"
 
-namespace unplug {
-//------------------------------------------------------------------------
 static const Steinberg::FUID kUnPlugDemoEffectProcessorUID(0x53624720, 0xA72E4FC2, 0xA4764509, 0xDF0D66D3);
 static const Steinberg::FUID kUnPlugDemoEffectControllerUID(0x3C63C830, 0xE4954F61, 0xBD9F749F, 0xDB7AC21E);
 
@@ -33,6 +31,3 @@ To generate UUIDs ready to be copy-pasted into the Steinberg::FUID constructor, 
  */
 
 #define UnPlugDemoEffectVST3Category "Fx"
-
-//------------------------------------------------------------------------
-} // namespace unplug

@@ -211,7 +211,7 @@ public:
     }
   }
 
-  bool isAutomatable(int tag, bool& result)
+  bool canBeAutomated(int tag, bool& result)
   {
     ParameterInfo info;
     if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {

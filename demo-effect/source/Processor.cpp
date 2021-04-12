@@ -74,13 +74,14 @@ UnPlugDemoEffectProcessor::process(Vst::ProcessData& data)
     }
   }
 
+  auto in = data.inputs[0];
+  auto out = data.outputs[0];
+
   if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
-    processImpl(
-      data.inputs[0].channelBuffers64, data.outputs[0].channelBuffers64, data.inputs[0].numChannels, data.numSamples);
+    processImpl(in.channelBuffers64, out.channelBuffers64, in.numChannels, data.numSamples);
   }
   else {
-    processImpl(
-      data.inputs[0].channelBuffers32, data.outputs[0].channelBuffers32, data.inputs[0].numChannels, data.numSamples);
+    processImpl(in.channelBuffers32, out.channelBuffers32, in.numChannels, data.numSamples);
   }
 
   return kResultOk;

@@ -113,9 +113,11 @@ UnPlugDemoEffectController::setState(IBStream* state)
 {
   // used to load ui-only data
   IBStreamer streamer(state, kLittleEndian);
-  auto const loadInteger = [&](int64_t& x) { return streamer.readInt64(x); };
+  auto const loadInteger = [&](int64_t& x) { 
+    return streamer.readInt64((Steinberg::int64&)x);
+  };
   auto const loadIntegerArray = [&](int64_t* x, int64_t size) {
-    return streamer.readInt64Array(x, static_cast<int>(size));
+    return streamer.readInt64Array((Steinberg::int64*)x, size);
   };
   auto const loadDoubleArray = [&](double* x, int64_t size) {
     return streamer.readDoubleArray(x, static_cast<int>(size));
@@ -132,7 +134,7 @@ UnPlugDemoEffectController::getState(IBStream* state)
   IBStreamer streamer(state, kLittleEndian);
   auto const saveInteger = [&](int64_t const& x) { return streamer.writeInt64(x); };
   auto const saveIntegerArray = [&](int64_t const* x, int64_t size) {
-    return streamer.writeInt64Array(x, static_cast<int>(size));
+    return streamer.writeInt64Array((Steinberg::int64*)x, static_cast<Steinberg::int32>(size));
   };
   auto const saveDoubleArray = [&](double const* x, int64_t size) {
     return streamer.writeDoubleArray(x, static_cast<int>(size));

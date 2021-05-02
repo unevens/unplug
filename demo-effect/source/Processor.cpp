@@ -66,22 +66,37 @@ UnPlugDemoEffectProcessor::process(Vst::ProcessData& data)
     for (int32 index = 0; index < numParamsChanged; index++) {
       if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
         int32 numPoints = paramQueue->getPointCount();
-        Vst::ParamValue value;
-        int32 sampleOffset;
-        paramQueue->getPoint(numPoints - 1, sampleOffset, value);
-        parameterStorage.setNormalized(index, value);
+        if (numPoints > 0) {
+            Vst::ParamValue value;
+            int32 sampleOffset;
+            paramQueue->getPoint(numPoints - 1, sampleOffset, value);
+            parameterStorage.setNormalized(index, value);
+        }
       }
     }
   }
 
-  auto in = data.inputs[0];
-  auto out = data.outputs[0];
-
-  if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
-    processImpl(in.channelBuffers64, out.channelBuffers64, in.numChannels, data.numSamples);
-  }
-  else {
-    processImpl(in.channelBuffers32, out.channelBuffers32, in.numChannels, data.numSamples);
+  for (int o = 0; o < data.numOutputs; ++o) {
+    auto out = data.outputs[o];
+    if (o < data.numInputs) {
+      auto in = data.inputs[0];
+      if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
+        processImpl(in.channelBuffers64, out.channelBuffers64, in.numChannels, data.numSamples);
+      }
+      else {
+        processImpl(in.channelBuffers32, out.channelBuffers32, in.numChannels, data.numSamples);
+      }
+    }
+    else {
+      for (int c = 0; c < out.numChannels; ++c) {
+        if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
+          std::fill(out.channelBuffers64[c], out.channelBuffers64[c] + data.numSamples, 0.0);
+        }
+        else {
+          std::fill(out.channelBuffers32[c], out.channelBuffers32[c] + data.numSamples, 0.f);
+        }
+      }
+    }
   }
 
   return kResultOk;

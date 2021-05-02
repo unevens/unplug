@@ -54,7 +54,14 @@ UnPlugDemoEffectController::initialize(FUnknown* context)
 
     switch (description.type) {
       case ParameterDescription::Type::numeric: {
-        int32 flags = description.canBeAutomated ? ParameterInfo::kCanAutomate : ParameterInfo::kNoFlags;
+        int32 const flags = [&] {
+          int32 flags = ParameterInfo::kNoFlags;
+          if (description.canBeAutomated)
+            flags = ParameterInfo::kCanAutomate;
+          if (description.isBypass)
+            flags |= ParameterInfo::kIsBypass;
+          return flags;
+        }();
         auto parameter = new RangeParameter(title.c_str(),
                                             description.tag,
                                             pUnits,
@@ -68,7 +75,7 @@ UnPlugDemoEffectController::initialize(FUnknown* context)
         parameters.addParameter(parameter);
       } break;
       case ParameterDescription::Type::list: {
-        int32 flags =
+        int32 const flags =
           ParameterInfo::kIsList | (description.canBeAutomated ? ParameterInfo::kCanAutomate : ParameterInfo::kNoFlags);
         auto parameter = new StringListParameter(title.c_str(), description.tag, pUnits, flags, unitId, pShortTitle);
         for (auto& entry : description.labels) {
@@ -113,19 +120,25 @@ UnPlugDemoEffectController::setState(IBStream* state)
 {
   // used to load ui-only data
   IBStreamer streamer(state, kLittleEndian);
-  auto const loadInteger = [&](int64_t& x) { 
-    return streamer.readInt64((Steinberg::int64&)x);
-  };
+  auto const loadInteger = [&](int64_t& x) { return streamer.readInt64((Steinberg::int64&)x); };
   auto const loadIntegerArray = [&](int64_t* x, int64_t size) {
     return streamer.readInt64Array((Steinberg::int64*)x, size);
   };
   auto const loadDoubleArray = [&](double* x, int64_t size) {
     return streamer.readDoubleArray(x, static_cast<int>(size));
   };
-  auto const loadBytes = [&](void* x, int64_t size) { return streamer.readRaw(x, static_cast<int>(size)); };
+  auto const loadBytes = [&](void* x, int64_t size) {
+    if (size > 0) {
+      auto numBytesRead = streamer.readRaw(x, static_cast<int>(size));
+      return numBytesRead == size;
+    }
+    else {
+      return true;
+    }
+  };
   persistentData.load(loadInteger, loadIntegerArray, loadDoubleArray, loadBytes);
   return kResultTrue;
-}
+ }
 
 tresult PLUGIN_API
 UnPlugDemoEffectController::getState(IBStream* state)

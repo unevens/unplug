@@ -3,6 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libs/imgui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/implot" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libs/pugl" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libs/vst3sdk" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libs/vst3sdk/base" vcs="Git" />

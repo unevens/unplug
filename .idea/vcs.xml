@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/imgui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/pugl" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/vst3sdk" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/vst3sdk/base" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/vst3sdk/cmake" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/vst3sdk/doc" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/vst3sdk/pluginterfaces" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/vst3sdk/public.sdk" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/vst3sdk/vstgui4" vcs="Git" />
+  </component>
+</project>

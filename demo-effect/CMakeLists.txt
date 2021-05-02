@@ -65,7 +65,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
 add_library(pugl STATIC)
 include_directories("${unplug_SOURCE_DIR}/libs/pugl/include" "${unplug_SOURCE_DIR}/libs/pugl/src" "${unplug_SOURCE_DIR}/libs/pugl/bindings/cxx/include")
 target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/implementation.c")
-target_compile_definitions(pugl PUBLIC PUGL_STATIC=1 PUGL_NO_INCLUDE_GL_H PUGL_NO_INCLUDE_GLU_H)
+target_compile_definitions(pugl PUBLIC PUGL_STATIC=1 PUGL_NO_INCLUDE_GL_H PUGL_NO_INCLUDE_GLU_H )
 if(SMTG_WIN)
 	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/win.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_gl.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_stub.c")
 elseif(SMTG_MAC)
@@ -75,7 +75,7 @@ else()
 endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE pugl)
 
-# Dear ImGui
+# Dear ImGui & ImPlot
 add_library(imgui STATIC)
 target_compile_definitions(imgui PUBLIC IMGUI_USER_CONFIG="imgui_user_config.h" IMGUI_DISABLE_OBSOLETE_FUNCTIONS)
 include_directories("${unplug_SOURCE_DIR}/libs/imgui" "${unplug_SOURCE_DIR}/libs/imgui/backends" "${unplug_SOURCE_DIR}/unplug/imgui")
@@ -83,7 +83,13 @@ file(GLOB imgui_src "${unplug_SOURCE_DIR}/libs/imgui/*.cpp")
 file(GLOB imgui_gl "${unplug_SOURCE_DIR}/libs/imgui/backends/imgui_impl_opengl2.cpp" "${unplug_SOURCE_DIR}/unplug/imgui/imgui_tls_context.cpp")
 target_sources(imgui PRIVATE ${imgui_src})
 target_sources(imgui PRIVATE ${imgui_gl})
+# and ImPlot
+include_directories("${unplug_SOURCE_DIR}/libs/implot")
+file(GLOB_RECURSE implot_src "${unplug_SOURCE_DIR}/libs/implot/*.cpp" "${unplug_SOURCE_DIR}/libs/implot/*.h")
+target_sources(imgui PRIVATE ${implot_src})
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
+
+
 
 # Unplug
 include_directories("${unplug_SOURCE_DIR}/unplug/include")

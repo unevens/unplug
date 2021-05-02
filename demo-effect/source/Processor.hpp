@@ -57,7 +57,4 @@ public:
 
 private:
   unplug::ParameterStorage<ParamTag::numParams> parameterStorage;
-
-  template<class SampleType>
-  void processImpl(SampleType** in, SampleType** out, int numChannels, int numSamples);
 };

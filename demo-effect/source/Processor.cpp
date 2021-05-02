@@ -67,24 +67,45 @@ UnPlugDemoEffectProcessor::process(Vst::ProcessData& data)
       if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
         int32 numPoints = paramQueue->getPointCount();
         if (numPoints > 0) {
-            Vst::ParamValue value;
-            int32 sampleOffset;
-            paramQueue->getPoint(numPoints - 1, sampleOffset, value);
-            parameterStorage.setNormalized(index, value);
+          Vst::ParamValue value;
+          int32 sampleOffset;
+          paramQueue->getPoint(numPoints - 1, sampleOffset, value);
+          parameterStorage.setNormalized(index, value);
         }
       }
     }
   }
 
+  auto const gain = parameterStorage.get(ParamTag::gain);
+  bool const bypass = parameterStorage.get(ParamTag::bypass) > 0.0;
+
   for (int o = 0; o < data.numOutputs; ++o) {
     auto out = data.outputs[o];
     if (o < data.numInputs) {
-      auto in = data.inputs[0];
-      if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
-        processImpl(in.channelBuffers64, out.channelBuffers64, in.numChannels, data.numSamples);
-      }
-      else {
-        processImpl(in.channelBuffers32, out.channelBuffers32, in.numChannels, data.numSamples);
+      auto in = data.inputs[o];
+      for (int c = 0; c < out.numChannels; ++c) {
+        if (c < in.numChannels) {
+          if (bypass) {
+            if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
+              std::copy(in.channelBuffers64[c], in.channelBuffers64[c] + data.numSamples, out.channelBuffers64[c]);
+            }
+            else {
+              std::copy(in.channelBuffers32[c], in.channelBuffers32[c] + data.numSamples, out.channelBuffers32[c]);
+            }
+          }
+          else {
+            if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
+              for (int s = 0; s < data.numSamples; ++s) {
+                out.channelBuffers64[c][s] = gain * in.channelBuffers64[c][s];
+              }
+            }
+            else {
+              for (int s = 0; s < data.numSamples; ++s) {
+                out.channelBuffers32[c][s] = gain * in.channelBuffers32[c][s];
+              }
+            }
+          }
+        }
       }
     }
     else {
@@ -166,25 +187,4 @@ UnPlugDemoEffectProcessor::getState(IBStream* state)
     }
   }
   return kResultOk;
-}
-
-template<class SampleType>
-void
-UnPlugDemoEffectProcessor::processImpl(SampleType** in, SampleType** out, int numChannels, int numSamples)
-{
-  auto const gain = parameterStorage.get(ParamTag::gain);
-  bool const bypass = parameterStorage.get(ParamTag::bypass) > 0.0;
-
-  if (bypass) {
-    for (int c = 0; c < numChannels; ++c) {
-      std::copy(in[c], in[c] + numSamples, out[c]);
-    }
-  }
-  else {
-    for (int c = 0; c < numChannels; ++c) {
-      for (int s = 0; s < numSamples; ++s) {
-        out[c][s] = gain * in[c][s];
-      }
-    }
-  }
 }

@@ -13,6 +13,7 @@
 
 #pragma once
 #include "ModifierKeys.h"
+#include "../ParameterAccess.hpp"
 #include "OpaqueGl.h"
 #include "imgui.h"
 #include "imgui_impl_opengl2.h"
@@ -29,14 +30,14 @@ namespace unplug::detail {
  * you are familiar with Dear ImGui, think of the EventHandler class as a Dear ImGui backend.
  */
 
-template<class UserInterface, class Parameters>
+template<class UserInterface>
 class EventHandler final
 {
   using clock = std::chrono::steady_clock;
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
 
 public:
-  explicit EventHandler(pugl::View& view, Parameters& parameters)
+  explicit EventHandler(pugl::View& view, ParameterAccess& parameters)
     : view(view)
     , parameters(parameters)
     , ui(parameters)
@@ -387,7 +388,7 @@ private:
   }
 
 private:
-  Parameters& parameters;
+  ParameterAccess& parameters;
   pugl::View& view;
   ImGuiContext* imguiContext = nullptr;
   UserInterface ui;

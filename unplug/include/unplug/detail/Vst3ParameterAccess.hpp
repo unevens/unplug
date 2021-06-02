@@ -29,7 +29,7 @@ static constexpr auto kResultTrue = Steinberg::kResultTrue;
 static constexpr auto kResultFalse = Steinberg::kResultFalse;
 
 /**
- * The Parameters class expose the plugin parameters to the user interface.
+ * The ParameterAccess class exposes the plugin parameters to the user interface.
  * */
 
 class ParameterAccess final

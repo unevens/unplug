@@ -12,12 +12,22 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/detail/EventHandler.hpp"
-#include "unplug/detail/Vst3View.hpp"
+#ifdef UNPLUG_VST3
+#include "unplug/detail/Vst3ParameterAccess.hpp"
+#else
+//todo for other targets
+#endif
 
-namespace unplug::vst3 {
+namespace unplug {
 
-template<class UserInterface>
-using PluginView = detail::View<unplug::detail::EventHandler<UserInterface>>;
+/**
+ * The ParameterAccess class exposes the plugin parameters to the user interface.
+ * */
 
-} // namespace unplug
+#ifdef UNPLUG_VST3
+using ParameterAccess = vst3::ParameterAccess;
+#else
+//todo for other targets
+#endif
+
+} // namespace unplug::vst3

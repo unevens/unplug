@@ -15,6 +15,7 @@
 #include "imgui.h"
 #include "pugl/pugl.hpp"
 #include <array>
+#include "unplug/ParameterAccess.hpp"
 
 namespace unplug {
 
@@ -22,11 +23,12 @@ namespace unplug {
  * Just an hello world user interface that shows the Dear ImGui demo
  * */
 
-template<class Parameters>
 class DemoUserInterface final
 {
 public:
-  explicit DemoUserInterface(Parameters& parameters)
+  using ParameterAccess = unplug::ParameterAccess;
+
+  explicit DemoUserInterface(ParameterAccess& parameters)
     : parameters(parameters)
   {}
 
@@ -57,7 +59,7 @@ public:
   }
 
 private:
-  Parameters& parameters;
+  ParameterAccess& parameters;
 };
 
 } // namespace unplug

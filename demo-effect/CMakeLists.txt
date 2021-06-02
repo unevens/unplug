@@ -56,6 +56,8 @@ elseif(SMTG_WIN)
 	)
 endif()
 
+target_compile_definitions(${PROJECT_NAME} PUBLIC UNPLUG_VST3)
+
 # OpenGL
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIRS})

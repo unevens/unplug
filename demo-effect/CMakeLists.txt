@@ -56,7 +56,10 @@ elseif(SMTG_WIN)
 	)
 endif()
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC UNPLUG_VST3)
+target_compile_definitions(${PROJECT_NAME} PUBLIC UNPLUG_VST3=1)
+if(SMTG_WIN)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC _USE_MATH_DEFINES=1)
+endif()
 
 # OpenGL
 find_package(OpenGL REQUIRED)
@@ -79,7 +82,7 @@ endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE pugl)
 
 # Dear ImGui & ImPlot
-add_library(imgui STATIC)
+add_library(imgui STATIC ../unplug/include/unplug/Knob.hpp)
 target_compile_definitions(imgui PUBLIC IMGUI_USER_CONFIG="imgui_user_config.h" IMGUI_DISABLE_OBSOLETE_FUNCTIONS)
 include_directories("${unplug_SOURCE_DIR}/libs/imgui" "${unplug_SOURCE_DIR}/libs/imgui/backends" "${unplug_SOURCE_DIR}/unplug/imgui")
 file(GLOB imgui_src "${unplug_SOURCE_DIR}/libs/imgui/*.cpp")

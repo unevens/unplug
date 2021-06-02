@@ -50,6 +50,16 @@ public:
     return value;
   }
 
+  double normalizeValue(int tag, double value)
+  {
+    return controller.normalizedParamToPlain(tag, value);
+  }
+
+  double valueFromNormalized(int tag, double value)
+  {
+    return controller.plainParamToNormalized(tag, value);
+  }
+
   double getValueNormalized(int tag) { return controller.getParamNormalized(tag); }
 
   bool getDefaultValue(int tag, double& result)
@@ -253,6 +263,11 @@ public:
     else {
       return false;
     }
+  }
+
+  bool isBeingEdited(int tag) const {
+    auto const editedIter = paramsBeingEdited.find(tag);
+    return editedIter != paramsBeingEdited.cend();
   }
 
 private:

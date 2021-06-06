@@ -16,7 +16,7 @@
 #include "pugl/pugl.hpp"
 #include <array>
 #include "unplug/ParameterAccess.hpp"
-#include "unplug/Knob.hpp"
+#include "unplug/Controls.hpp"
 
 namespace unplug {
 

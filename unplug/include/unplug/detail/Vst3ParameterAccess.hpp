@@ -136,7 +136,7 @@ public:
     auto const editedIter = paramsBeingEdited.find(tag);
     if (editedIter != paramsBeingEdited.end()) {
       assert(false);
-      return true;
+      return false;
     }
     if (controller.beginEdit(tag) == kResultTrue) {
       paramsBeingEdited.insert(tag);
@@ -155,7 +155,7 @@ public:
       return false;
     }
     if (controller.endEdit(tag) == kResultTrue) {
-      paramsBeingEdited.insert(tag);
+      paramsBeingEdited.erase(tag);
       return true;
     }
     else {

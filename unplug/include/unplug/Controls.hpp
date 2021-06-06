@@ -13,7 +13,9 @@
 
 #pragma once
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "unplug/ParameterAccess.hpp"
+#include "imgui_user_config.h"
 
 namespace unplug {
 
@@ -92,8 +94,8 @@ Checkbox(ParameterAccess& parameters, int parameterTag)
   assert(gotNameOk);
 
   bool newValue = value != 0;
-  bool const hasValueChanged = Checkbox(parameterName.c_str(), newValue);
-  if(hasValueChanged){
+  bool const hasValueChanged = ImGui::Checkbox(parameterName.c_str(), &newValue);
+  if (hasValueChanged) {
     parameters.beginEdit(parameterTag);
     parameters.setValueNormalized(parameterTag, newValue);
     parameters.endEdit(parameterTag);
@@ -139,7 +141,7 @@ Knob(const char* name,
   if (isActive) {
     ImVec2 mp = ImGui::GetIO().MousePos;
     double nextAngle = std::atan2(mp.x - center.x, center.y - mp.y) + M_PI;
-    nextAngle = ImMax(angleOffset, ImMin(2.0f * M_PI - angleOffset, nextAngle));
+    nextAngle = std::max(angleOffset, std::min(2.0f * M_PI - angleOffset, nextAngle));
     outputValue = 0.5f * (nextAngle - angleOffset) / (M_PI - angleOffset);
   }
 

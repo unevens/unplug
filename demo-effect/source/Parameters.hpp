@@ -17,8 +17,8 @@
 namespace ParamTag {
 enum
 {
-  gain,
   bypass,
+  gain,
   numParams
 };
 }
@@ -28,7 +28,7 @@ getParameterInitializer()
 {
   using namespace unplug;
   auto params = ParameterCreator{};
-  params.addParameter(ParameterDescription(ParamTag::gain, "Gain", 0, 1, 1));
   params.addParameter(ParameterDescription::makeBypassParameter(ParamTag::bypass));
+  params.addParameter(ParameterDescription(ParamTag::gain, "Gain", 0, 1, 1));
   return params.done();
 }

@@ -11,20 +11,46 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#include "Controller.hpp"
-#include "Id.hpp"
-#include "Parameters.hpp"
+#pragma once
+
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/base/ustring.h"
+#include "public.sdk/source/vst/vsteditcontroller.h"
+#include "unplug/ParameterStorage.hpp"
 #include "unplug/StringConversion.hpp"
-#include "unplug/Vst3DemoView.hpp"
+#include "unplug/ViewPersistentData.hpp"
+#include <memory>
 
-using namespace Steinberg;
+namespace unplug {
 
-using ViewClass = unplug::vst3::DemoView;
+template<class ViewClass, class PluginParameters>
+class UnPlugController : public Steinberg::Vst::EditControllerEx1
+{
+public:
+  UnPlugController() = default;
+  ~UnPlugController() override = default;
 
-tresult PLUGIN_API
-UnPlugDemoEffectController::initialize(FUnknown* context)
+  // IPluginBase
+  Steinberg::tresult PLUGIN_API initialize(Steinberg::FUnknown* context) override;
+
+  // EditController
+  Steinberg::tresult PLUGIN_API setComponentState(Steinberg::IBStream* state) override;
+
+  Steinberg::IPlugView* PLUGIN_API createView(Steinberg::FIDString name) override;
+
+  Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream* state) override;
+
+  Steinberg::tresult PLUGIN_API getState(Steinberg::IBStream* state) override;
+
+private:
+  unplug::ViewPersistentData persistentData;
+};
+
+// implementation
+
+template<class ViewClass, class PluginParameters>
+Steinberg::tresult PLUGIN_API
+UnPlugController<ViewClass, PluginParameters>::initialize(FUnknown* context)
 {
   using namespace unplug;
   using namespace Steinberg;
@@ -42,8 +68,6 @@ UnPlugDemoEffectController::initialize(FUnknown* context)
   unitInfo.parentUnitId = Steinberg::Vst::kNoParentUnitId;
   UString setUnitName(unitInfo.name, 128);
   setUnitName.fromAscii("Root");
-
-  // todo maybe: add support for preset lists
 
   auto const initializeParameter = [this, unitId = kRootUnitId](unplug::ParameterDescription const& description) {
     TString title = ToVstTChar{}(description.name);
@@ -87,25 +111,21 @@ UnPlugDemoEffectController::initialize(FUnknown* context)
     }
   };
 
-  getParameterInitializer().initializeParameters(initializeParameter);
+  PluginParameters::getParameterInitializer().initializeParameters(initializeParameter);
 
   return kResultOk;
 }
 
-tresult PLUGIN_API
-UnPlugDemoEffectController::terminate()
+template<class ViewClass, class PluginParameters>
+Steinberg::tresult PLUGIN_API
+UnPlugController<ViewClass, PluginParameters>::setComponentState(Steinberg::IBStream* state)
 {
-  return EditControllerEx1::terminate();
-}
-
-tresult PLUGIN_API
-UnPlugDemoEffectController::setComponentState(IBStream* state)
-{
+  using namespace Steinberg;
   // loads the dsp state
   if (!state)
     return kResultFalse;
   IBStreamer streamer(state, kLittleEndian);
-  for (int i = 0; i < ParamTag::numParams; ++i) {
+  for (int i = 0; i < PluginParameters::numParameters; ++i) {
     double value;
     if (!streamer.readDouble(value))
       return kResultFalse;
@@ -115,9 +135,12 @@ UnPlugDemoEffectController::setComponentState(IBStream* state)
   return kResultOk;
 }
 
-tresult PLUGIN_API
-UnPlugDemoEffectController::setState(IBStream* state)
+template<class ViewClass, class PluginParameters>
+Steinberg::tresult PLUGIN_API
+UnPlugController<ViewClass, PluginParameters>::setState(Steinberg::IBStream* state)
 {
+  using namespace Steinberg;
+
   // used to load ui-only data
   IBStreamer streamer(state, kLittleEndian);
   auto const loadInteger = [&](int64_t& x) { return streamer.readInt64((Steinberg::int64&)x); };
@@ -138,11 +161,13 @@ UnPlugDemoEffectController::setState(IBStream* state)
   };
   persistentData.load(loadInteger, loadIntegerArray, loadDoubleArray, loadBytes);
   return kResultTrue;
- }
+}
 
-tresult PLUGIN_API
-UnPlugDemoEffectController::getState(IBStream* state)
+template<class ViewClass, class PluginParameters>
+Steinberg::tresult PLUGIN_API
+UnPlugController<ViewClass, PluginParameters>::getState(Steinberg::IBStream* state)
 {
+  using namespace Steinberg;
   // used to save ui-only data
   IBStreamer streamer(state, kLittleEndian);
   auto const saveInteger = [&](int64_t const& x) { return streamer.writeInt64(x); };
@@ -157,40 +182,16 @@ UnPlugDemoEffectController::getState(IBStream* state)
   return kResultTrue;
 }
 
-IPlugView* PLUGIN_API
-UnPlugDemoEffectController::createView(FIDString name)
+template<class ViewClass, class PluginParameters>
+Steinberg::IPlugView* PLUGIN_API
+UnPlugController<ViewClass, PluginParameters>::createView(Steinberg::FIDString name)
 {
+  using namespace Steinberg;
   if (FIDStringsEqual(name, Vst::ViewType::kEditor)) {
-    auto ui = new ViewClass(*this, persistentData, "UnPlugDemoEffect");
+    auto ui = new ViewClass(*this, persistentData);
     return ui;
   }
   return nullptr;
 }
 
-tresult PLUGIN_API
-UnPlugDemoEffectController::setParamNormalized(Vst::ParamID tag, Vst::ParamValue value)
-{
-  // called by host to update your parameters
-  tresult result = EditControllerEx1::setParamNormalized(tag, value);
-  return result;
-}
-
-tresult PLUGIN_API
-UnPlugDemoEffectController::getParamStringByValue(Vst::ParamID tag,
-                                                  Vst::ParamValue valueNormalized,
-                                                  Vst::String128 string)
-{
-  // called by host to get a string for given normalized value of a specific
-  // parameter (without having to set the value!)
-  return EditControllerEx1::getParamStringByValue(tag, valueNormalized, string);
-}
-
-tresult PLUGIN_API
-UnPlugDemoEffectController::getParamValueByString(Vst::ParamID tag,
-                                                  Vst::TChar* string,
-                                                  Vst::ParamValue& valueNormalized)
-{
-  // called by host to get a normalized value from a string representation of a
-  // specific parameter (without having to set the value!)
-  return EditControllerEx1::getParamValueByString(tag, string, valueNormalized);
-}
+} // namespace unplug

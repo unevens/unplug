@@ -13,11 +13,13 @@
 
 #pragma once
 
-#include "public.sdk/source/vst/vsteditcontroller.h"
-#include "unplug/ViewPersistentData.hpp"
-#include <memory>
+#include "Parameters.hpp"
+#include "unplug/UnplugController.hpp"
+#include "unplug/Vst3DemoView.hpp"
 
-class UnPlugDemoEffectController final : public Steinberg::Vst::EditControllerEx1
+using ViewClass = unplug::vst3::DemoView;
+
+class UnPlugDemoEffectController final : public unplug::UnPlugController<ViewClass, DemoEffectParameters>
 {
 public:
   UnPlugDemoEffectController() = default;
@@ -28,33 +30,7 @@ public:
     return (Steinberg::Vst::IEditController*)new UnPlugDemoEffectController;
   }
 
-  // IPluginBase
-  Steinberg::tresult PLUGIN_API initialize(Steinberg::FUnknown* context) SMTG_OVERRIDE;
-  Steinberg::tresult PLUGIN_API terminate() SMTG_OVERRIDE;
-
-  // EditController
-  Steinberg::tresult PLUGIN_API setComponentState(Steinberg::IBStream* state) SMTG_OVERRIDE;
-
-  Steinberg::IPlugView* PLUGIN_API createView(Steinberg::FIDString name) SMTG_OVERRIDE;
-
-  Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream* state) SMTG_OVERRIDE;
-
-  Steinberg::tresult PLUGIN_API getState(Steinberg::IBStream* state) SMTG_OVERRIDE;
-
-  Steinberg::tresult PLUGIN_API setParamNormalized(Steinberg::Vst::ParamID tag,
-                                                   Steinberg::Vst::ParamValue value) SMTG_OVERRIDE;
-
-  Steinberg::tresult PLUGIN_API getParamStringByValue(Steinberg::Vst::ParamID tag,
-                                                      Steinberg::Vst::ParamValue valueNormalized,
-                                                      Steinberg::Vst::String128 string) SMTG_OVERRIDE;
-
-  Steinberg::tresult PLUGIN_API getParamValueByString(Steinberg::Vst::ParamID tag,
-                                                      Steinberg::Vst::TChar* string,
-                                                      Steinberg::Vst::ParamValue& valueNormalized) SMTG_OVERRIDE;
-
 private:
-  unplug::ViewPersistentData persistentData;
-
   //---Interface---------
   DEFINE_INTERFACES
   // Here you can add more supported VST3 interfaces

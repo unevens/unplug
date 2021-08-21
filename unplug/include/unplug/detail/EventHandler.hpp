@@ -12,8 +12,8 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "ModifierKeys.h"
 #include "../ParameterAccess.hpp"
+#include "ModifierKeys.h"
 #include "OpaqueGl.h"
 #include "imgui.h"
 #include "imgui_impl_opengl2.h"
@@ -53,6 +53,8 @@ public:
   {
     return UserInterface::initializePersistentData(presistentData);
   }
+
+  static std::string getWindowName() { return UserInterface::getWindowName(); }
 
   void handleScroll(float dx, float dy)
   {
@@ -398,4 +400,4 @@ private:
   static constexpr uintptr_t redrawTimerId = 1;
 };
 
-} // namespace unplug
+} // namespace unplug::detail

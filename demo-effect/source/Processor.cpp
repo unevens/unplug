@@ -14,9 +14,6 @@
 #include "Processor.hpp"
 #include "Id.hpp"
 
-#include "base/source/fstreamer.h"
-#include "pluginterfaces/vst/ivstparameterchanges.h"
-
 using namespace Steinberg;
 
 UnPlugDemoEffectProcessor::UnPlugDemoEffectProcessor()
@@ -27,54 +24,21 @@ UnPlugDemoEffectProcessor::UnPlugDemoEffectProcessor()
 UnPlugDemoEffectProcessor::~UnPlugDemoEffectProcessor() = default;
 
 tresult PLUGIN_API
-UnPlugDemoEffectProcessor::initialize(FUnknown* context)
+UnPlugDemoEffectProcessor::canProcessSampleSize(int32 symbolicSampleSize)
 {
-  tresult result = AudioEffect::initialize(context);
-  if (result != kResultOk) {
-    return result;
-  }
+  if (symbolicSampleSize == Vst::kSample32)
+    return kResultTrue;
 
-  getParameterInitializer().initializeStorage(parameterStorage);
+  if (symbolicSampleSize == Vst::kSample64)
+    return kResultTrue;
 
-  //--- create Audio IO ------
-  addAudioInput(STR16("Stereo In"), Steinberg::Vst::SpeakerArr::kStereo);
-  addAudioOutput(STR16("Stereo Out"), Steinberg::Vst::SpeakerArr::kStereo);
-
-  /* If you don't need an event bus, you can remove the next line */
-  addEventInput(STR16("Event In"), 1);
-
-  return kResultOk;
-}
-
-tresult PLUGIN_API
-UnPlugDemoEffectProcessor::terminate()
-{
-  return AudioEffect::terminate();
-}
-
-tresult PLUGIN_API
-UnPlugDemoEffectProcessor::setActive(TBool state)
-{
-  return kResultOk;
+  return kResultFalse;
 }
 
 tresult PLUGIN_API
 UnPlugDemoEffectProcessor::process(Vst::ProcessData& data)
 {
-  if (data.inputParameterChanges) {
-    int32 numParamsChanged = data.inputParameterChanges->getParameterCount();
-    for (int32 index = 0; index < numParamsChanged; index++) {
-      if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
-        int32 numPoints = paramQueue->getPointCount();
-        if (numPoints > 0) {
-          Vst::ParamValue value;
-          int32 sampleOffset;
-          paramQueue->getPoint(numPoints - 1, sampleOffset, value);
-          parameterStorage.setNormalized(index, value);
-        }
-      }
-    }
-  }
+  UpdateParametersToLastPoint(data);
 
   auto const gain = parameterStorage.get(ParamTag::gain);
   bool const bypass = parameterStorage.get(ParamTag::bypass) > 0.0;
@@ -120,71 +84,5 @@ UnPlugDemoEffectProcessor::process(Vst::ProcessData& data)
     }
   }
 
-  return kResultOk;
-}
-
-tresult PLUGIN_API
-UnPlugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup& newSetup)
-{
-  // called from the UI Thread.
-  // the newSetup object contains information such as the maximum number of samples per audio block and the sample
-  // rate
-  tresult result = AudioEffect::setupProcessing(newSetup);
-  if (result != kResultOk) {
-    return result;
-  }
-
-  return kResultOk;
-}
-
-Steinberg::tresult
-UnPlugDemoEffectProcessor::setProcessing(Steinberg::TBool state)
-{
-  // may be called by both the Processing Thread and the UI thread
-  // it is called before the processing starts with state = true, and after it stops with state = false
-  // it is used to reset the internal state of the plugin, as in cleaning any delay buffer and any filter memory
-  return kResultOk;
-}
-
-tresult PLUGIN_API
-UnPlugDemoEffectProcessor::canProcessSampleSize(int32 symbolicSampleSize)
-{
-  if (symbolicSampleSize == Vst::kSample32)
-    return kResultTrue;
-
-  if (symbolicSampleSize == Vst::kSample64)
-    return kResultTrue;
-
-  return kResultFalse;
-}
-
-tresult PLUGIN_API
-UnPlugDemoEffectProcessor::setState(IBStream* state)
-{
-  // loads the state
-  // may be called by either the Processing Thread or the UI Thread
-  IBStreamer streamer(state, kLittleEndian);
-  for (int i = 0; i < ParamTag::numParams; ++i) {
-    double value;
-    if (!streamer.readDouble(value)) {
-      return kResultFalse;
-    }
-    parameterStorage.set(i, value);
-  }
-  return kResultOk;
-}
-
-tresult PLUGIN_API
-UnPlugDemoEffectProcessor::getState(IBStream* state)
-{
-  // saves the state
-  // may be called by either the Processing Thread or the UI Thread
-  IBStreamer streamer(state, kLittleEndian);
-  for (int i = 0; i < ParamTag::numParams; ++i) {
-    double const value = parameterStorage.get(i);
-    if (!streamer.writeDouble(value)) {
-      return kResultFalse;
-    }
-  }
   return kResultOk;
 }

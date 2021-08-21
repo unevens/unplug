@@ -29,8 +29,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS FALSE)
 
-file(GLOB_RECURSE src "${CMAKE_SOURCE_DIR}/source/*")
-smtg_add_vst3plugin(${PROJECT_NAME} ${src})
+file(GLOB_RECURSE plug-src "${CMAKE_SOURCE_DIR}/source/*")
+smtg_add_vst3plugin(${PROJECT_NAME} ${plug-src})
 if(SMTG_ADD_VSTGUI)
     target_link_libraries(${PROJECT_NAME} PRIVATE vstgui_support)
 endif()
@@ -100,7 +100,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
 # Unplug
 include_directories("${unplug_SOURCE_DIR}/unplug/include")
 add_library(unplug-opaque_gl STATIC)
-target_sources(unplug-opaque_gl PRIVATE "${unplug_SOURCE_DIR}/unplug/OpaqueGl.cpp")
+target_sources(unplug-opaque_gl PRIVATE "${unplug_SOURCE_DIR}/unplug/impl/OpaqueGl.cpp")
 target_link_libraries(${PROJECT_NAME} PRIVATE unplug-opaque_gl)
+
 
 

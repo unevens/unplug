@@ -19,16 +19,20 @@ enum
 {
   bypass,
   gain,
+  ucci,
   numParams
 };
 }
 
-inline unplug::ParameterInitializer
-getParameterInitializer()
+struct DemoEffectParameters
 {
-  using namespace unplug;
-  auto params = ParameterCreator{};
-  params.addParameter(ParameterDescription::makeBypassParameter(ParamTag::bypass));
-  params.addParameter(ParameterDescription(ParamTag::gain, "Gain", 0, 1, 1));
-  return params.done();
-}
+  static unplug::ParameterInitializer getParameterInitializer()
+  {
+    using namespace unplug;
+    auto params = ParameterCreator{};
+    params.addParameter(ParameterDescription::makeBypassParameter(ParamTag::bypass));
+    params.addParameter(ParameterDescription(ParamTag::gain, "Gain", 0, 1, .5));
+    return params.done();
+  }
+  static constexpr int numParameters = ParamTag::numParams;
+};

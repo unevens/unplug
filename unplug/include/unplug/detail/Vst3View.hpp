@@ -60,13 +60,12 @@ public:
     return Steinberg::CPluginView::queryInterface(iid, obj);
   }
 
-  View(EditControllerEx1& controller, ViewPersistentData& persistentData, const char* name)
+  View(EditControllerEx1& controller, ViewPersistentData& persistentData)
     : world{ pugl::WorldType::module }
-    , name{ name }
     , parameters{ controller }
     , persistentData{ persistentData }
   {
-    world.setClassName(name);
+    world.setClassName(EventHandler::getWindowName().c_str());
   }
 
   ~View() = default;
@@ -93,7 +92,7 @@ public:
     eventHandler = std::make_unique<EventHandler>(*puglView, parameters);
     puglView->setEventHandler(*eventHandler);
     puglView->setParentWindow((pugl::NativeView)pParent);
-    puglView->setWindowTitle(name.c_str());
+    puglView->setWindowTitle(EventHandler::getWindowName().c_str());
     auto const defaultSize = EventHandler::getDefaultSize();
     puglView->setDefaultSize(defaultSize[0], defaultSize[1]);
     puglView->setAspectRatio(0, 0, 0, 0);
@@ -234,7 +233,6 @@ private:
   pugl::World world;
   std::unique_ptr<pugl::View> puglView;
   std::unique_ptr<EventHandler> eventHandler;
-  std::string name;
   ParameterAccess parameters;
   ViewPersistentData& persistentData;
 };

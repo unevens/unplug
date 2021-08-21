@@ -12,10 +12,10 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/StringConversion.hpp"
 #include "public.sdk/source/vst/vsteditcontroller.h"
+#include "unplug/StringConversion.hpp"
 #include <cassert>
-#include <unordered_set>
+#include <unordered_map>
 
 namespace unplug::vst3 {
 
@@ -45,22 +45,26 @@ public:
 
   double getValue(int tag)
   {
-    auto value = controller.getParamNormalized(tag);
-    value = controller.normalizedParamToPlain(tag, value);
-    return value;
+    auto const valueNormalized = getValueNormalized(tag);
+    auto const valuePlain = controller.normalizedParamToPlain(tag, valueNormalized);
+    return valuePlain;
   }
 
-  double normalizeValue(int tag, double value)
+  double normalizeValue(int tag, double value) { return controller.normalizedParamToPlain(tag, value); }
+
+  double valueFromNormalized(int tag, double value) { return controller.plainParamToNormalized(tag, value); }
+
+  double getValueNormalized(int tag)
   {
-    return controller.normalizedParamToPlain(tag, value);
+    auto const editedIter = paramsBeingEdited.find(tag);
+    bool const isBeingEdited = editedIter != paramsBeingEdited.end();
+    if (isBeingEdited) {
+      return editedIter->second;
+    }
+    else {
+      return controller.getParamNormalized(tag);
+    }
   }
-
-  double valueFromNormalized(int tag, double value)
-  {
-    return controller.plainParamToNormalized(tag, value);
-  }
-
-  double getValueNormalized(int tag) { return controller.getParamNormalized(tag); }
 
   bool getDefaultValue(int tag, double& result)
   {
@@ -112,13 +116,8 @@ public:
 
   bool setValue(int tag, double value)
   {
-    auto const editedIter = paramsBeingEdited.find(tag);
-    if (editedIter == paramsBeingEdited.end()) {
-      assert(false);
-      return false;
-    }
-    value = controller.plainParamToNormalized(tag, value);
-    return controller.performEdit(tag, value) == kResultTrue;
+    value = valueFromNormalized(tag, value);
+    return setValueNormalized(tag, value);
   }
 
   bool setValueNormalized(int tag, double value)
@@ -128,6 +127,7 @@ public:
       assert(false);
       return false;
     }
+    editedIter->second = value;
     return controller.performEdit(tag, value) == kResultTrue;
   }
 
@@ -139,7 +139,8 @@ public:
       return false;
     }
     if (controller.beginEdit(tag) == kResultTrue) {
-      paramsBeingEdited.insert(tag);
+      auto const value = getValue(tag);
+      paramsBeingEdited.emplace(tag, value);
       return true;
     }
     else {
@@ -265,14 +266,15 @@ public:
     }
   }
 
-  bool isBeingEdited(int tag) const {
+  bool isBeingEdited(int tag) const
+  {
     auto const editedIter = paramsBeingEdited.find(tag);
     return editedIter != paramsBeingEdited.cend();
   }
 
 private:
   EditControllerEx1& controller;
-  std::unordered_set<int> paramsBeingEdited;
+  std::unordered_map<int, double> paramsBeingEdited;
 };
 
 } // namespace unplug::vst3

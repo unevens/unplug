@@ -167,7 +167,7 @@ Knob(const char* name,
 bool
 Knob(ParameterAccess& parameters, int parameterTag, float radius, const double angleOffset = M_PI / 4)
 {
-  bool const isBeingEdited = parameters.isBeingEdited(parameterTag);
+  bool const isParameterBeingEdited = parameters.isBeingEdited(parameterTag);
   double const normalizedValue = parameters.getValueNormalized(parameterTag);
   double const value = parameters.valueFromNormalized(parameterTag, normalizedValue);
   std::string parameterName;
@@ -179,18 +179,22 @@ Knob(ParameterAccess& parameters, int parameterTag, float radius, const double a
 
   auto const output = Knob(parameterName.c_str(), valueAsText.c_str(), normalizedValue, radius, angleOffset);
 
-  if (isBeingEdited) {
+  if (isParameterBeingEdited) {
     if (output.isActive) {
-      parameters.setValueNormalized(parameterTag, output.outputValue);
+      bool const setValueOk = parameters.setValueNormalized(parameterTag, output.outputValue);
+      assert(setValueOk);
     }
     else {
-      parameters.endEdit(parameterTag);
+      bool const endEditOk = parameters.endEdit(parameterTag);
+      assert(endEditOk);
     }
   }
   else {
     if (output.isActive) {
-      parameters.beginEdit(parameterTag);
-      parameters.setValueNormalized(parameterTag, output.outputValue);
+      bool const beginEditOk = parameters.beginEdit(parameterTag);
+      assert(beginEditOk);
+      bool const setValueOk = parameters.setValueNormalized(parameterTag, output.outputValue);
+      assert(setValueOk);
     }
   }
 

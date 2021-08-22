@@ -14,6 +14,7 @@
 #pragma once
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "unplug/StringConversion.hpp"
+#include "unplug/MidiMapping.hpp"
 #include <cassert>
 #include <unordered_map>
 
@@ -35,8 +36,8 @@ static constexpr auto kResultFalse = Steinberg::kResultFalse;
 class ParameterAccess final
 {
 public:
-  explicit ParameterAccess(EditControllerEx1& controller)
-    : controller(controller)
+  ParameterAccess(EditControllerEx1& controller, MidiMapping& midiMapping)
+    : controller(controller), midiMapping(midiMapping)
   {
     controller.addRef();
   }
@@ -272,8 +273,17 @@ public:
     return editedIter != paramsBeingEdited.cend();
   }
 
+  void setMidiMapping(int parameterTag, MidiCC midiControl, int channel){
+    midiMapping.mapParameter(parameterTag,midiControl,channel);
+  }
+
+  void setMidiMapping(int parameterTag, MidiCC midiControl){
+    midiMapping.mapParameter(parameterTag,midiControl);
+  }
+
 private:
   EditControllerEx1& controller;
+  MidiMapping& midiMapping;
   std::unordered_map<int, double> paramsBeingEdited;
 };
 

@@ -18,6 +18,7 @@
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/gl.hpp"
 #include "unplug/ViewPersistentData.hpp"
+#include "unplug/MidiMapping.hpp"
 #include <memory>
 #include <string>
 
@@ -60,9 +61,9 @@ public:
     return Steinberg::CPluginView::queryInterface(iid, obj);
   }
 
-  View(EditControllerEx1& controller, ViewPersistentData& persistentData)
+  View(EditControllerEx1& controller, ViewPersistentData& persistentData, MidiMapping& midiMapping)
     : world{ pugl::WorldType::module }
-    , parameters{ controller }
+    , parameters{ controller, midiMapping }
     , persistentData{ persistentData }
   {
     world.setClassName(EventHandler::getWindowName().c_str());

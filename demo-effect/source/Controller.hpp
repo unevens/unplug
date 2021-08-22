@@ -28,16 +28,4 @@ public:
 
   static FUnknown* createInstance(void* /*context*/) { return (IEditController*)new UnplugDemoEffectController; }
 
-  tresult PLUGIN_API getMidiControllerAssignment(int32 busIndex,
-                                                 int16 /*midiChannel*/,
-                                                 CtrlNumber midiControllerNumber,
-                                                 ParamID& tag) override
-  {
-    using namespace Steinberg::Vst;
-    if (busIndex == 0 && midiControllerNumber == kCtrlVolume) {
-      tag = ParamTag::gain;
-      return kResultTrue;
-    }
-    return kResultFalse;
-  }
 };

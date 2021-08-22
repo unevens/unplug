@@ -17,6 +17,7 @@
 #include "pluginterfaces/base/ustring.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
+#include "unplug/MidiMapping.hpp"
 #include "unplug/ParameterStorage.hpp"
 #include "unplug/StringConversion.hpp"
 #include "unplug/ViewPersistentData.hpp"
@@ -30,13 +31,9 @@ class UnplugController
   , public IMidiMapping
 {
 public:
-  using tresult = tresult;
-  using int32 = int32;
-  using int16 = int16;
-  using CtrlNumber = CtrlNumber;
-  using ParamID = ParamID;
   using FUnknown = FUnknown;
   using IEditController = IEditController;
+  using MidiCC = unplug::MidiCC;
   static constexpr auto kResultTrue = Steinberg::kResultTrue;
   static constexpr auto kResultFalse = Steinberg::kResultFalse;
 
@@ -59,6 +56,9 @@ public:
                                                  int16 channel,
                                                  CtrlNumber midiControllerNumber,
                                                  ParamID& tag) override;
+
+protected:
+  unplug::MidiMapping midiMapping;
 
 private:
   unplug::ViewPersistentData persistentData;
@@ -131,6 +131,16 @@ UnplugController<View, Parameters>::initialize(FUnknown* context)
         }
         parameters.addParameter(parameter);
       } break;
+    }
+
+    if (description.hasDefaultMidiMapping) {
+      auto const& mapping = description.defaultMidiMapping;
+      if (description.defaultMidiMapping.listensToAllChannels()) {
+        midiMapping.mapParameter(description.tag, mapping.control);
+      }
+      else {
+        midiMapping.mapParameter(description.tag, description.defaultMidiMapping.control, mapping.channel);
+      }
     }
   };
 
@@ -209,11 +219,12 @@ UnplugController<View, Parameters>::createView(FIDString name)
 {
   using namespace Steinberg;
   if (FIDStringsEqual(name, ViewType::kEditor)) {
-    auto ui = new View(*this, persistentData);
+    auto ui = new View(*this, persistentData, midiMapping);
     return ui;
   }
   return nullptr;
 }
+
 template<class View, class Parameters>
 tresult
 UnplugController<View, Parameters>::getMidiControllerAssignment(int32 busIndex,
@@ -221,6 +232,11 @@ UnplugController<View, Parameters>::getMidiControllerAssignment(int32 busIndex,
                                                                 CtrlNumber midiControllerNumber,
                                                                 ParamID& tag)
 {
+  if (busIndex == 0) {
+    auto const controller = static_cast<MidiCC>(midiControllerNumber);
+    tag = midiMapping.getParameter(controller, channel);
+    return kResultTrue;
+  }
   return kResultFalse;
 }
 

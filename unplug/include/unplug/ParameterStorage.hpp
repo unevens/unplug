@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "MidiMapping.hpp"
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -39,28 +40,26 @@ struct ParameterDescription
   std::string name;
   std::string shortName;
   std::string measureUnit;
-  bool canBeAutomated;
+  bool canBeAutomated = true;
   ParameterValueType min;
   ParameterValueType max;
   ParameterValueType defaultValue;
   int numSteps;
   std::vector<std::string> labels;
   bool isBypass = false;
+  bool hasDefaultMidiMapping = false;
+  struct
+  {
+    MidiCC control;
+    int channel = -1;
+    bool listensToAllChannels() const { return channel == -1; }
+  } defaultMidiMapping;
 
-  ParameterDescription(int tag,
-                       std::string name_,
-                       std::vector<std::string> labels_,
-                       int defaultValue = 0,
-                       std::string shortName_ = "",
-                       std::string measureUnit_ = "",
-                       bool canBeAutomated = true)
+  ParameterDescription(int tag, std::string name_, std::vector<std::string> labels_, int defaultValue = 0)
     : type{ Type::list }
     , tag{ tag }
     , labels{ std::move(labels_) }
     , name{ std::move(name_) }
-    , shortName{ std::move(shortName_) }
-    , measureUnit{ std::move(measureUnit_) }
-    , canBeAutomated{ canBeAutomated }
     , defaultValue{ static_cast<ParameterValueType>(defaultValue) }
   {
     numSteps = static_cast<int>(labels.size()) - 1;
@@ -72,10 +71,7 @@ struct ParameterDescription
                        ParameterValueType min,
                        ParameterValueType max,
                        ParameterValueType defaultValue = 0,
-                       int numSteps = 0,
-                       std::string shortName_ = "",
-                       std::string measureUnit_ = "",
-                       bool canBeAutomated = true)
+                       int numSteps = 0)
     : type{ Type::numeric }
     , tag{ tag }
     , min{ min }
@@ -83,10 +79,35 @@ struct ParameterDescription
     , defaultValue{ defaultValue }
     , numSteps{ numSteps }
     , name{ std::move(name_) }
-    , shortName{ std::move(shortName_) }
-    , measureUnit{ std::move(measureUnit_) }
-    , canBeAutomated{ canBeAutomated }
   {}
+
+  ParameterDescription Automatable(bool isAutomatable)
+  {
+    canBeAutomated = isAutomatable;
+    return *this;
+  }
+
+  ParameterDescription ShortName(std::string shortName_)
+  {
+    shortName = std::move(shortName_);
+    return *this;
+  }
+
+  ParameterDescription MeasureUnit(std::string measureUnit_)
+  {
+    measureUnit = std::move(measureUnit_);
+    return *this;
+  }
+
+  ParameterDescription MidiMapping(MidiCC control) { return MidiMapping(control, -1); }
+
+  ParameterDescription MidiMapping(MidiCC control, int channel)
+  {
+    hasDefaultMidiMapping = true;
+    defaultMidiMapping.control = control;
+    defaultMidiMapping.channel = channel;
+    return *this;
+  }
 
   static ParameterDescription makeBypassParameter(int tag)
   {

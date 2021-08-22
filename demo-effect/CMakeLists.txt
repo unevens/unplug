@@ -100,9 +100,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
 
 # Unplug
 include_directories("${unplug_SOURCE_DIR}/unplug/include")
-add_library(unplug-opaque_gl STATIC)
-target_sources(unplug-opaque_gl PRIVATE "${unplug_SOURCE_DIR}/unplug/impl/OpaqueGl.cpp")
-target_link_libraries(${PROJECT_NAME} PRIVATE unplug-opaque_gl)
+add_library(unplug-opaque-gl STATIC)
+target_sources(unplug-opaque-gl PRIVATE "${unplug_SOURCE_DIR}/unplug/impl/OpaqueGl.cpp")
+target_link_libraries(${PROJECT_NAME} PRIVATE unplug-opaque-gl)
 
 
 

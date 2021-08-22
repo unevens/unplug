@@ -13,8 +13,8 @@
 
 #pragma once
 #include "public.sdk/source/vst/vsteditcontroller.h"
-#include "unplug/StringConversion.hpp"
 #include "unplug/MidiMapping.hpp"
+#include "unplug/StringConversion.hpp"
 #include <cassert>
 #include <unordered_map>
 
@@ -37,7 +37,8 @@ class ParameterAccess final
 {
 public:
   ParameterAccess(EditControllerEx1& controller, MidiMapping& midiMapping)
-    : controller(controller), midiMapping(midiMapping)
+    : controller(controller)
+    , midiMapping(midiMapping)
   {
     controller.addRef();
   }
@@ -79,6 +80,14 @@ public:
     }
   }
 
+  double getDefaultValue(int tag)
+  {
+    double value = 0;
+    bool const ok = getDefaultValue(tag, value);
+    assert(ok);
+    return value;
+  }
+
   bool getDefaultValueNormalized(int tag, double& result)
   {
     ParameterInfo info;
@@ -89,6 +98,14 @@ public:
     else {
       return false;
     }
+  }
+
+  double getDefaultValueNormalized(int tag)
+  {
+    double value = 0;
+    bool const ok = getDefaultValueNormalized(tag, value);
+    assert(ok);
+    return value;
   }
 
   bool getMinValue(int tag, double& result)
@@ -103,6 +120,14 @@ public:
     }
   }
 
+  double getMinValue(int tag)
+  {
+    double value = 0;
+    bool const ok = getMinValue(tag, value);
+    assert(ok);
+    return value;
+  }
+
   bool getMaxValue(int tag, double& result)
   {
     ParameterInfo info;
@@ -113,6 +138,14 @@ public:
     else {
       return false;
     }
+  }
+
+  double getMaxValue(int tag)
+  {
+    double value = 1;
+    bool const ok = getMaxValue(tag, value);
+    assert(ok);
+    return value;
   }
 
   bool setValue(int tag, double value)
@@ -177,10 +210,26 @@ public:
     }
   }
 
+  std::string convertToText(int tag, double value)
+  {
+    std::string text;
+    bool const ok = convertToText(tag, value, text);
+    assert(ok);
+    return text;
+  }
+
   bool convertFromText(int tag, double& value, std::string const& text)
   {
     auto text16 = ToVstTChar{}(text);
     return controller.getParamValueByString(tag, const_cast<TChar*>(text16.c_str()), value) == kResultTrue;
+  }
+
+  double convertFromText(int tag, std::string const& text)
+  {
+    double value = 0;
+    bool const ok = convertFromText(tag, value, text);
+    assert(ok);
+    return value;
   }
 
   bool getName(int tag, std::string& result)
@@ -195,6 +244,14 @@ public:
     }
   }
 
+  std::string getName(int tag)
+  {
+    std::string text;
+    bool const ok = getName(tag, text);
+    assert(ok);
+    return text;
+  }
+
   bool getMeasureUnit(int tag, std::string& result)
   {
     ParameterInfo info;
@@ -205,6 +262,14 @@ public:
     else {
       return false;
     }
+  }
+
+  std::string getMeasureUnit(int tag)
+  {
+    std::string text;
+    bool const ok = getMeasureUnit(tag, text);
+    assert(ok);
+    return text;
   }
 
   bool getNumSteps(int tag, int& result)
@@ -219,6 +284,14 @@ public:
     }
   }
 
+  int getNumSteps(int tag)
+  {
+    int value = 0;
+    bool const ok = getNumSteps(tag, value);
+    assert(ok);
+    return value;
+  }
+
   bool canBeAutomated(int tag, bool& result)
   {
     ParameterInfo info;
@@ -229,6 +302,14 @@ public:
     else {
       return false;
     }
+  }
+
+  int canBeAutomated(int tag)
+  {
+    bool value = false;
+    bool const ok = canBeAutomated(tag, value);
+    assert(ok);
+    return value;
   }
 
   bool isList(int tag, bool& result)
@@ -243,6 +324,14 @@ public:
     }
   }
 
+  int isList(int tag)
+  {
+    bool value = false;
+    bool const ok = isList(tag, value);
+    assert(ok);
+    return value;
+  }
+
   bool isProgramChange(int tag, bool& result)
   {
     ParameterInfo info;
@@ -253,6 +342,14 @@ public:
     else {
       return false;
     }
+  }
+
+  int isProgramChange(int tag)
+  {
+    bool value = false;
+    bool const ok = isProgramChange(tag, value);
+    assert(ok);
+    return value;
   }
 
   bool isBypass(int tag, bool& result)
@@ -267,19 +364,26 @@ public:
     }
   }
 
+  int isBypass(int tag)
+  {
+    bool value = false;
+    bool const ok = isBypass(tag, value);
+    assert(ok);
+    return value;
+  }
+
   bool isBeingEdited(int tag) const
   {
     auto const editedIter = paramsBeingEdited.find(tag);
     return editedIter != paramsBeingEdited.cend();
   }
 
-  void setMidiMapping(int parameterTag, MidiCC midiControl, int channel){
-    midiMapping.mapParameter(parameterTag,midiControl,channel);
+  void setMidiMapping(int parameterTag, MidiCC midiControl, int channel)
+  {
+    midiMapping.mapParameter(parameterTag, midiControl, channel);
   }
 
-  void setMidiMapping(int parameterTag, MidiCC midiControl){
-    midiMapping.mapParameter(parameterTag,midiControl);
-  }
+  void setMidiMapping(int parameterTag, MidiCC midiControl) { midiMapping.mapParameter(parameterTag, midiControl); }
 
 private:
   EditControllerEx1& controller;

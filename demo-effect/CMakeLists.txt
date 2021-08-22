@@ -21,6 +21,7 @@ if(NOT vst3sdk_SOURCE_DIR)
 endif()
 project(${unplug_plugin_name} VERSION ${unplug_plugin_version})
 set(SMTG_VSTGUI_ROOT "${vst3sdk_SOURCE_DIR}")
+set(SMTG_ADD_VSTGUI OFF)
 add_subdirectory(${vst3sdk_SOURCE_DIR} "${PROJECT_BINARY_DIR}/vst3sdk")
 smtg_enable_vst3_sdk()
 

@@ -2,8 +2,17 @@
 
 unplug is a work in progress experiment to make VST3 plugins using [Dear ImGui](https://github.com/ocornut/imgui) and [Pugl](https://github.com/lv2/pugl) instead of VSTGUI to do the user interface.
 
-Currently, it *seems* to work on Windows, Mac and Ubuntu 20. 
+Currently, it *seems* to work on Windows and Mac. It still needs some work on Linux. 
 
+
+## Installing dependencies on Ubuntu
+
+```bash
+$ sudo apt install libx11-dev
+$ sudo apt install libgl1-mesa-dev
+$ sudo apt install libxrandr-dev
+$ sudo apt install libxcursor-dev
+```
 
 ===
 

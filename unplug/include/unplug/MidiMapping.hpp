@@ -13,6 +13,7 @@
 
 #pragma once
 #include <array>
+#include <cassert>
 
 namespace unplug {
 
@@ -20,7 +21,7 @@ enum class MidiCC
 {
   BankSelect = 0,
   ModulationWheelCoarse,
-  BreathcontrollerCoarse,
+  BreathControllerCoarse,
   FootPedalCoarse = 4,
   PortamentoTimeCoarse,
   DataEntryCoarse,
@@ -36,7 +37,7 @@ enum class MidiCC
   GeneralPurposeSlider4,
   BankSelectFine = 32,
   ModulationWheelFine,
-  BreathcontrollerFine,
+  BreathControllerFine,
   FootPedalFine = 36,
   PortamentoTimeFine,
   DataEntryFine,

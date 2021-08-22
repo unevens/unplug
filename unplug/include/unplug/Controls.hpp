@@ -19,6 +19,8 @@
 
 namespace unplug {
 
+inline constexpr auto pi = (float)M_PI;
+
 /**
  * Combo ImGui control associated with a plugin parameter
  * */
@@ -109,30 +111,50 @@ struct KnobOutput
   double outputValue;
 };
 
+struct KnobDrawData{
+  float radius;
+  ImVec2 center;
+  ImVec2 pointerPosition;
+  float angleOffset;
+  bool isActive;
+  bool isHovered;
+};
+
+template<int numSegments>
+void
+DrawSimpleKnob(KnobDrawData const& knob)
+{
+  ImU32 col32 = ImGui::GetColorU32(knob.isActive    ? ImGuiCol_FrameBgActive
+                                   : knob.isHovered ? ImGuiCol_FrameBgHovered
+                                                    : ImGuiCol_FrameBg);
+  ImU32 col32line = ImGui::GetColorU32(ImGuiCol_SliderGrabActive);
+  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+  draw_list->AddCircleFilled(knob.center, knob.radius, col32, numSegments);
+  draw_list->AddLine(knob.center, knob.pointerPosition, col32line, 1);
+}
+
 /**
  * Knob ImGui control, based on https://github.com/ocornut/imgui/issues/942
  * */
+template<class Drawer>
 KnobOutput
 Knob(const char* name,
-     const char* valueLabel,
-     const double inputValue,
+     const float inputValue,
      const float radius,
-     const double angleOffset = M_PI / 4,
-     const int numSegments = 64)
+     Drawer drawer = DrawSimpleKnob<64>,
+     const float angleOffset = pi / 4)
 {
   ImGuiStyle& style = ImGui::GetStyle();
-  auto const lineHeight = ImGui::GetTextLineHeight();
   ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
   ImVec2 center = ImVec2(cursorPosition.x + radius, cursorPosition.y + radius);
 
-  ImVec2 textpos = cursorPosition;
-  auto const currentAngle = (M_PI - angleOffset) * inputValue * 2.0f + angleOffset;
+  auto const currentAngle = (pi - angleOffset) * inputValue * 2.0f + angleOffset;
 
   auto const x = -std::sin(currentAngle) * radius + center.x;
   auto const y = std::cos(currentAngle) * radius + center.y;
 
   auto const diameter = 2 * radius;
-  ImGui::InvisibleButton(name, ImVec2(diameter, diameter + lineHeight + style.ItemInnerSpacing.y));
+  ImGui::InvisibleButton(name, ImVec2(diameter, diameter));
 
   bool const isActive = ImGui::IsItemActive();
   bool const isHovered = ImGui::IsItemHovered();
@@ -140,9 +162,9 @@ Knob(const char* name,
 
   if (isActive) {
     ImVec2 mp = ImGui::GetIO().MousePos;
-    double nextAngle = std::atan2(mp.x - center.x, center.y - mp.y) + M_PI;
-    nextAngle = std::max(angleOffset, std::min(2.0f * M_PI - angleOffset, nextAngle));
-    outputValue = 0.5f * (nextAngle - angleOffset) / (M_PI - angleOffset);
+    float nextAngle = std::atan2(mp.x - center.x, center.y - mp.y) + pi;
+    nextAngle = std::max(angleOffset, std::min(2.0f * pi - angleOffset, nextAngle));
+    outputValue = 0.5f * (nextAngle - angleOffset) / (pi - angleOffset);
     bool const hasGoneBelowTheBottom = inputValue == 0.0 && outputValue > 0.5;
     bool const hasGoneOverTheTop = inputValue == 1.0 && outputValue < 0.5;
     bool const hasGoneOutsideTheRange = hasGoneBelowTheBottom || hasGoneOverTheTop;
@@ -151,16 +173,14 @@ Knob(const char* name,
     }
   }
 
-  ImU32 col32 = ImGui::GetColorU32(isActive    ? ImGuiCol_FrameBgActive
-                                   : isHovered ? ImGuiCol_FrameBgHovered
-                                               : ImGuiCol_FrameBg);
-  ImU32 col32line = ImGui::GetColorU32(ImGuiCol_SliderGrabActive);
-  ImU32 col32text = ImGui::GetColorU32(ImGuiCol_Text);
-  ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  draw_list->AddCircleFilled(center, radius, col32, numSegments);
-  draw_list->AddLine(center, ImVec2(x, y), col32line, 1);
-  draw_list->AddText(textpos, col32text, valueLabel);
-  draw_list->AddText(ImVec2(cursorPosition.x, cursorPosition.y + diameter + style.ItemInnerSpacing.y), col32text, name);
+  KnobDrawData drawData;
+  drawData.radius = radius;
+  drawData.center = center;
+  drawData.pointerPosition = ImVec2(x, y);
+  drawData.angleOffset = angleOffset;
+  drawData.isActive = isActive;
+  drawData.isHovered = isHovered;
+  drawer(drawData);
 
   return { isActive, outputValue };
 }
@@ -168,13 +188,13 @@ Knob(const char* name,
 /**
  * Knob ImGui control associated with a plugin parameter
  * */
-
+template<class Drawer>
 bool
 Knob(ParameterAccess& parameters,
      int parameterTag,
      float radius,
-     const double angleOffset = M_PI / 4,
-     const int numSegments = 64)
+     Drawer drawer,
+     const float angleOffset = pi / 4)
 {
   bool const isParameterBeingEdited = parameters.isBeingEdited(parameterTag);
   double const normalizedValue = parameters.getValueNormalized(parameterTag);
@@ -187,7 +207,7 @@ Knob(ParameterAccess& parameters,
   assert(convertedOk);
 
   auto const output =
-    Knob(parameterName.c_str(), valueAsText.c_str(), normalizedValue, radius, angleOffset, numSegments);
+    Knob(parameterName.c_str(), normalizedValue, radius, drawer, angleOffset);
 
   if (isParameterBeingEdited) {
     if (output.isActive) {
@@ -209,6 +229,12 @@ Knob(ParameterAccess& parameters,
   }
 
   return output.isActive;
+}
+
+bool
+Knob(ParameterAccess& parameters, int parameterTag, float radius, const float angleOffset = pi / 4)
+{
+  return Knob(parameters, parameterTag, radius, DrawSimpleKnob<64>, angleOffset);
 }
 
 } // namespace unplug

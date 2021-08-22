@@ -19,7 +19,6 @@ enum
 {
   bypass,
   gain,
-  ucci,
   numParams
 };
 }

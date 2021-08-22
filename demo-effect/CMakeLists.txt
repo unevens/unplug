@@ -75,7 +75,7 @@ target_compile_definitions(pugl PUBLIC PUGL_STATIC PUGL_NO_INCLUDE_GL_H PUGL_NO_
 if(SMTG_WIN)
 	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/win.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_gl.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_stub.c")
 elseif(SMTG_MAC)
-	#todo
+	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/mac.m" "${unplug_SOURCE_DIR}/libs/pugl/src/mac_gl.m" "${unplug_SOURCE_DIR}/libs/pugl/src/mac_stub.m")
 else()
 	target_compile_definitions(pugl PUBLIC HAVE_XSYNC HAVE_XRANDR HAVE_XCURSOR)
 	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/x11.c" "${unplug_SOURCE_DIR}/libs/pugl/src/x11_gl.c" "${unplug_SOURCE_DIR}/libs/pugl/src/x11_stub.c")

@@ -34,8 +34,7 @@ public:
   using FUnknown = FUnknown;
   using IEditController = IEditController;
   using MidiCC = unplug::MidiCC;
-  static constexpr auto kResultTrue = Steinberg::kResultTrue;
-  static constexpr auto kResultFalse = Steinberg::kResultFalse;
+  using MidiMapping = unplug::MidiMapping;
 
   UnplugController() = default;
   ~UnplugController() override = default;
@@ -234,8 +233,11 @@ UnplugController<View, Parameters>::getMidiControllerAssignment(int32 busIndex,
 {
   if (busIndex == 0) {
     auto const controller = static_cast<MidiCC>(midiControllerNumber);
-    tag = midiMapping.getParameter(controller, channel);
-    return kResultTrue;
+    auto const mappedParameter = midiMapping.getParameter(controller, channel);
+    if (mappedParameter != MidiMapping::unmapped) {
+      tag = mappedParameter;
+      return kResultTrue;
+    }
   }
   return kResultFalse;
 }

@@ -14,11 +14,10 @@
 #pragma once
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "unplug/ParameterAccess.hpp"
 #include "imgui_user_config.h"
+#include "unplug/ParameterAccess.hpp"
 
 namespace unplug {
-
 
 /**
  * Combo ImGui control associated with a plugin parameter
@@ -104,8 +103,8 @@ Checkbox(ParameterAccess& parameters, int parameterTag)
   return hasValueChanged;
 }
 
-
-struct KnobOutput{
+struct KnobOutput
+{
   bool isActive;
   double outputValue;
 };
@@ -118,7 +117,8 @@ Knob(const char* name,
      const char* valueLabel,
      const double inputValue,
      const float radius,
-     const double angleOffset = M_PI / 4)
+     const double angleOffset = M_PI / 4,
+     const int numSegments = 64)
 {
   ImGuiStyle& style = ImGui::GetStyle();
   auto const lineHeight = ImGui::GetTextLineHeight();
@@ -143,15 +143,21 @@ Knob(const char* name,
     double nextAngle = std::atan2(mp.x - center.x, center.y - mp.y) + M_PI;
     nextAngle = std::max(angleOffset, std::min(2.0f * M_PI - angleOffset, nextAngle));
     outputValue = 0.5f * (nextAngle - angleOffset) / (M_PI - angleOffset);
+    bool const hasGoneBelowTheBottom = inputValue == 0.0 && outputValue > 0.5;
+    bool const hasGoneOverTheTop = inputValue == 1.0 && outputValue < 0.5;
+    bool const hasGoneOutsideTheRange = hasGoneBelowTheBottom || hasGoneOverTheTop;
+    if (hasGoneOutsideTheRange) {
+      outputValue = inputValue;
+    }
   }
 
   ImU32 col32 = ImGui::GetColorU32(isActive    ? ImGuiCol_FrameBgActive
-                                               : isHovered ? ImGuiCol_FrameBgHovered
-                                                           : ImGuiCol_FrameBg);
+                                   : isHovered ? ImGuiCol_FrameBgHovered
+                                               : ImGuiCol_FrameBg);
   ImU32 col32line = ImGui::GetColorU32(ImGuiCol_SliderGrabActive);
   ImU32 col32text = ImGui::GetColorU32(ImGuiCol_Text);
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  draw_list->AddCircleFilled(center, radius, col32, 16);
+  draw_list->AddCircleFilled(center, radius, col32, numSegments);
   draw_list->AddLine(center, ImVec2(x, y), col32line, 1);
   draw_list->AddText(textpos, col32text, valueLabel);
   draw_list->AddText(ImVec2(cursorPosition.x, cursorPosition.y + diameter + style.ItemInnerSpacing.y), col32text, name);
@@ -159,13 +165,16 @@ Knob(const char* name,
   return { isActive, outputValue };
 }
 
-
 /**
  * Knob ImGui control associated with a plugin parameter
  * */
 
 bool
-Knob(ParameterAccess& parameters, int parameterTag, float radius, const double angleOffset = M_PI / 4)
+Knob(ParameterAccess& parameters,
+     int parameterTag,
+     float radius,
+     const double angleOffset = M_PI / 4,
+     const int numSegments = 64)
 {
   bool const isParameterBeingEdited = parameters.isBeingEdited(parameterTag);
   double const normalizedValue = parameters.getValueNormalized(parameterTag);
@@ -177,7 +186,8 @@ Knob(ParameterAccess& parameters, int parameterTag, float radius, const double a
   bool const convertedOk = parameters.convertToText(parameterTag, value, valueAsText);
   assert(convertedOk);
 
-  auto const output = Knob(parameterName.c_str(), valueAsText.c_str(), normalizedValue, radius, angleOffset);
+  auto const output =
+    Knob(parameterName.c_str(), valueAsText.c_str(), normalizedValue, radius, angleOffset, numSegments);
 
   if (isParameterBeingEdited) {
     if (output.isActive) {
@@ -200,6 +210,5 @@ Knob(ParameterAccess& parameters, int parameterTag, float radius, const double a
 
   return output.isActive;
 }
-
 
 } // namespace unplug

@@ -16,7 +16,7 @@
 #include "unplug/MidiMapping.hpp"
 #include "unplug/StringConversion.hpp"
 #include <cassert>
-#include <unordered_map>
+#include <unordered_set>
 
 namespace unplug::vst3 {
 
@@ -56,17 +56,7 @@ public:
 
   double valueFromNormalized(int tag, double value) { return controller.plainParamToNormalized(tag, value); }
 
-  double getValueNormalized(int tag)
-  {
-    auto const editedIter = paramsBeingEdited.find(tag);
-    bool const isBeingEdited = editedIter != paramsBeingEdited.end();
-    if (isBeingEdited) {
-      return editedIter->second;
-    }
-    else {
-      return controller.getParamNormalized(tag);
-    }
-  }
+  double getValueNormalized(int tag) { return controller.getParamNormalized(tag); }
 
   bool getDefaultValue(int tag, double& result)
   {
@@ -161,8 +151,13 @@ public:
       assert(false);
       return false;
     }
-    editedIter->second = value;
-    return controller.performEdit(tag, value) == kResultTrue;
+    bool const setOk = controller.setParamNormalized(tag, value) == kResultTrue;
+    if (setOk) {
+      return controller.performEdit(tag, value) == kResultTrue;
+    }
+    else {
+      return false;
+    }
   }
 
   bool beginEdit(int tag)
@@ -174,7 +169,7 @@ public:
     }
     if (controller.beginEdit(tag) == kResultTrue) {
       auto const value = getValue(tag);
-      paramsBeingEdited.emplace(tag, value);
+      paramsBeingEdited.insert(tag);
       return true;
     }
     else {
@@ -189,13 +184,8 @@ public:
       assert(false);
       return false;
     }
-    if (controller.endEdit(tag) == kResultTrue) {
-      paramsBeingEdited.erase(tag);
-      return true;
-    }
-    else {
-      return false;
-    }
+    paramsBeingEdited.erase(tag);
+    return controller.endEdit(tag) == kResultTrue;
   }
 
   bool convertToText(int tag, double value, std::string& result)
@@ -388,7 +378,7 @@ public:
 private:
   EditControllerEx1& controller;
   MidiMapping& midiMapping;
-  std::unordered_map<int, double> paramsBeingEdited;
+  std::unordered_set<int> paramsBeingEdited;
 };
 
 } // namespace unplug::vst3

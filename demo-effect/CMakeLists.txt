@@ -76,6 +76,10 @@ if(SMTG_WIN)
 	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/win.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_gl.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_stub.c")
 elseif(SMTG_MAC)
 	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/mac.m" "${unplug_SOURCE_DIR}/libs/pugl/src/mac_gl.m" "${unplug_SOURCE_DIR}/libs/pugl/src/mac_stub.m")
+	find_library(COCOA_LIBRARY Cocoa)
+	target_link_libraries(${PROJECT_NAME} PRIVATE  ${COCOA_LIBRARY})
+	find_library(COREVIDEO_LIBRARY CoreVideo)
+	target_link_libraries(${PROJECT_NAME} PRIVATE  ${COREVIDEO_LIBRARY})
 else()
 	target_compile_definitions(pugl PUBLIC HAVE_XSYNC HAVE_XRANDR HAVE_XCURSOR)
 	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/x11.c" "${unplug_SOURCE_DIR}/libs/pugl/src/x11_gl.c" "${unplug_SOURCE_DIR}/libs/pugl/src/x11_stub.c")
@@ -96,13 +100,8 @@ file(GLOB_RECURSE implot_src "${unplug_SOURCE_DIR}/libs/implot/*.cpp" "${unplug_
 target_sources(imgui PRIVATE ${implot_src})
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
 
-
-
 # Unplug
 include_directories("${unplug_SOURCE_DIR}/unplug/include")
 add_library(unplug-opaque-gl STATIC)
 target_sources(unplug-opaque-gl PRIVATE "${unplug_SOURCE_DIR}/unplug/impl/OpaqueGl.cpp")
 target_link_libraries(${PROJECT_NAME} PRIVATE unplug-opaque-gl)
-
-
-

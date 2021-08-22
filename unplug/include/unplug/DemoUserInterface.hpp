@@ -14,9 +14,9 @@
 #pragma once
 #include "imgui.h"
 #include "pugl/pugl.hpp"
-#include <array>
-#include "unplug/ParameterAccess.hpp"
 #include "unplug/Controls.hpp"
+#include "unplug/ParameterAccess.hpp"
+#include <array>
 
 namespace unplug {
 
@@ -35,9 +35,24 @@ public:
 
   void paint()
   {
-    bool keep_open = true;
-    ImGui::ShowDemoWindow(&keep_open);
-    // will not handle keep open
+    //    bool keep_open = true;
+    //    ImGui::ShowDemoWindow(&keep_open);
+
+    const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20),
+                            ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
+
+    // Main body of the Demo window starts here.
+    if (!ImGui::Begin("Dear ImGui Demo", NULL, 0)) {
+      // Early out if the window is collapsed, as an optimization.
+      ImGui::End();
+      return;
+    }
+
+    Knob(parameters, ParamTag::gain, 40.f);
+
+    ImGui::End();
   }
 
   static void adjustSize(int& width, int& height) {}
@@ -47,6 +62,8 @@ public:
   static std::array<int, 2> getDefaultSize() { return { { 900, 700 } }; }
 
   static void initializePersistentData(ViewPersistentData& presistentData) {}
+
+  static std::string getWindowName() { return "Demo"; }
 
   std::array<float, 4> getBackgroundColor() const { return { { 0, 0, 0, 1 } }; }
 

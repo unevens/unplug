@@ -24,8 +24,7 @@ inline constexpr auto pi = (float)M_PI;
 /**
  * Combo ImGui control associated with a plugin parameter
  * */
-
-bool
+inline bool
 Combo(ParameterAccess& parameters, int parameterTag)
 {
   using namespace ImGui;
@@ -83,8 +82,7 @@ Combo(ParameterAccess& parameters, int parameterTag)
 /**
  * Checkbox ImGui control associated with a plugin parameter
  * */
-
-bool
+inline bool
 Checkbox(ParameterAccess& parameters, int parameterTag)
 {
   using namespace ImGui;
@@ -105,13 +103,29 @@ Checkbox(ParameterAccess& parameters, int parameterTag)
   return hasValueChanged;
 }
 
+inline void
+Label(ParameterAccess& parameters, int parameterTag)
+{
+  auto const name = parameters.getName(parameterTag);
+  return ImGui::TextUnformatted(name.c_str());
+}
+
+inline void
+ValueAsText(ParameterAccess& parameters, int parameterTag)
+{
+  auto const value = parameters.getValue(parameterTag);
+  auto const valueAsText = parameters.convertToText(parameterTag, value);
+  return ImGui::TextUnformatted(valueAsText.c_str());
+}
+
 struct KnobOutput
 {
   bool isActive;
   double outputValue;
 };
 
-struct KnobDrawData{
+struct KnobDrawData
+{
   float radius;
   ImVec2 center;
   ImVec2 pointerPosition;
@@ -121,7 +135,7 @@ struct KnobDrawData{
 };
 
 template<int numSegments>
-void
+inline void
 DrawSimpleKnob(KnobDrawData const& knob)
 {
   ImU32 col32 = ImGui::GetColorU32(knob.isActive    ? ImGuiCol_FrameBgActive
@@ -137,7 +151,7 @@ DrawSimpleKnob(KnobDrawData const& knob)
  * Knob ImGui control, based on https://github.com/ocornut/imgui/issues/942
  * */
 template<class Drawer>
-KnobOutput
+inline KnobOutput
 Knob(const char* name,
      const float inputValue,
      const float radius,
@@ -189,12 +203,8 @@ Knob(const char* name,
  * Knob ImGui control associated with a plugin parameter
  * */
 template<class Drawer>
-bool
-Knob(ParameterAccess& parameters,
-     int parameterTag,
-     float radius,
-     Drawer drawer,
-     const float angleOffset = pi / 4)
+inline bool
+Knob(ParameterAccess& parameters, int parameterTag, float radius, Drawer drawer, const float angleOffset = pi / 4)
 {
   bool const isParameterBeingEdited = parameters.isBeingEdited(parameterTag);
   double const normalizedValue = parameters.getValueNormalized(parameterTag);
@@ -206,8 +216,7 @@ Knob(ParameterAccess& parameters,
   bool const convertedOk = parameters.convertToText(parameterTag, value, valueAsText);
   assert(convertedOk);
 
-  auto const output =
-    Knob(parameterName.c_str(), normalizedValue, radius, drawer, angleOffset);
+  auto const output = Knob(parameterName.c_str(), normalizedValue, radius, drawer, angleOffset);
 
   if (isParameterBeingEdited) {
     if (output.isActive) {
@@ -231,7 +240,7 @@ Knob(ParameterAccess& parameters,
   return output.isActive;
 }
 
-bool
+inline bool
 Knob(ParameterAccess& parameters, int parameterTag, float radius, const float angleOffset = pi / 4)
 {
   return Knob(parameters, parameterTag, radius, DrawSimpleKnob<64>, angleOffset);

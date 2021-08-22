@@ -13,12 +13,9 @@
 
 #pragma once
 
-#include "Id.hpp"
-#include "Parameters.hpp"
-#include "public.sdk/source/vst/vstaudioeffect.h"
-
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
+#include "public.sdk/source/vst/vstaudioeffect.h"
 
 namespace unplug {
 

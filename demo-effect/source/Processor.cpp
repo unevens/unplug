@@ -16,15 +16,15 @@
 
 using namespace Steinberg;
 
-UnPlugDemoEffectProcessor::UnPlugDemoEffectProcessor()
+UnplugDemoEffectProcessor::UnplugDemoEffectProcessor()
 {
-  setControllerClass(kUnPlugDemoEffectControllerUID);
+  setControllerClass(kUnplugDemoEffectControllerUID);
 }
 
-UnPlugDemoEffectProcessor::~UnPlugDemoEffectProcessor() = default;
+UnplugDemoEffectProcessor::~UnplugDemoEffectProcessor() = default;
 
 tresult PLUGIN_API
-UnPlugDemoEffectProcessor::canProcessSampleSize(int32 symbolicSampleSize)
+UnplugDemoEffectProcessor::canProcessSampleSize(int32 symbolicSampleSize)
 {
   if (symbolicSampleSize == Vst::kSample32)
     return kResultTrue;
@@ -36,7 +36,7 @@ UnPlugDemoEffectProcessor::canProcessSampleSize(int32 symbolicSampleSize)
 }
 
 tresult PLUGIN_API
-UnPlugDemoEffectProcessor::process(Vst::ProcessData& data)
+UnplugDemoEffectProcessor::process(Vst::ProcessData& data)
 {
   UpdateParametersToLastPoint(data);
 

@@ -16,15 +16,17 @@
 #include "Parameters.hpp"
 #include "unplug/UnplugProcessor.hpp"
 
-class UnPlugDemoEffectProcessor final : public unplug::UnPlugProcessor<DemoEffectParameters>
+using BaseProcessor = unplug::UnplugProcessor<DemoEffectParameters>;
+
+class UnplugDemoEffectProcessor final : public BaseProcessor
 {
 public:
-  UnPlugDemoEffectProcessor();
-  ~UnPlugDemoEffectProcessor() override;
+  UnplugDemoEffectProcessor();
+  ~UnplugDemoEffectProcessor() override;
 
   static Steinberg::FUnknown* createInstance(void* /*context*/)
   {
-    return (Steinberg::Vst::IAudioProcessor*)new UnPlugDemoEffectProcessor;
+    return (Steinberg::Vst::IAudioProcessor*)new UnplugDemoEffectProcessor;
   }
 
   /** Reports if the plugin supports 32/64 bit floating point audio */

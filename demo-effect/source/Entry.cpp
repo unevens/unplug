@@ -18,7 +18,7 @@
 
 #include "public.sdk/source/main/pluginfactory.h"
 
-#define stringPluginName "UnPlugDemoEffect"
+#define stringPluginName "UnplugDemoEffect"
 
 //------------------------------------------------------------------------
 //  Module init/exit
@@ -50,22 +50,22 @@ BEGIN_FACTORY_DEF("unevens", "https://unevens.net", "mailto:hi@unevens.net")
 
 //---First Plug-in included in this factory-------
 // its kVstAudioEffectClass component
-DEF_CLASS2(INLINE_UID_FROM_FUID(kUnPlugDemoEffectProcessorUID),
+DEF_CLASS2(INLINE_UID_FROM_FUID(kUnplugDemoEffectProcessorUID),
            PClassInfo::kManyInstances,                // cardinality
            kVstAudioEffectClass,                      // the component category (do not changed this)
            stringPluginName,                          // here the Plug-in name (to be changed)
            Vst::kDistributable,                       // means that component and controller could be
                                                       // distributed on different computers
-           UnPlugDemoEffectVST3Category,              // Subcategory for this Plug-in (to be changed)
+           UnplugDemoEffectVST3Category,              // Subcategory for this Plug-in (to be changed)
            FULL_VERSION_STR,                          // Plug-in version (to be changed)
            kVstVersionString,                         // the VST 3 SDK version (do not changed this, use always
                                                       // this define)
-           UnPlugDemoEffectProcessor::createInstance) // function pointer called when
+           UnplugDemoEffectProcessor::createInstance) // function pointer called when
                                                       // this component should be
                                                       // instantiated
 
 // its kVstComponentControllerClass component
-DEF_CLASS2(INLINE_UID_FROM_FUID(kUnPlugDemoEffectControllerUID),
+DEF_CLASS2(INLINE_UID_FROM_FUID(kUnplugDemoEffectControllerUID),
            PClassInfo::kManyInstances,                 // cardinality
            kVstComponentControllerClass,               // the Controller category (do not changed this)
            stringPluginName "Controller",              // controller name (could be the same than component name)
@@ -74,7 +74,7 @@ DEF_CLASS2(INLINE_UID_FROM_FUID(kUnPlugDemoEffectControllerUID),
            FULL_VERSION_STR,                           // Plug-in version (to be changed)
            kVstVersionString,                          // the VST 3 SDK version (do not changed this, use always
                                                        // this define)
-           UnPlugDemoEffectController::createInstance) // function pointer called when
+           UnplugDemoEffectController::createInstance) // function pointer called when
                                                        // this component should be
                                                        // instantiated
 

@@ -18,23 +18,26 @@
 #include "unplug/Vst3DemoView.hpp"
 
 using ViewClass = unplug::vst3::DemoView;
+using BaseController = unplug::UnplugController<ViewClass, DemoEffectParameters>;
 
-class UnPlugDemoEffectController final : public unplug::UnPlugController<ViewClass, DemoEffectParameters>
+class UnplugDemoEffectController final : public BaseController
 {
 public:
-  UnPlugDemoEffectController() = default;
-  ~UnPlugDemoEffectController() SMTG_OVERRIDE = default;
+  UnplugDemoEffectController() = default;
+  ~UnplugDemoEffectController() override = default;
 
-  static Steinberg::FUnknown* createInstance(void* /*context*/)
+  static FUnknown* createInstance(void* /*context*/) { return (IEditController*)new UnplugDemoEffectController; }
+
+  tresult PLUGIN_API getMidiControllerAssignment(int32 busIndex,
+                                                 int16 /*midiChannel*/,
+                                                 CtrlNumber midiControllerNumber,
+                                                 ParamID& tag) override
   {
-    return (Steinberg::Vst::IEditController*)new UnPlugDemoEffectController;
+    using namespace Steinberg::Vst;
+    if (busIndex == 0 && midiControllerNumber == kCtrlVolume) {
+      tag = ParamTag::gain;
+      return kResultTrue;
+    }
+    return kResultFalse;
   }
-
-private:
-  //---Interface---------
-  DEFINE_INTERFACES
-  // Here you can add more supported VST3 interfaces
-  // DEF_INTERFACE (Vst::IXXX)
-  END_DEFINE_INTERFACES(EditController)
-  DELEGATE_REFCOUNT(EditController)
 };

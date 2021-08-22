@@ -15,57 +15,80 @@
 
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/base/ustring.h"
+#include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "unplug/ParameterStorage.hpp"
 #include "unplug/StringConversion.hpp"
 #include "unplug/ViewPersistentData.hpp"
 #include <memory>
 
-namespace unplug {
+namespace Steinberg::Vst {
 
-template<class ViewClass, class PluginParameters>
-class UnPlugController : public Steinberg::Vst::EditControllerEx1
+template<class View, class Parameters>
+class UnplugController
+  : public EditControllerEx1
+  , public IMidiMapping
 {
 public:
-  UnPlugController() = default;
-  ~UnPlugController() override = default;
+  using tresult = tresult;
+  using int32 = int32;
+  using int16 = int16;
+  using CtrlNumber = CtrlNumber;
+  using ParamID = ParamID;
+  using FUnknown = FUnknown;
+  using IEditController = IEditController;
+  static constexpr auto kResultTrue = Steinberg::kResultTrue;
+  static constexpr auto kResultFalse = Steinberg::kResultFalse;
+
+  UnplugController() = default;
+  ~UnplugController() override = default;
 
   // IPluginBase
-  Steinberg::tresult PLUGIN_API initialize(Steinberg::FUnknown* context) override;
+  tresult PLUGIN_API initialize(FUnknown* context) override;
 
   // EditController
-  Steinberg::tresult PLUGIN_API setComponentState(Steinberg::IBStream* state) override;
+  tresult PLUGIN_API setComponentState(IBStream* state) override;
 
-  Steinberg::IPlugView* PLUGIN_API createView(Steinberg::FIDString name) override;
+  IPlugView* PLUGIN_API createView(FIDString name) override;
 
-  Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream* state) override;
+  tresult PLUGIN_API setState(IBStream* state) override;
 
-  Steinberg::tresult PLUGIN_API getState(Steinberg::IBStream* state) override;
+  tresult PLUGIN_API getState(IBStream* state) override;
+
+  tresult PLUGIN_API getMidiControllerAssignment(int32 busIndex,
+                                                 int16 channel,
+                                                 CtrlNumber midiControllerNumber,
+                                                 ParamID& tag) override;
 
 private:
   unplug::ViewPersistentData persistentData;
+
+  DEFINE_INTERFACES
+  DEF_INTERFACE(IMidiMapping);
+  END_DEFINE_INTERFACES(EditController)
+  DELEGATE_REFCOUNT(EditController)
 };
 
 // implementation
 
-template<class ViewClass, class PluginParameters>
-Steinberg::tresult PLUGIN_API
-UnPlugController<ViewClass, PluginParameters>::initialize(FUnknown* context)
+template<class View, class Parameters>
+tresult PLUGIN_API
+UnplugController<View, Parameters>::initialize(FUnknown* context)
 {
   using namespace unplug;
   using namespace Steinberg;
-  using namespace Steinberg::Vst;
+  using namespace Vst;
 
   tresult result = EditControllerEx1::initialize(context);
   if (result != kResultOk) {
     return result;
   }
 
-  ViewClass::initializePersistentData(persistentData);
+  View::initializePersistentData(persistentData);
 
   UnitInfo unitInfo;
   unitInfo.id = kRootUnitId;
-  unitInfo.parentUnitId = Steinberg::Vst::kNoParentUnitId;
+  unitInfo.parentUnitId = kNoParentUnitId;
   UString setUnitName(unitInfo.name, 128);
   setUnitName.fromAscii("Root");
 
@@ -111,21 +134,21 @@ UnPlugController<ViewClass, PluginParameters>::initialize(FUnknown* context)
     }
   };
 
-  PluginParameters::getParameterInitializer().initializeParameters(initializeParameter);
+  Parameters::getParameterInitializer().initializeParameters(initializeParameter);
 
   return kResultOk;
 }
 
-template<class ViewClass, class PluginParameters>
-Steinberg::tresult PLUGIN_API
-UnPlugController<ViewClass, PluginParameters>::setComponentState(Steinberg::IBStream* state)
+template<class View, class Parameters>
+tresult PLUGIN_API
+UnplugController<View, Parameters>::setComponentState(IBStream* state)
 {
   using namespace Steinberg;
   // loads the dsp state
   if (!state)
     return kResultFalse;
   IBStreamer streamer(state, kLittleEndian);
-  for (int i = 0; i < PluginParameters::numParameters; ++i) {
+  for (int i = 0; i < Parameters::numParameters; ++i) {
     double value;
     if (!streamer.readDouble(value))
       return kResultFalse;
@@ -135,18 +158,16 @@ UnPlugController<ViewClass, PluginParameters>::setComponentState(Steinberg::IBSt
   return kResultOk;
 }
 
-template<class ViewClass, class PluginParameters>
-Steinberg::tresult PLUGIN_API
-UnPlugController<ViewClass, PluginParameters>::setState(Steinberg::IBStream* state)
+template<class View, class Parameters>
+tresult PLUGIN_API
+UnplugController<View, Parameters>::setState(IBStream* state)
 {
   using namespace Steinberg;
 
   // used to load ui-only data
   IBStreamer streamer(state, kLittleEndian);
-  auto const loadInteger = [&](int64_t& x) { return streamer.readInt64((Steinberg::int64&)x); };
-  auto const loadIntegerArray = [&](int64_t* x, int64_t size) {
-    return streamer.readInt64Array((Steinberg::int64*)x, size);
-  };
+  auto const loadInteger = [&](int64_t& x) { return streamer.readInt64((int64&)x); };
+  auto const loadIntegerArray = [&](int64_t* x, int64_t size) { return streamer.readInt64Array((int64*)x, size); };
   auto const loadDoubleArray = [&](double* x, int64_t size) {
     return streamer.readDoubleArray(x, static_cast<int>(size));
   };
@@ -163,16 +184,16 @@ UnPlugController<ViewClass, PluginParameters>::setState(Steinberg::IBStream* sta
   return kResultTrue;
 }
 
-template<class ViewClass, class PluginParameters>
-Steinberg::tresult PLUGIN_API
-UnPlugController<ViewClass, PluginParameters>::getState(Steinberg::IBStream* state)
+template<class View, class Parameters>
+tresult PLUGIN_API
+UnplugController<View, Parameters>::getState(IBStream* state)
 {
   using namespace Steinberg;
   // used to save ui-only data
   IBStreamer streamer(state, kLittleEndian);
   auto const saveInteger = [&](int64_t const& x) { return streamer.writeInt64(x); };
   auto const saveIntegerArray = [&](int64_t const* x, int64_t size) {
-    return streamer.writeInt64Array((Steinberg::int64*)x, static_cast<Steinberg::int32>(size));
+    return streamer.writeInt64Array((int64*)x, static_cast<int32>(size));
   };
   auto const saveDoubleArray = [&](double const* x, int64_t size) {
     return streamer.writeDoubleArray(x, static_cast<int>(size));
@@ -182,16 +203,30 @@ UnPlugController<ViewClass, PluginParameters>::getState(Steinberg::IBStream* sta
   return kResultTrue;
 }
 
-template<class ViewClass, class PluginParameters>
-Steinberg::IPlugView* PLUGIN_API
-UnPlugController<ViewClass, PluginParameters>::createView(Steinberg::FIDString name)
+template<class View, class Parameters>
+IPlugView* PLUGIN_API
+UnplugController<View, Parameters>::createView(FIDString name)
 {
   using namespace Steinberg;
-  if (FIDStringsEqual(name, Vst::ViewType::kEditor)) {
-    auto ui = new ViewClass(*this, persistentData);
+  if (FIDStringsEqual(name, ViewType::kEditor)) {
+    auto ui = new View(*this, persistentData);
     return ui;
   }
   return nullptr;
 }
+template<class View, class Parameters>
+tresult
+UnplugController<View, Parameters>::getMidiControllerAssignment(int32 busIndex,
+                                                                int16 channel,
+                                                                CtrlNumber midiControllerNumber,
+                                                                ParamID& tag)
+{
+  return kResultFalse;
+}
 
-} // namespace unplug
+} // namespace Steinberg::Vst
+
+namespace unplug {
+template<class View, class Parameters>
+using UnplugController = Steinberg::Vst::UnplugController<View, Parameters>;
+}

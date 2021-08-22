@@ -17,28 +17,28 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 
-namespace unplug {
+namespace Steinberg::Vst {
 
-template<class PluginParameters>
-class UnPlugProcessor : public Steinberg::Vst::AudioEffect
+template<class Parameters>
+class UnplugProcessor : public AudioEffect
 {
 public:
   //--- ---------------------------------------------------------------------
   // AudioEffect overrides:
   //--- ---------------------------------------------------------------------
-  Steinberg::tresult PLUGIN_API initialize(Steinberg::FUnknown* context) override;
+  tresult PLUGIN_API initialize(FUnknown* context) override;
 
-  Steinberg::tresult PLUGIN_API terminate() override;
+  tresult PLUGIN_API terminate() override;
 
   /** Will be called before any process call */
-  Steinberg::tresult PLUGIN_API setupProcessing(Steinberg::Vst::ProcessSetup& newSetup) override;
+  tresult PLUGIN_API setupProcessing(ProcessSetup& newSetup) override;
 
   /** For persistence */
-  Steinberg::tresult PLUGIN_API setState(Steinberg::IBStream* state) override;
-  Steinberg::tresult PLUGIN_API getState(Steinberg::IBStream* state) override;
+  tresult PLUGIN_API setState(IBStream* state) override;
+  tresult PLUGIN_API getState(IBStream* state) override;
 
 protected:
-  void UpdateParametersToLastPoint(Steinberg::Vst::ProcessData& data);
+  void UpdateParametersToLastPoint(ProcessData& data);
 
 private:
   /** Called from initialize, at first after constructor */
@@ -52,27 +52,27 @@ private:
    * information such as the maximum number of samples per audio block and the sample rate, so this is the right place
    * where to allocate resources that depend on those.
    * */
-  virtual void onSetupProcessing(Steinberg::Vst::ProcessSetup& newSetup) {}
+  virtual void onSetupProcessing(ProcessSetup& newSetup) {}
 
 protected:
-  unplug::ParameterStorage<PluginParameters::numParameters> parameterStorage;
+  unplug::ParameterStorage<Parameters::numParameters> parameterStorage;
 };
 
-template<class PluginParameters>
+template<class Parameters>
 void
-UnPlugProcessor<PluginParameters>::onInitialization()
+UnplugProcessor<Parameters>::onInitialization()
 {
   //--- create Audio IO ------
-  addAudioInput(STR16("Stereo In"), Steinberg::Vst::SpeakerArr::kStereo);
-  addAudioOutput(STR16("Stereo Out"), Steinberg::Vst::SpeakerArr::kStereo);
+  addAudioInput(STR16("Stereo In"), SpeakerArr::kStereo);
+  addAudioOutput(STR16("Stereo Out"), SpeakerArr::kStereo);
 
   /* If you don't need an event bus, you can remove the next line */
   addEventInput(STR16("Event In"), 1);
 }
 
-template<class PluginParameters>
-Steinberg::tresult PLUGIN_API
-UnPlugProcessor<PluginParameters>::initialize(FUnknown* context)
+template<class Parameters>
+tresult PLUGIN_API
+UnplugProcessor<Parameters>::initialize(FUnknown* context)
 {
   using namespace Steinberg;
   tresult result = AudioEffect::initialize(context);
@@ -80,24 +80,24 @@ UnPlugProcessor<PluginParameters>::initialize(FUnknown* context)
     return result;
   }
 
-  PluginParameters::getParameterInitializer().initializeStorage(parameterStorage);
+  Parameters::getParameterInitializer().initializeStorage(parameterStorage);
 
   onInitialization();
 
   return kResultOk;
 }
 
-template<class PluginParameters>
-Steinberg::tresult PLUGIN_API
-UnPlugProcessor<PluginParameters>::terminate()
+template<class Parameters>
+tresult PLUGIN_API
+UnplugProcessor<Parameters>::terminate()
 {
   onTermination();
   return AudioEffect::terminate();
 }
 
-template<class PluginParameters>
+template<class Parameters>
 void
-UnPlugProcessor<PluginParameters>::UpdateParametersToLastPoint(Steinberg::Vst::ProcessData& data)
+UnplugProcessor<Parameters>::UpdateParametersToLastPoint(ProcessData& data)
 {
   using namespace Steinberg;
   if (data.inputParameterChanges) {
@@ -106,7 +106,7 @@ UnPlugProcessor<PluginParameters>::UpdateParametersToLastPoint(Steinberg::Vst::P
       if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
         int32 numPoints = paramQueue->getPointCount();
         if (numPoints > 0) {
-          Vst::ParamValue value;
+          ParamValue value;
           int32 sampleOffset;
           paramQueue->getPoint(numPoints - 1, sampleOffset, value);
           parameterStorage.setNormalized(index, value);
@@ -116,9 +116,9 @@ UnPlugProcessor<PluginParameters>::UpdateParametersToLastPoint(Steinberg::Vst::P
   }
 }
 
-template<class PluginParameters>
-Steinberg::tresult PLUGIN_API
-UnPlugProcessor<PluginParameters>::setupProcessing(Steinberg::Vst::ProcessSetup& newSetup)
+template<class Parameters>
+tresult PLUGIN_API
+UnplugProcessor<Parameters>::setupProcessing(ProcessSetup& newSetup)
 {
   using namespace Steinberg;
   tresult result = AudioEffect::setupProcessing(newSetup);
@@ -131,14 +131,14 @@ UnPlugProcessor<PluginParameters>::setupProcessing(Steinberg::Vst::ProcessSetup&
 /**
  * loads the state. may be called by either the Processing Thread or the UI Thread
  * */
-template<class PluginParameters>
-Steinberg::tresult PLUGIN_API
-UnPlugProcessor<PluginParameters>::setState(Steinberg::IBStream* state)
+template<class Parameters>
+tresult PLUGIN_API
+UnplugProcessor<Parameters>::setState(IBStream* state)
 {
   using namespace Steinberg;
 
   IBStreamer streamer(state, kLittleEndian);
-  for (int i = 0; i < PluginParameters::numParameters; ++i) {
+  for (int i = 0; i < Parameters::numParameters; ++i) {
     double value;
     if (!streamer.readDouble(value)) {
       return kResultFalse;
@@ -151,15 +151,15 @@ UnPlugProcessor<PluginParameters>::setState(Steinberg::IBStream* state)
 /**
  * saves the state. may be called by either the Processing Thread or the UI Thread
  * */
-template<class PluginParameters>
-Steinberg::tresult PLUGIN_API
-UnPlugProcessor<PluginParameters>::getState(Steinberg::IBStream* state)
+template<class Parameters>
+tresult PLUGIN_API
+UnplugProcessor<Parameters>::getState(IBStream* state)
 {
   using namespace Steinberg;
   // saves the state
   //
   IBStreamer streamer(state, kLittleEndian);
-  for (int i = 0; i < PluginParameters::numParameters; ++i) {
+  for (int i = 0; i < Parameters::numParameters; ++i) {
     double const value = parameterStorage.get(i);
     if (!streamer.writeDouble(value)) {
       return kResultFalse;
@@ -168,4 +168,9 @@ UnPlugProcessor<PluginParameters>::getState(Steinberg::IBStream* state)
   return kResultOk;
 }
 
-} // namespace unplug
+} // namespace Steinberg::Vst
+
+namespace unplug {
+template<class Parameters>
+using UnplugProcessor = Steinberg::Vst::UnplugProcessor<Parameters>;
+}

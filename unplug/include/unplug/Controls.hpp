@@ -24,112 +24,38 @@ inline constexpr auto pi = (float)M_PI;
 /**
  * Combo ImGui control associated with a plugin parameter
  * */
-inline bool
-Combo(ParameterAccess& parameters, int parameterTag)
-{
-  using namespace ImGui;
-
-  bool isList = false;
-  parameters.isList(parameterTag, isList);
-  assert(isList);
-
-  double const value = parameters.getValue(parameterTag);
-  std::string parameterName;
-  bool const gotNameOk = parameters.getName(parameterTag, parameterName);
-  assert(gotNameOk);
-
-  std::string valueAsText;
-  bool const convertedOk = parameters.convertToText(parameterTag, value, valueAsText);
-  assert(convertedOk);
-
-  int numSteps = 0;
-  bool const gotNumStepsOk = parameters.getNumSteps(parameterTag, numSteps);
-  assert(gotNumStepsOk);
-
-  if (!BeginCombo(parameterName.c_str(), valueAsText.c_str(), ImGuiComboFlags_None))
-    return false;
-
-  auto const numItems = numSteps + 1;
-
-  bool hasValueChanged = false;
-  auto newValue = value;
-  for (int i = 0; i < numItems; i++) {
-    PushID((void*)(intptr_t)i);
-    const bool selectedItem = (i == newValue);
-    std::string itemText;
-    parameters.convertToText(parameterTag, (double)i, itemText);
-    if (Selectable(itemText.c_str(), selectedItem)) {
-      hasValueChanged = true;
-      newValue = i;
-    }
-    if (selectedItem)
-      SetItemDefaultFocus();
-    PopID();
-  }
-
-  EndCombo();
-  if (hasValueChanged) {
-    parameters.beginEdit(parameterTag);
-    parameters.setValueNormalized(parameterTag, newValue);
-    parameters.endEdit(parameterTag);
-    auto& g = *GImGui;
-    MarkItemEdited(g.CurrentWindow->DC.LastItemId);
-  }
-
-  return hasValueChanged;
-}
+bool
+Combo(ParameterAccess& parameters, int parameterTag);
 
 /**
  * Checkbox ImGui control associated with a plugin parameter
  * */
-inline bool
-Checkbox(ParameterAccess& parameters, int parameterTag)
-{
-  using namespace ImGui;
+bool
+Checkbox(ParameterAccess& parameters, int parameterTag);
 
-  double const value = parameters.getValue(parameterTag);
-  std::string parameterName;
-  bool const gotNameOk = parameters.getName(parameterTag, parameterName);
-  assert(gotNameOk);
+void
+Label(ParameterAccess& parameters, int parameterTag);
 
-  bool newValue = value != 0;
-  bool const hasValueChanged = ImGui::Checkbox(parameterName.c_str(), &newValue);
-  if (hasValueChanged) {
-    parameters.beginEdit(parameterTag);
-    parameters.setValueNormalized(parameterTag, newValue);
-    parameters.endEdit(parameterTag);
-  }
+void
+ValueAsText(ParameterAccess& parameters, int parameterTag);
 
-  return hasValueChanged;
-}
+/**
+ * Knob control stuff, originally based on https://github.com/ocornut/imgui/issues/942
+ * The Knob function is templated in order to support customizable drawing. A minimalist one is provided as default.
+ * */
 
-inline void
-Label(ParameterAccess& parameters, int parameterTag)
-{
-  auto const name = parameters.getName(parameterTag);
-  return ImGui::TextUnformatted(name.c_str());
-}
-
-inline void
-ValueAsText(ParameterAccess& parameters, int parameterTag)
-{
-  auto const value = parameters.getValue(parameterTag);
-  auto const valueAsText = parameters.convertToText(parameterTag, value);
-  return ImGui::TextUnformatted(valueAsText.c_str());
-}
-
+/**
+ * Describes the layout of the knob control
+ * */
 struct KnobLayout
-  {
-    float radius = 20.f;
-    float angleOffset=pi/4;
-  };
-
-struct KnobOutput
 {
-  bool isActive;
-  double outputValue;
+  float radius = 20.f;
+  float angleOffset = pi / 4;
 };
 
+/**
+ * Data needed to draw a knob. An object of this type is passed to the function that draws the knob.
+ * */
 struct KnobDrawData
 {
   KnobLayout layout;
@@ -139,6 +65,9 @@ struct KnobDrawData
   bool isHovered;
 };
 
+/**
+ * Minimalistic knob drwaer
+ * */
 template<int numSegments>
 inline void
 DrawSimpleKnob(KnobDrawData const& knob)
@@ -153,57 +82,23 @@ DrawSimpleKnob(KnobDrawData const& knob)
 }
 
 /**
- * Knob ImGui control, based on https://github.com/ocornut/imgui/issues/942
+ * implementation details for the Knob control
  * */
-template<class Drawer>
-inline KnobOutput
-Knob(const char* name,
-     const float inputValue,
-     KnobLayout layout,
-     Drawer drawer = DrawSimpleKnob<64>)
+namespace detail {
+
+struct KnobOutput
 {
-  ImGuiStyle& style = ImGui::GetStyle();
-  ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
-  ImVec2 center = ImVec2(cursorPosition.x + layout.radius, cursorPosition.y + layout.radius);
-
-  auto const currentAngle = (pi - layout.angleOffset) * inputValue * 2.0f + layout.angleOffset;
-
-  auto const x = -std::sin(currentAngle) * layout.radius + center.x;
-  auto const y = std::cos(currentAngle) * layout.radius + center.y;
-
-  auto const diameter = 2 * layout.radius;
-  ImGui::InvisibleButton(name, ImVec2(diameter, diameter));
-
-  bool const isActive = ImGui::IsItemActive();
-  bool const isHovered = ImGui::IsItemHovered();
-  auto outputValue = inputValue;
-
-  if (isActive) {
-    ImVec2 mp = ImGui::GetIO().MousePos;
-    float nextAngle = std::atan2(mp.x - center.x, center.y - mp.y) + pi;
-    nextAngle = std::max(layout.angleOffset, std::min(2.0f * pi - layout.angleOffset, nextAngle));
-    outputValue = 0.5f * (nextAngle - layout.angleOffset) / (pi - layout.angleOffset);
-    bool const hasGoneBelowTheBottom = inputValue == 0.0 && outputValue > 0.5;
-    bool const hasGoneOverTheTop = inputValue == 1.0 && outputValue < 0.5;
-    bool const hasGoneOutsideTheRange = hasGoneBelowTheBottom || hasGoneOverTheTop;
-    if (hasGoneOutsideTheRange) {
-      outputValue = inputValue;
-    }
-  }
-
   KnobDrawData drawData;
-  drawData.layout = layout;
-  drawData.center = center;
-  drawData.pointerPosition = ImVec2(x, y);
-  drawData.isActive = isActive;
-  drawData.isHovered = isHovered;
-  drawer(drawData);
+  double outputValue;
+  bool isActive;
+};
 
-  return { isActive, outputValue };
-}
+inline KnobOutput
+Knob(const char* name, const float inputValue, KnobLayout layout);
+} // namespace detail
 
 /**
- * Knob ImGui control associated with a plugin parameter
+ * Knob control associated with a plugin parameter
  * */
 template<class Drawer>
 inline bool
@@ -219,7 +114,9 @@ Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout, Drawer dr
   bool const convertedOk = parameters.convertToText(parameterTag, value, valueAsText);
   assert(convertedOk);
 
-  auto const output = Knob(parameterName.c_str(), normalizedValue, layout, drawer);
+  auto const output = detail::Knob(parameterName.c_str(), normalizedValue, layout);
+
+  drawer(output.drawData);
 
   if (isParameterBeingEdited) {
     if (output.isActive) {
@@ -243,10 +140,10 @@ Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout, Drawer dr
   return output.isActive;
 }
 
-inline bool
-Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout)
-{
-  return Knob(parameters, parameterTag, layout, DrawSimpleKnob<64>);
-}
+/**
+ * Knob control associated with a plugin parameter using the minimalistic drawer
+ * */
+bool
+Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout);
 
 } // namespace unplug

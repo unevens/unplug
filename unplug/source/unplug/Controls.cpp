@@ -1,0 +1,157 @@
+//------------------------------------------------------------------------
+// Copyright(c) 2021 Dario Mambro.
+//
+// Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
+// granted, provided that the above copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+// AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+//------------------------------------------------------------------------
+
+#include "unplug/Controls.hpp"
+
+namespace unplug {
+
+bool
+Combo(ParameterAccess& parameters, int parameterTag)
+{
+  using namespace ImGui;
+
+  bool isList = false;
+  parameters.isList(parameterTag, isList);
+  assert(isList);
+
+  double const value = parameters.getValue(parameterTag);
+  std::string parameterName;
+  bool const gotNameOk = parameters.getName(parameterTag, parameterName);
+  assert(gotNameOk);
+
+  std::string valueAsText;
+  bool const convertedOk = parameters.convertToText(parameterTag, value, valueAsText);
+  assert(convertedOk);
+
+  int numSteps = 0;
+  bool const gotNumStepsOk = parameters.getNumSteps(parameterTag, numSteps);
+  assert(gotNumStepsOk);
+
+  if (!BeginCombo(parameterName.c_str(), valueAsText.c_str(), ImGuiComboFlags_None))
+    return false;
+
+  auto const numItems = numSteps + 1;
+
+  bool hasValueChanged = false;
+  auto newValue = value;
+  for (int i = 0; i < numItems; i++) {
+    PushID((void*)(intptr_t)i);
+    const bool selectedItem = (i == newValue);
+    std::string itemText;
+    parameters.convertToText(parameterTag, (double)i, itemText);
+    if (Selectable(itemText.c_str(), selectedItem)) {
+      hasValueChanged = true;
+      newValue = i;
+    }
+    if (selectedItem)
+      SetItemDefaultFocus();
+    PopID();
+  }
+
+  EndCombo();
+  if (hasValueChanged) {
+    parameters.beginEdit(parameterTag);
+    parameters.setValueNormalized(parameterTag, newValue);
+    parameters.endEdit(parameterTag);
+    auto& g = *GImGui;
+    MarkItemEdited(g.CurrentWindow->DC.LastItemId);
+  }
+
+  return hasValueChanged;
+}
+
+bool
+Checkbox(ParameterAccess& parameters, int parameterTag)
+{
+  using namespace ImGui;
+
+  double const value = parameters.getValue(parameterTag);
+  std::string parameterName;
+  bool const gotNameOk = parameters.getName(parameterTag, parameterName);
+  assert(gotNameOk);
+
+  bool newValue = value != 0;
+  bool const hasValueChanged = ImGui::Checkbox(parameterName.c_str(), &newValue);
+  if (hasValueChanged) {
+    parameters.beginEdit(parameterTag);
+    parameters.setValueNormalized(parameterTag, newValue);
+    parameters.endEdit(parameterTag);
+  }
+
+  return hasValueChanged;
+}
+
+void
+Label(ParameterAccess& parameters, int parameterTag)
+{
+  auto const name = parameters.getName(parameterTag);
+  return ImGui::TextUnformatted(name.c_str());
+}
+
+void
+ValueAsText(ParameterAccess& parameters, int parameterTag)
+{
+  auto const value = parameters.getValue(parameterTag);
+  auto const valueAsText = parameters.convertToText(parameterTag, value);
+  return ImGui::TextUnformatted(valueAsText.c_str());
+}
+
+detail::KnobOutput
+detail::Knob(const char* name, const float inputValue, KnobLayout layout)
+{
+  ImGuiStyle& style = ImGui::GetStyle();
+  ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
+  ImVec2 center = ImVec2(cursorPosition.x + layout.radius, cursorPosition.y + layout.radius);
+
+  auto const currentAngle = (pi - layout.angleOffset) * inputValue * 2.0f + layout.angleOffset;
+
+  auto const x = -std::sin(currentAngle) * layout.radius + center.x;
+  auto const y = std::cos(currentAngle) * layout.radius + center.y;
+
+  auto const diameter = 2 * layout.radius;
+  ImGui::InvisibleButton(name, ImVec2(diameter, diameter));
+
+  bool const isActive = ImGui::IsItemActive();
+  bool const isHovered = ImGui::IsItemHovered();
+  auto outputValue = inputValue;
+
+  if (isActive) {
+    ImVec2 mp = ImGui::GetIO().MousePos;
+    float nextAngle = std::atan2(mp.x - center.x, center.y - mp.y) + pi;
+    nextAngle = std::max(layout.angleOffset, std::min(2.0f * pi - layout.angleOffset, nextAngle));
+    outputValue = 0.5f * (nextAngle - layout.angleOffset) / (pi - layout.angleOffset);
+    bool const hasGoneBelowTheBottom = inputValue == 0.0 && outputValue > 0.5;
+    bool const hasGoneOverTheTop = inputValue == 1.0 && outputValue < 0.5;
+    bool const hasGoneOutsideTheRange = hasGoneBelowTheBottom || hasGoneOverTheTop;
+    if (hasGoneOutsideTheRange) {
+      outputValue = inputValue;
+    }
+  }
+
+  KnobDrawData drawData;
+  drawData.layout = layout;
+  drawData.center = center;
+  drawData.pointerPosition = ImVec2(x, y);
+  drawData.isActive = isActive;
+  drawData.isHovered = isHovered;
+
+  return { drawData, outputValue, isActive };
+}
+
+bool
+Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout)
+{
+  return Knob(parameters, parameterTag, layout, DrawSimpleKnob<64>);
+}
+
+} // namespace unplug

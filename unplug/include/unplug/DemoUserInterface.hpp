@@ -50,7 +50,10 @@ public:
       return;
     }
 
-    Knob(parameters, ParamTag::gain, 40.f);
+    KnobLayout knobLayout;
+    knobLayout.radius = 40;
+
+    Knob(parameters, ParamTag::gain, knobLayout);
 
     ImGui::End();
   }

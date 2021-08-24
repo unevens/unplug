@@ -118,6 +118,12 @@ ValueAsText(ParameterAccess& parameters, int parameterTag)
   return ImGui::TextUnformatted(valueAsText.c_str());
 }
 
+struct KnobLayout
+  {
+    float radius = 20.f;
+    float angleOffset=pi/4;
+  };
+
 struct KnobOutput
 {
   bool isActive;
@@ -126,10 +132,9 @@ struct KnobOutput
 
 struct KnobDrawData
 {
-  float radius;
+  KnobLayout layout;
   ImVec2 center;
   ImVec2 pointerPosition;
-  float angleOffset;
   bool isActive;
   bool isHovered;
 };
@@ -143,7 +148,7 @@ DrawSimpleKnob(KnobDrawData const& knob)
                                                     : ImGuiCol_FrameBg);
   ImU32 col32line = ImGui::GetColorU32(ImGuiCol_SliderGrabActive);
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  draw_list->AddCircleFilled(knob.center, knob.radius, col32, numSegments);
+  draw_list->AddCircleFilled(knob.center, knob.layout.radius, col32, numSegments);
   draw_list->AddLine(knob.center, knob.pointerPosition, col32line, 1);
 }
 
@@ -154,20 +159,19 @@ template<class Drawer>
 inline KnobOutput
 Knob(const char* name,
      const float inputValue,
-     const float radius,
-     Drawer drawer = DrawSimpleKnob<64>,
-     const float angleOffset = pi / 4)
+     KnobLayout layout,
+     Drawer drawer = DrawSimpleKnob<64>)
 {
   ImGuiStyle& style = ImGui::GetStyle();
   ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
-  ImVec2 center = ImVec2(cursorPosition.x + radius, cursorPosition.y + radius);
+  ImVec2 center = ImVec2(cursorPosition.x + layout.radius, cursorPosition.y + layout.radius);
 
-  auto const currentAngle = (pi - angleOffset) * inputValue * 2.0f + angleOffset;
+  auto const currentAngle = (pi - layout.angleOffset) * inputValue * 2.0f + layout.angleOffset;
 
-  auto const x = -std::sin(currentAngle) * radius + center.x;
-  auto const y = std::cos(currentAngle) * radius + center.y;
+  auto const x = -std::sin(currentAngle) * layout.radius + center.x;
+  auto const y = std::cos(currentAngle) * layout.radius + center.y;
 
-  auto const diameter = 2 * radius;
+  auto const diameter = 2 * layout.radius;
   ImGui::InvisibleButton(name, ImVec2(diameter, diameter));
 
   bool const isActive = ImGui::IsItemActive();
@@ -177,8 +181,8 @@ Knob(const char* name,
   if (isActive) {
     ImVec2 mp = ImGui::GetIO().MousePos;
     float nextAngle = std::atan2(mp.x - center.x, center.y - mp.y) + pi;
-    nextAngle = std::max(angleOffset, std::min(2.0f * pi - angleOffset, nextAngle));
-    outputValue = 0.5f * (nextAngle - angleOffset) / (pi - angleOffset);
+    nextAngle = std::max(layout.angleOffset, std::min(2.0f * pi - layout.angleOffset, nextAngle));
+    outputValue = 0.5f * (nextAngle - layout.angleOffset) / (pi - layout.angleOffset);
     bool const hasGoneBelowTheBottom = inputValue == 0.0 && outputValue > 0.5;
     bool const hasGoneOverTheTop = inputValue == 1.0 && outputValue < 0.5;
     bool const hasGoneOutsideTheRange = hasGoneBelowTheBottom || hasGoneOverTheTop;
@@ -188,10 +192,9 @@ Knob(const char* name,
   }
 
   KnobDrawData drawData;
-  drawData.radius = radius;
+  drawData.layout = layout;
   drawData.center = center;
   drawData.pointerPosition = ImVec2(x, y);
-  drawData.angleOffset = angleOffset;
   drawData.isActive = isActive;
   drawData.isHovered = isHovered;
   drawer(drawData);
@@ -204,7 +207,7 @@ Knob(const char* name,
  * */
 template<class Drawer>
 inline bool
-Knob(ParameterAccess& parameters, int parameterTag, float radius, Drawer drawer, const float angleOffset = pi / 4)
+Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout, Drawer drawer)
 {
   bool const isParameterBeingEdited = parameters.isBeingEdited(parameterTag);
   double const normalizedValue = parameters.getValueNormalized(parameterTag);
@@ -216,7 +219,7 @@ Knob(ParameterAccess& parameters, int parameterTag, float radius, Drawer drawer,
   bool const convertedOk = parameters.convertToText(parameterTag, value, valueAsText);
   assert(convertedOk);
 
-  auto const output = Knob(parameterName.c_str(), normalizedValue, radius, drawer, angleOffset);
+  auto const output = Knob(parameterName.c_str(), normalizedValue, layout, drawer);
 
   if (isParameterBeingEdited) {
     if (output.isActive) {
@@ -241,9 +244,9 @@ Knob(ParameterAccess& parameters, int parameterTag, float radius, Drawer drawer,
 }
 
 inline bool
-Knob(ParameterAccess& parameters, int parameterTag, float radius, const float angleOffset = pi / 4)
+Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout)
 {
-  return Knob(parameters, parameterTag, radius, DrawSimpleKnob<64>, angleOffset);
+  return Knob(parameters, parameterTag, layout, DrawSimpleKnob<64>);
 }
 
 } // namespace unplug

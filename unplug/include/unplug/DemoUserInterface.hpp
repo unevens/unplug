@@ -43,16 +43,11 @@ public:
     // use PushStyleColor or PushStyleVar (and the corresponding Pop calls) to edit the ImGui style after
     // ImGui::NewFrame() has been called
 
-    //    bool keep_open = true;
-    //    ImGui::ShowDemoWindow(&keep_open);
-
     const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20),
-                            ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_None);
+    ImGui::SetNextWindowSize(main_viewport->Size, ImGuiCond_None);
 
-    // Main body of the Demo window starts here.
-    if (!ImGui::Begin("Dear ImGui Demo", NULL, 0)) {
+    if (!ImGui::Begin("UnPlugDemo", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove)) {
       // Early out if the window is collapsed, as an optimization.
       ImGui::End();
       return;
@@ -66,11 +61,14 @@ public:
     ImGui::End();
   }
 
-  static void adjustSize(int& width, int& height) {}
+  static void adjustSize(int& width, int& height) {
+    width = std::max(width, 100);
+    height = std::max(height, 200);
+  }
 
   static bool isResizingAllowed() { return true; }
 
-  static std::array<int, 2> getDefaultSize() { return { { 900, 700 } }; }
+  static std::array<int, 2> getDefaultSize() { return { { 300, 300 } }; }
 
   static void initializePersistentData(ViewPersistentData& presistentData) {}
 

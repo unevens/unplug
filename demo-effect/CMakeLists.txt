@@ -12,7 +12,23 @@ if(WIN32)
 	add_compile_options("/EHsc")
 	ADD_DEFINITIONS(-DUNICODE)
 	ADD_DEFINITIONS(-D_UNICODE)
+endif(WIN32)
+
+#universal binary if building on arm64
+if(APPLE)
+execute_process(
+		COMMAND uname -m
+		RESULT_VARIABLE result
+		OUTPUT_VARIABLE MACHINE_ARCHITECTURE
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(MACHINE_ARCHITECTURE STREQUAL "arm64")
+	set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
+	message(STATUS "Supported architectures: x86_64, arm64")
+else()
+	message(STATUS "Supported architectures: ${MACHINE_ARCHITECTURE}")
 endif()
+endif(APPLE)
 
 # VST3 SDK and plugin
 set(vst3sdk_SOURCE_DIR ${unplug_SOURCE_DIR}/libs/vst3sdk)
@@ -29,6 +45,7 @@ smtg_enable_vst3_sdk()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS FALSE)
+set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "")
 
 file(GLOB_RECURSE plug-src "${CMAKE_SOURCE_DIR}/source/*")
 smtg_add_vst3plugin(${PROJECT_NAME} ${plug-src})

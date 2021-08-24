@@ -99,11 +99,35 @@ Label(ParameterAccess& parameters, int parameterTag)
 }
 
 void
+TextCentered(std::string const& text, ImVec2 size)
+{
+  auto const bkgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
+  ImGui::PushStyleColor(ImGuiCol_Button, bkgColor);
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, bkgColor);
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, bkgColor);
+  ImGui::Button(text.c_str(), size);
+  ImGui::PopStyleColor(3);
+}
+
+void
+LabelCentered(ParameterAccess& parameters, int parameterTag, ImVec2 size)
+{
+  auto const name = parameters.getName(parameterTag);
+  TextCentered(name, size);
+}
+
+void
 ValueAsText(ParameterAccess& parameters, int parameterTag)
 {
-  auto const value = parameters.getValue(parameterTag);
-  auto const valueAsText = parameters.convertToText(parameterTag, value);
+  auto const valueAsText = parameters.getValueAsText(parameterTag);
   return ImGui::TextUnformatted(valueAsText.c_str());
+}
+
+void
+ValueAsTextCentered(ParameterAccess& parameters, int parameterTag, ImVec2 size)
+{
+  auto const valueAsText = parameters.getValueAsText(parameterTag);
+  TextCentered(valueAsText, size);
 }
 
 detail::KnobOutput
@@ -152,6 +176,12 @@ bool
 Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout)
 {
   return Knob(parameters, parameterTag, layout, DrawSimpleKnob<64>);
+}
+
+bool
+KnobWithLabels(ParameterAccess& parameters, int parameterTag, KnobLayout layout)
+{
+  return KnobWithLabels(parameters, parameterTag, layout, DrawSimpleKnob<64>);
 }
 
 } // namespace unplug

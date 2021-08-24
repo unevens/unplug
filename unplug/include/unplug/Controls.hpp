@@ -34,10 +34,19 @@ bool
 Checkbox(ParameterAccess& parameters, int parameterTag);
 
 void
+TextCentered(std::string const& text, ImVec2 size);
+
+void
 Label(ParameterAccess& parameters, int parameterTag);
 
 void
+LabelCentered(ParameterAccess& parameters, int parameterTag, ImVec2 size);
+
+void
 ValueAsText(ParameterAccess& parameters, int parameterTag);
+
+void
+ValueAsTextCentered(ParameterAccess& parameters, int parameterTag, ImVec2 size);
 
 /**
  * Knob control stuff, originally based on https://github.com/ocornut/imgui/issues/942
@@ -145,5 +154,20 @@ Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout, Drawer dr
  * */
 bool
 Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout);
+
+
+template<class Drawer>
+bool
+KnobWithLabels(ParameterAccess& parameters, int parameterTag, KnobLayout layout, Drawer drawer)
+{
+  auto const size = ImVec2{ layout.radius * 2, 2 * ImGui::GetTextLineHeight() };
+  LabelCentered(parameters, parameterTag, size);
+  auto const isActive = Knob(parameters, parameterTag, layout, drawer);
+  ValueAsTextCentered(parameters, parameterTag, size);
+  return isActive;
+}
+
+bool
+KnobWithLabels(ParameterAccess& parameters, int parameterTag, KnobLayout layout);
 
 } // namespace unplug

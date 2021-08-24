@@ -35,6 +35,14 @@ public:
 
   void paint()
   {
+
+    // ImGui default style can be editer directly before calling ImGui::NewFrame();
+
+    ImGui::NewFrame();
+
+    // use PushStyleColor or PushStyleVar (and the corresponding Pop calls) to edit the ImGui style after
+    // ImGui::NewFrame() has been called
+
     //    bool keep_open = true;
     //    ImGui::ShowDemoWindow(&keep_open);
 
@@ -53,7 +61,7 @@ public:
     KnobLayout knobLayout;
     knobLayout.radius = 40;
 
-    Knob(parameters, ParamTag::gain, knobLayout);
+    KnobWithLabels(parameters, ParamTag::gain, knobLayout);
 
     ImGui::End();
   }

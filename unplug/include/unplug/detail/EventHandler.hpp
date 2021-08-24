@@ -180,7 +180,6 @@ public:
     setCursor(io);
 
     ImGui_ImplOpenGL2_NewFrame();
-    ImGui::NewFrame();
     ui.paint();
     ImGui::Render();
     resizeAndClearViewport(io.DisplaySize.x, io.DisplaySize.y, ui.getBackgroundColor());

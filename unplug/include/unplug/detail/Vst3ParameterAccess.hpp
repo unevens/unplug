@@ -188,10 +188,10 @@ public:
     return controller.endEdit(tag) == kResultTrue;
   }
 
-  bool convertToText(int tag, double value, std::string& result)
+  bool convertToText(int tag, double valueNormalized, std::string& result)
   {
     String128 text;
-    if (controller.getParamStringByValue(tag, value, text) == kResultTrue) {
+    if (controller.getParamStringByValue(tag, valueNormalized, text) == kResultTrue) {
       result = ToUtf8{}(text);
       return true;
     }
@@ -200,12 +200,18 @@ public:
     }
   }
 
-  std::string convertToText(int tag, double value)
+  std::string convertToText(int tag, double valueNormalized)
   {
     std::string text;
-    bool const ok = convertToText(tag, value, text);
+    bool const ok = convertToText(tag, valueNormalized, text);
     assert(ok);
     return text;
+  }
+
+  std::string getValueAsText(int tag)
+  {
+    auto const valueNormalized = getValueNormalized(tag);
+    return convertToText(tag, valueNormalized);
   }
 
   bool convertFromText(int tag, double& value, std::string const& text)
@@ -220,6 +226,12 @@ public:
     bool const ok = convertFromText(tag, value, text);
     assert(ok);
     return value;
+  }
+
+  void setFromText(int tag, std::string const& text)
+  {
+    auto const valueNormalized = convertFromText(tag, text);
+    setValueNormalized(tag, valueNormalized);
   }
 
   bool getName(int tag, std::string& result)

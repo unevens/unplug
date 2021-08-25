@@ -131,7 +131,7 @@ ValueAsTextCentered(ParameterAccess& parameters, int parameterTag, ImVec2 size)
 }
 
 detail::KnobOutput
-detail::Knob(const char* name, const float inputValue, KnobLayout layout)
+detail::Knob(const char* name, float const inputValue, KnobLayout layout)
 {
   ImGuiStyle& style = ImGui::GetStyle();
   ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
@@ -172,16 +172,68 @@ detail::Knob(const char* name, const float inputValue, KnobLayout layout)
   return { drawData, outputValue, isActive };
 }
 
-bool
-Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout)
+void
+DrawSimpleKnob(KnobDrawData const& knob)
 {
-  return Knob(parameters, parameterTag, layout, DrawSimpleKnob<64>);
+  ImU32 col32 = ImGui::GetColorU32(knob.isActive    ? ImGuiCol_FrameBgActive
+    : knob.isHovered ? ImGuiCol_FrameBgHovered
+    : ImGuiCol_FrameBg);
+  ImU32 col32line = ImGui::GetColorU32(ImGuiCol_SliderGrabActive);
+  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+  auto const numSegments = static_cast<int>(1.5f*knob.layout.radius);
+  draw_list->AddCircleFilled(knob.center, knob.layout.radius, col32, numSegments);
+  draw_list->AddLine(knob.center, knob.pointerPosition, col32line, 1);
 }
 
 bool
-KnobWithLabels(ParameterAccess& parameters, int parameterTag, KnobLayout layout)
+Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> drawer)
 {
-  return KnobWithLabels(parameters, parameterTag, layout, DrawSimpleKnob<64>);
+  bool const isParameterBeingEdited = parameters.isBeingEdited(parameterTag);
+  double const normalizedValue = parameters.getValueNormalized(parameterTag);
+  double const value = parameters.valueFromNormalized(parameterTag, normalizedValue);
+  std::string parameterName;
+  bool const gotNameOk = parameters.getName(parameterTag, parameterName);
+  assert(gotNameOk);
+  std::string valueAsText;
+  bool const convertedOk = parameters.convertToText(parameterTag, value, valueAsText);
+  assert(convertedOk);
+
+  auto const output = detail::Knob(parameterName.c_str(), static_cast<float>(normalizedValue), layout);
+
+  drawer(output.drawData);
+
+  if (isParameterBeingEdited) {
+    if (output.isActive) {
+      bool const setValueOk = parameters.setValueNormalized(parameterTag, output.outputValue);
+      assert(setValueOk);
+    }
+    else {
+      bool const endEditOk = parameters.endEdit(parameterTag);
+      assert(endEditOk);
+    }
+  }
+  else {
+    if (output.isActive) {
+      bool const beginEditOk = parameters.beginEdit(parameterTag);
+      assert(beginEditOk);
+      bool const setValueOk = parameters.setValueNormalized(parameterTag, output.outputValue);
+      assert(setValueOk);
+    }
+  }
+
+  return output.isActive;
 }
+
+
+bool
+KnobWithLabels(ParameterAccess& parameters, int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> drawer)
+{
+  auto const size = ImVec2{ layout.radius * 2, 2 * ImGui::GetTextLineHeight() };
+  LabelCentered(parameters, parameterTag, size);
+  auto const isActive = Knob(parameters, parameterTag, layout, std::move(drawer));
+  ValueAsTextCentered(parameters, parameterTag, size);
+  return isActive;
+}
+
 
 } // namespace unplug

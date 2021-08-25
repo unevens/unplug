@@ -16,6 +16,8 @@
 #include "imgui_internal.h"
 #include "imgui_user_config.h"
 #include "unplug/ParameterAccess.hpp"
+#include <functional>
+#include <utility>
 
 namespace unplug {
 
@@ -77,18 +79,8 @@ struct KnobDrawData
 /**
  * Minimalistic knob drwaer
  * */
-template<int numSegments>
-inline void
-DrawSimpleKnob(KnobDrawData const& knob)
-{
-  ImU32 col32 = ImGui::GetColorU32(knob.isActive    ? ImGuiCol_FrameBgActive
-                                   : knob.isHovered ? ImGuiCol_FrameBgHovered
-                                                    : ImGuiCol_FrameBg);
-  ImU32 col32line = ImGui::GetColorU32(ImGuiCol_SliderGrabActive);
-  ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  draw_list->AddCircleFilled(knob.center, knob.layout.radius, col32, numSegments);
-  draw_list->AddLine(knob.center, knob.pointerPosition, col32line, 1);
-}
+void
+DrawSimpleKnob(KnobDrawData const& knob);
 
 /**
  * implementation details for the Knob control
@@ -102,72 +94,24 @@ struct KnobOutput
   bool isActive;
 };
 
-inline KnobOutput
-Knob(const char* name, const float inputValue, KnobLayout layout);
+KnobOutput
+Knob(const char* name, float inputValue, KnobLayout layout);
 } // namespace detail
 
 /**
  * Knob control associated with a plugin parameter
  * */
-template<class Drawer>
-inline bool
-Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout, Drawer drawer)
-{
-  bool const isParameterBeingEdited = parameters.isBeingEdited(parameterTag);
-  double const normalizedValue = parameters.getValueNormalized(parameterTag);
-  double const value = parameters.valueFromNormalized(parameterTag, normalizedValue);
-  std::string parameterName;
-  bool const gotNameOk = parameters.getName(parameterTag, parameterName);
-  assert(gotNameOk);
-  std::string valueAsText;
-  bool const convertedOk = parameters.convertToText(parameterTag, value, valueAsText);
-  assert(convertedOk);
-
-  auto const output = detail::Knob(parameterName.c_str(), normalizedValue, layout);
-
-  drawer(output.drawData);
-
-  if (isParameterBeingEdited) {
-    if (output.isActive) {
-      bool const setValueOk = parameters.setValueNormalized(parameterTag, output.outputValue);
-      assert(setValueOk);
-    }
-    else {
-      bool const endEditOk = parameters.endEdit(parameterTag);
-      assert(endEditOk);
-    }
-  }
-  else {
-    if (output.isActive) {
-      bool const beginEditOk = parameters.beginEdit(parameterTag);
-      assert(beginEditOk);
-      bool const setValueOk = parameters.setValueNormalized(parameterTag, output.outputValue);
-      assert(setValueOk);
-    }
-  }
-
-  return output.isActive;
-}
-
-/**
- * Knob control associated with a plugin parameter using the minimalistic drawer
- * */
 bool
-Knob(ParameterAccess& parameters, int parameterTag, KnobLayout layout);
-
-
-template<class Drawer>
-bool
-KnobWithLabels(ParameterAccess& parameters, int parameterTag, KnobLayout layout, Drawer drawer)
-{
-  auto const size = ImVec2{ layout.radius * 2, 2 * ImGui::GetTextLineHeight() };
-  LabelCentered(parameters, parameterTag, size);
-  auto const isActive = Knob(parameters, parameterTag, layout, drawer);
-  ValueAsTextCentered(parameters, parameterTag, size);
-  return isActive;
-}
+Knob(ParameterAccess& parameters,
+     int parameterTag,
+     KnobLayout layout,
+     std::function<void(KnobDrawData const&)> drawer = DrawSimpleKnob);
 
 bool
-KnobWithLabels(ParameterAccess& parameters, int parameterTag, KnobLayout layout);
+KnobWithLabels(ParameterAccess& parameters,
+               int parameterTag,
+               KnobLayout layout,
+               std::function<void(KnobDrawData const&)> drawer = DrawSimpleKnob);
+
 
 } // namespace unplug

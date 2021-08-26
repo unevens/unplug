@@ -35,24 +35,81 @@ Combo(int parameterTag);
 bool
 Checkbox(int parameterTag);
 
+/**
+ * Displays some text centered in the rectangle between the current position and size
+ * */
 void
 TextCentered(std::string const& text, ImVec2 size);
 
+/**
+ * Displays the name of a parameter
+ * */
 void
 Label(int parameterTag);
 
+/**
+ * Displays the name of a parameter, centered in the rectangle between the current position and size
+ * */
 void
 LabelCentered(int parameterTag, ImVec2 size);
 
+/**
+ * Displays the value of a parameter as text
+ * */
 void
 ValueAsText(int parameterTag);
 
+/**
+ * Displays the value of a parameter as text, centered in the rectangle between the current position and size
+ * */
 void
 ValueAsTextCentered(int parameterTag, ImVec2 size);
 
 /**
+ * Data that characterize the state of a parameter
+ * */
+struct ParameterData
+{
+  std::string name;
+  float valueNormalized;
+  float value;
+  float minValue;
+  float maxValue;
+  std::string valueAsText;
+  bool isBeingEdited;
+
+  ParameterData(ParameterAccess& parameters, int parameterTag);
+};
+
+/**
+ * Data that characterize the state of a control
+ * */
+struct ControlOutput
+{
+  float value = 0.f;
+  bool isActive = false;
+};
+
+/**
+ * Controls a parameter with a custom control, used internally by knobs and sliders
+ * */
+bool
+Control(int parameterTag, std::function<ControlOutput(ParameterData const& parameter)> const& control);
+
+/**
+ * SliderFloat ImGui control associated with a plugin parameter
+ * */
+bool
+SliderFloat(int parameterTag, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
+
+/**
+ * SliderInt ImGui control associated with a plugin parameter
+ * */
+bool
+SliderInt(int parameterTag, const char* format = "%df", ImGuiSliderFlags flags = 0);
+
+/**
  * Knob control stuff, originally based on https://github.com/ocornut/imgui/issues/942
- * The Knob function is templated in order to support customizable drawing. A minimalist one is provided as default.
  * */
 
 /**
@@ -72,8 +129,8 @@ struct KnobDrawData
   KnobLayout layout;
   ImVec2 center;
   ImVec2 pointerPosition;
-  bool isActive;
-  bool isHovered;
+  bool isActive = false;
+  bool isHovered = false;
 };
 
 /**
@@ -83,28 +140,49 @@ void
 DrawSimpleKnob(KnobDrawData const& knob);
 
 /**
- * implementation details for the Knob control
+ * Knob control associated with a plugin parameter
+ * */
+bool
+Knob(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
+
+/**
+ * Knob control associated with a plugin parameter, which also display the name and value of the parameter
+ * */
+
+bool
+KnobWithLabels(int parameterTag,
+               KnobLayout layout,
+               std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
+
+/**
+ * implementation details that can be useful to implement custom controls
  * */
 namespace detail {
+
+struct EditingState
+{
+  bool isParameterBeingEdited;
+  bool isControlActive;
+
+  EditingState(ParameterData const& parameterData, bool isControlActive);
+};
+
+void
+applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingState editingState, float outputValue);
 
 struct KnobOutput
 {
   KnobDrawData drawData;
-  double outputValue;
-  bool isActive;
+  ControlOutput output;
+  double value = 0.f;
+  bool isActive = false;
 };
 
+/**
+ * ImGui Knob control, not assocciated with any parameter*/
 KnobOutput
 Knob(const char* name, float inputValue, KnobLayout layout);
+
 } // namespace detail
-
-/**
- * Knob control associated with a plugin parameter
- * */
-bool
-Knob(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> drawer = DrawSimpleKnob);
-
-bool
-KnobWithLabels(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> drawer = DrawSimpleKnob);
 
 } // namespace unplug

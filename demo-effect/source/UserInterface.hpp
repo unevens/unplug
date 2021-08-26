@@ -25,7 +25,7 @@ public:
 
   static bool isResizingAllowed() { return true; }
 
-  static std::array<int, 2> getDefaultSize() { return { { 300, 300 } }; }
+  static std::array<int, 2> getDefaultSize() { return { { 200, 300 } }; }
 
   static void initializePersistentData(unplug::ViewPersistentData& presistentData) {}
 

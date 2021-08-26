@@ -39,9 +39,12 @@ DemoEffectUserInterface::paint()
     return;
   }
 
-  KnobLayout knobLayout;
-  knobLayout.radius = 40;
+  auto const p = main_viewport->Size.x / static_cast<float>(getDefaultSize()[0]);
 
+  KnobLayout knobLayout;
+  knobLayout.radius = 80 * p;
+
+  //  SliderFloat(ParamTag::gain);
   KnobWithLabels(ParamTag::gain, knobLayout);
 
   ImGui::End();
@@ -50,6 +53,11 @@ DemoEffectUserInterface::paint()
 void
 DemoEffectUserInterface::adjustSize(int& width, int& height)
 {
-  width = std::max(width, 100);
-  height = std::max(height, 200);
+  auto const reference = getDefaultSize();
+  auto const referenceWidth = static_cast<float>(reference[0]);
+  auto const referenceHeight = static_cast<float>(reference[1]);
+  auto const ratio = referenceHeight / referenceWidth;
+  height = static_cast<int>(static_cast<float>(width) * ratio);
+  width = std::max(width, static_cast<int>(referenceWidth / 2.f));
+  height = std::max(height, static_cast<int>(referenceHeight / 2.f));
 }

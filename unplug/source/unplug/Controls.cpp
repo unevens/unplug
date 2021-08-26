@@ -41,7 +41,9 @@ Combo(int parameterTag)
   bool const gotNumStepsOk = parameters.getNumSteps(parameterTag, numSteps);
   assert(gotNumStepsOk);
 
-  if (!BeginCombo(parameterName.c_str(), valueAsText.c_str(), ImGuiComboFlags_None))
+  auto controlName = parameterName + "_COMBO";
+
+  if (!BeginCombo(controlName.c_str(), valueAsText.c_str(), ImGuiComboFlags_None))
     return false;
 
   auto const numItems = numSteps + 1;
@@ -87,7 +89,8 @@ Checkbox(int parameterTag)
   assert(gotNameOk);
 
   bool newValue = value != 0;
-  bool const hasValueChanged = ImGui::Checkbox(parameterName.c_str(), &newValue);
+  auto controlName = parameterName + "_CHECKBOX";
+  bool const hasValueChanged = ImGui::Checkbox(controlName.c_str(), &newValue);
   if (hasValueChanged) {
     parameters.beginEdit(parameterTag);
     parameters.setValueNormalized(parameterTag, newValue);
@@ -197,8 +200,9 @@ SliderFloat(int parameterTag, const char* format, ImGuiSliderFlags flags)
 {
   return Control(parameterTag, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
+    auto controlName = parameter.name + "_SLIDERFLOAT";
     bool isActive =
-      ImGui::SliderFloat(parameter.name.c_str(), &outputValue, parameter.minValue, parameter.maxValue, format, flags);
+      ImGui::SliderFloat(controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, format, flags);
     return ControlOutput{ outputValue, isActive };
   });
 }
@@ -262,7 +266,8 @@ bool
 Knob(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> const& drawer)
 {
   return Control(parameterTag, [&](ParameterData const& parameter) {
-    auto const knobOutput = Knob(parameter.name.c_str(), static_cast<float>(parameter.valueNormalized), layout);
+    auto controlName = parameter.name + "_K NOB";
+    auto const knobOutput = Knob(controlName.c_str(), static_cast<float>(parameter.valueNormalized), layout);
     drawer(knobOutput.drawData);
     return knobOutput.output;
   });

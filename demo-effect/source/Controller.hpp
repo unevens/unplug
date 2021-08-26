@@ -14,10 +14,11 @@
 #pragma once
 
 #include "Parameters.hpp"
+#include "UserInterface.hpp"
 #include "unplug/UnplugController.hpp"
-#include "unplug/Vst3DemoView.hpp"
+#include "unplug/Vst3PluginView.hpp"
 
-using ViewClass = unplug::vst3::DemoView;
+using ViewClass = unplug::vst3::PluginView<DemoEffectUserInterface>;
 using BaseController = unplug::UnplugController<ViewClass, DemoEffectParameters>;
 
 class UnplugDemoEffectController final : public BaseController

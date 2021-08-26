@@ -26,6 +26,7 @@ namespace unplug {
 
 #ifdef UNPLUG_VST3
 using ParameterAccess = vst3::ParameterAccess;
+using vst3::Parameters;
 #else
 //todo for other targets
 #endif

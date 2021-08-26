@@ -11,7 +11,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#pragma once
 #include "unplug/detail/Vst3ParameterAccess.hpp"
 #include <cassert>
 
@@ -416,5 +415,22 @@ ParameterAccess::setMidiMapping(int parameterTag, MidiCC midiControl, int channe
   midiMapping.mapParameter(parameterTag, midiControl, channel);
 }
 
+void
+ParameterAccess::setCurrent(ParameterAccess* parameterAccess)
+{
+  current = parameterAccess;
+}
+
+ParameterAccess*
+ParameterAccess::getCurrent()
+{
+  return current;
+}
+
+ParameterAccess&
+Parameters()
+{
+  return *ParameterAccess::getCurrent();
+}
 
 } // namespace unplug::vst3

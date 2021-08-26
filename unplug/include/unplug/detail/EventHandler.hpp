@@ -40,7 +40,6 @@ public:
   explicit EventHandler(pugl::View& view, ParameterAccess& parameters)
     : view(view)
     , parameters(parameters)
-    , ui(parameters)
   {}
 
   static void adjustSize(int& width, int& height) { return UserInterface::adjustSize(width, height); }
@@ -330,6 +329,7 @@ private:
   {
     assert(imguiContext);
     ImGui::SetCurrentContext(imguiContext);
+    ParameterAccess::setCurrent(&parameters);
   }
 
   int convertButtonCode(int code)

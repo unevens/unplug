@@ -27,28 +27,28 @@ inline constexpr auto pi = (float)M_PI;
  * Combo ImGui control associated with a plugin parameter
  * */
 bool
-Combo(ParameterAccess& parameters, int parameterTag);
+Combo(int parameterTag);
 
 /**
  * Checkbox ImGui control associated with a plugin parameter
  * */
 bool
-Checkbox(ParameterAccess& parameters, int parameterTag);
+Checkbox(int parameterTag);
 
 void
 TextCentered(std::string const& text, ImVec2 size);
 
 void
-Label(ParameterAccess& parameters, int parameterTag);
+Label(int parameterTag);
 
 void
-LabelCentered(ParameterAccess& parameters, int parameterTag, ImVec2 size);
+LabelCentered(int parameterTag, ImVec2 size);
 
 void
-ValueAsText(ParameterAccess& parameters, int parameterTag);
+ValueAsText(int parameterTag);
 
 void
-ValueAsTextCentered(ParameterAccess& parameters, int parameterTag, ImVec2 size);
+ValueAsTextCentered(int parameterTag, ImVec2 size);
 
 /**
  * Knob control stuff, originally based on https://github.com/ocornut/imgui/issues/942
@@ -102,16 +102,9 @@ Knob(const char* name, float inputValue, KnobLayout layout);
  * Knob control associated with a plugin parameter
  * */
 bool
-Knob(ParameterAccess& parameters,
-     int parameterTag,
-     KnobLayout layout,
-     std::function<void(KnobDrawData const&)> drawer = DrawSimpleKnob);
+Knob(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> drawer = DrawSimpleKnob);
 
 bool
-KnobWithLabels(ParameterAccess& parameters,
-               int parameterTag,
-               KnobLayout layout,
-               std::function<void(KnobDrawData const&)> drawer = DrawSimpleKnob);
-
+KnobWithLabels(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> drawer = DrawSimpleKnob);
 
 } // namespace unplug

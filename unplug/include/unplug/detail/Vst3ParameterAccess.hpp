@@ -117,10 +117,18 @@ public:
 
   void setMidiMapping(int parameterTag, MidiCC midiControl) { midiMapping.mapParameter(parameterTag, midiControl); }
 
+  static void setCurrent(ParameterAccess* parameterAccess);
+
+  static ParameterAccess* getCurrent();
+
 private:
   EditControllerEx1& controller;
   MidiMapping& midiMapping;
   std::unordered_set<int> paramsBeingEdited;
+  inline static thread_local ParameterAccess* current = nullptr;
 };
+
+ParameterAccess&
+Parameters();
 
 } // namespace unplug::vst3

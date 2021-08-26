@@ -12,65 +12,22 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "imgui.h"
 #include "pugl/pugl.hpp"
-#include "unplug/Controls.hpp"
-#include "unplug/ParameterAccess.hpp"
+#include "unplug/ViewPersistentData.hpp"
 #include <array>
 
-namespace unplug {
-
-/**
- * Just an hello world user interface that shows the Dear ImGui demo
- * */
-
-class DemoUserInterface final
+class DemoEffectUserInterface final
 {
 public:
-  using ParameterAccess = unplug::ParameterAccess;
+  void paint();
 
-  explicit DemoUserInterface(ParameterAccess& parameters)
-    : parameters(parameters)
-  {}
-
-  void paint()
-  {
-
-    // ImGui default style can be editer directly before calling ImGui::NewFrame();
-
-    ImGui::NewFrame();
-
-    // use PushStyleColor or PushStyleVar (and the corresponding Pop calls) to edit the ImGui style after
-    // ImGui::NewFrame() has been called
-
-    const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_None);
-    ImGui::SetNextWindowSize(main_viewport->Size, ImGuiCond_None);
-
-    if (!ImGui::Begin("UnPlugDemo", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove)) {
-      // Early out if the window is collapsed, as an optimization.
-      ImGui::End();
-      return;
-    }
-
-    KnobLayout knobLayout;
-    knobLayout.radius = 40;
-
-    KnobWithLabels(parameters, ParamTag::gain, knobLayout);
-
-    ImGui::End();
-  }
-
-  static void adjustSize(int& width, int& height) {
-    width = std::max(width, 100);
-    height = std::max(height, 200);
-  }
+  static void adjustSize(int& width, int& height);
 
   static bool isResizingAllowed() { return true; }
 
   static std::array<int, 2> getDefaultSize() { return { { 300, 300 } }; }
 
-  static void initializePersistentData(ViewPersistentData& presistentData) {}
+  static void initializePersistentData(unplug::ViewPersistentData& presistentData) {}
 
   static std::string getWindowName() { return "Demo"; }
 
@@ -84,9 +41,4 @@ public:
   {
     return pugl::Status::success;
   }
-
-private:
-  ParameterAccess& parameters;
 };
-
-} // namespace unplug

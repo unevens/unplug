@@ -17,6 +17,7 @@
 #include "OpaqueGl.h"
 #include "imgui.h"
 #include "imgui_impl_opengl2.h"
+#include "implot.h"
 #include "pugl/gl.hpp"
 #include <array>
 #include <chrono>
@@ -106,6 +107,7 @@ public:
     IMGUI_CHECKVERSION();
     if (imguiContext == nullptr) {
       imguiContext = ImGui::CreateContext();
+      implotContext = ImPlot::CreateContext();
       setCurrentContext();
     }
     ImGuiIO& io = ImGui::GetIO();
@@ -329,6 +331,7 @@ private:
   {
     assert(imguiContext);
     ImGui::SetCurrentContext(imguiContext);
+    ImPlot::SetCurrentContext(implotContext);
     ParameterAccess::setCurrent(&parameters);
   }
 
@@ -392,6 +395,7 @@ private:
   ParameterAccess& parameters;
   pugl::View& view;
   ImGuiContext* imguiContext = nullptr;
+  ImPlotContext* implotContext = nullptr;
   UserInterface ui;
   time_point prevFrameTime;
   ImGuiMouseCursor lastCursor = -1;

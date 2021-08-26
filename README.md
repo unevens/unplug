@@ -1,9 +1,8 @@
-# unplug
+# Unplug
 
-unplug is a work in progress experiment to make VST3 plugins using [Dear ImGui](https://github.com/ocornut/imgui) and [Pugl](https://github.com/lv2/pugl) instead of VSTGUI to do the user interface.
+Unplug is a work in progress experiment to make VST3 plugins using [Dear ImGui](https://github.com/ocornut/imgui) and [Pugl](https://github.com/lv2/pugl) and [ImPlot](https://github.com/epezent/implot) instead of VSTGUI to do the user interface.
 
 Currently, it *seems* to work on Windows and Mac. It still needs some work on Linux. 
-
 
 ## Installing dependencies on Ubuntu
 

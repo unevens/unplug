@@ -185,8 +185,10 @@ public:
     ui.paint();
     ImGui::Render();
     resizeAndClearViewport(io.DisplaySize.x, io.DisplaySize.y, ui.getBackgroundColor());
-
     ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+
+    resetKeys();
+
     return pugl::Status::success;
   }
 
@@ -390,6 +392,12 @@ private:
       default:
         break;
     }
+  }
+
+  void resetKeys()
+  {
+    ImGuiIO& io = ImGui::GetIO();
+    std::fill(std::begin(io.KeysDown), std::end(io.KeysDown), false);
   }
 
 private:

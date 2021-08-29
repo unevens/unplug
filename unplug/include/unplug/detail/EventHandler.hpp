@@ -95,6 +95,7 @@ public:
     io.KeyCtrl = modifiers.control;
     io.KeyShift = modifiers.shift;
     io.KeyAlt = modifiers.alt;
+    io.KeySuper = modifiers.command;
   }
 
   bool getParameterAtCoordinates(int x, int y, int& parameterTag)

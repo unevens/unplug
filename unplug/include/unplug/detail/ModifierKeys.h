@@ -20,6 +20,7 @@ struct ModifierKeys final
   bool shift = false;
   bool alt = false;
   bool control = false;
+  bool command = false;
 };
 
 } // namespace unplug

@@ -24,7 +24,8 @@ modifierKeysFromBitmask(Steinberg::int16 mask)
   unplug::detail::ModifierKeys modifierKeys;
   modifierKeys.shift = mask & Steinberg::kShiftKey;
   modifierKeys.alt = mask & Steinberg::kAlternateKey;
-  modifierKeys.control = (mask & Steinberg::kCommandKey) || (mask & Steinberg::kControlKey);
+  modifierKeys.control = mask & Steinberg::kControlKey;
+  modifierKeys.command = mask & Steinberg::kCommandKey;
   return modifierKeys;
 }
 

@@ -88,7 +88,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
 
 # Pugl
 add_library(pugl STATIC)
-include_directories("${unplug_SOURCE_DIR}/libs/pugl/include" "${unplug_SOURCE_DIR}/libs/pugl/src" "${unplug_SOURCE_DIR}/libs/pugl/bindings/cxx/include")
+include_directories("${unplug_SOURCE_DIR}/libs/pugl/include" "${unplug_SOURCE_DIR}/libs/pugl/src" "${unplug_SOURCE_DIR}/libs/pugl/bindings/cpp/include")
 target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/implementation.c")
 target_compile_definitions(pugl PUBLIC PUGL_STATIC PUGL_NO_INCLUDE_GL_H PUGL_NO_INCLUDE_GLU_H )
 if(SMTG_WIN)

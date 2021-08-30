@@ -43,7 +43,10 @@ public:
     , parameters(parameters)
   {}
 
-  static void adjustSize(int& width, int& height) { return UserInterface::adjustSize(width, height); }
+  static void adjustSize(int& width, int& height, int prevWidth, int prevHeight)
+  {
+    UserInterface::adjustSize(width, height, prevWidth, prevHeight);
+  }
 
   static bool isResizingAllowed() { return UserInterface::isResizingAllowed(); }
 

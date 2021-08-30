@@ -17,8 +17,8 @@
 #include "pluginterfaces/vst/ivstplugview.h"
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/gl.hpp"
-#include "unplug/ViewPersistentData.hpp"
 #include "unplug/MidiMapping.hpp"
+#include "unplug/ViewPersistentData.hpp"
 #include <memory>
 #include <string>
 
@@ -61,10 +61,14 @@ public:
     return Steinberg::CPluginView::queryInterface(iid, obj);
   }
 
-  View(EditControllerEx1& controller, ViewPersistentData& persistentData, MidiMapping& midiMapping)
+  View(EditControllerEx1& controller,
+       ViewPersistentData& persistentData,
+       MidiMapping& midiMapping,
+       std::array<int, 2>& lastViewSize)
     : world{ pugl::WorldType::module }
     , parameters{ controller, midiMapping }
     , persistentData{ persistentData }
+    , lastViewSize{ lastViewSize }
   {
     world.setClassName(EventHandler::getWindowName().c_str());
   }
@@ -94,7 +98,7 @@ public:
     puglView->setEventHandler(*eventHandler);
     puglView->setParentWindow((pugl::NativeView)pParent);
     puglView->setWindowTitle(EventHandler::getWindowName().c_str());
-    auto const defaultSize = EventHandler::getDefaultSize();
+    auto const defaultSize = getDefaultSize();
     puglView->setDefaultSize(defaultSize[0], defaultSize[1]);
     puglView->setAspectRatio(0, 0, 0, 0);
     puglView->setBackend(pugl::glBackend());
@@ -136,6 +140,8 @@ public:
       puglView->setFrame({ (double)r->left, (double)r->top, (double)r->getWidth(), (double)r->getHeight() });
       puglView->postRedisplay();
     }
+    lastViewSize[0] = r->getWidth();
+    lastViewSize[1] = r->getHeight();
     return CPluginView::onSize(r);
   }
 
@@ -168,7 +174,7 @@ public:
   {
     int width = rect->getWidth();
     int height = rect->getHeight();
-    EventHandler::adjustSize(width, height);
+    EventHandler::adjustSize(width, height, lastViewSize[0], lastViewSize[1]);
     rect->right = rect->left + width;
     rect->bottom = rect->top + height;
     return kResultTrue;
@@ -196,6 +202,12 @@ public:
   }
 
 private:
+  std::array<int, 2> getDefaultSize() const
+  {
+    bool const hasLastViewSize = lastViewSize[0] > -1 && lastViewSize[1] > -1;
+    return hasLastViewSize ? lastViewSize : EventHandler::getDefaultSize();
+  }
+
   Steinberg::tresult onKeyEvent(Steinberg::char16 key,
                                 Steinberg::int16 keyMsg,
                                 Steinberg::int16 modifiersMask,
@@ -236,6 +248,7 @@ private:
   std::unique_ptr<EventHandler> eventHandler;
   ParameterAccess parameters;
   ViewPersistentData& persistentData;
+  std::array<int, 2>& lastViewSize;
 };
 
-} // namespace unplug
+} // namespace unplug::vst3::detail

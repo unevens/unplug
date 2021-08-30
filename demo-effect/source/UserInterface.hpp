@@ -21,11 +21,13 @@ class DemoEffectUserInterface final
 public:
   void paint();
 
-  static void adjustSize(int& width, int& height);
+  static void adjustSize(int& width, int& height, int prevWidth, int prevHeight);
 
   static bool isResizingAllowed() { return true; }
 
   static std::array<int, 2> getDefaultSize() { return { { 200, 300 } }; }
+
+  static float getMinZoom() { return 0.5f; }
 
   static void initializePersistentData(unplug::ViewPersistentData& presistentData) {}
 

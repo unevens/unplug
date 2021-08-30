@@ -45,21 +45,22 @@ DemoEffectUserInterface::paint()
   knobLayout.radius = 80 * p;
 
   //  SliderFloat(ParamTag::gain);
-  //KnobWithLabels(ParamTag::gain, knobLayout);
-  auto c = false;
-  ImGui::ShowDemoWindow(&c);
+  KnobWithLabels(ParamTag::gain, knobLayout);
+  //  auto c = false;
+  //  ImGui::ShowDemoWindow(&c);
 
   ImGui::End();
 }
 
 void
-DemoEffectUserInterface::adjustSize(int& width, int& height)
+DemoEffectUserInterface::adjustSize(int& width, int& height, int prevWidth, int prevHeight)
 {
-  auto const reference = getDefaultSize();
-  auto const referenceWidth = static_cast<float>(reference[0]);
-  auto const referenceHeight = static_cast<float>(reference[1]);
-  auto const ratio = referenceHeight / referenceWidth;
-  height = static_cast<int>(static_cast<float>(width) * ratio);
-  width = std::max(width, static_cast<int>(referenceWidth / 2.f));
-  height = std::max(height, static_cast<int>(referenceHeight / 2.f));
+  auto const referenceSize = getDefaultSize();
+  auto const referenceWidth = static_cast<float>(referenceSize[0]);
+  auto const referenceHeight = static_cast<float>(referenceSize[1]);
+  auto const widthRatio = static_cast<float>(width) / referenceWidth;
+  auto const heightRatio = static_cast<float>(height) / referenceHeight;
+  auto const ratio = std::max(getMinZoom(), std::min(widthRatio, heightRatio));
+  width = static_cast<int>(ratio * referenceWidth);
+  height = static_cast<int>(ratio * referenceHeight);
 }

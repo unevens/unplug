@@ -61,6 +61,7 @@ protected:
 
 private:
   unplug::ViewPersistentData persistentData;
+  std::array<int, 2> lastViewSize{ { -1, -1 } };
 
   DEFINE_INTERFACES
   DEF_INTERFACE(IMidiMapping);
@@ -218,7 +219,7 @@ UnplugController<View, Parameters>::createView(FIDString name)
 {
   using namespace Steinberg;
   if (FIDStringsEqual(name, ViewType::kEditor)) {
-    auto ui = new View(*this, persistentData, midiMapping);
+    auto ui = new View(*this, persistentData, midiMapping, lastViewSize);
     return ui;
   }
   return nullptr;

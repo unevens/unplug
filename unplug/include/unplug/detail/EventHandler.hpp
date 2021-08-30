@@ -194,6 +194,7 @@ public:
 
   pugl::Status onEvent(const pugl::ButtonPressEvent& event)
   {
+    view.grabFocus();
     if (!isMouseCursorIn)
       return pugl::Status::failure;
     setCurrentContext();

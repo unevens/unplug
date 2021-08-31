@@ -39,12 +39,9 @@ DemoEffectUserInterface::paint()
     return;
   }
 
-  auto const p = main_viewport->Size.x / static_cast<float>(getDefaultSize()[0]);
+  ImGui::PushItemWidth(main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x);
 
-  KnobLayout knobLayout;
-  knobLayout.radius = 80 * p;
-
-  KnobWithLabels(ParamTag::gain, knobLayout);
+  KnobWithLabels(ParamTag::gain);
 
   DragFloat(ParamTag::gain);
   SliderFloat(ParamTag::gain);

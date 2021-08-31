@@ -51,19 +51,19 @@ TextCentered(std::string const& text, ImVec2 size);
  * Displays the name of a parameter
  * */
 void
-Label(int parameterTag);
+NameLabel(int parameterTag);
 
 /**
  * Displays the name of a parameter, centered in the rectangle between the current position and size
  * */
 void
-LabelCentered(int parameterTag, ImVec2 size);
+NameLabelCentered(int parameterTag, ImVec2 size);
 
 /**
  * Displays the value of a parameter as text. Not editable
  * */
 void
-ValueLabel(int parameterTag);
+ValueLabel(int parameterTag, ShowLabel showLabel = ShowLabel::yes);
 
 /**
  * Displays the value of a parameter as text, centered in the rectangle between the current position and size
@@ -72,10 +72,11 @@ void
 ValueLabelCentered(int parameterTag, ImVec2 size, ShowLabel showLabel = ShowLabel::yes);
 
 /**
- * Displays the value of a parameter as text, allowing user input upon click or double click, centered in the rectangle between the current position and size
+ * Displays the value of a parameter as text, allowing user input upon click or double click, centered in the rectangle
+ * between the current position and size
  * */
 bool
-ValueAsText(int parameterTag, ShowLabel showLabel = ShowLabel::yes, const char* format = "%.3f");
+ValueAsText(int parameterTag, ShowLabel showLabel = ShowLabel::yes, const char* format = "%.3f", bool noHighlight = true);
 
 /**
  * Data to characterize the state of a parameter
@@ -111,20 +112,11 @@ SliderInt(int parameterTag,
  * */
 
 /**
- * Describes the layout of the knob control
- * */
-struct KnobLayout
-{
-  float radius = 20.f;
-  float angleOffset = pi / 4;
-};
-
-/**
  * Data needed to draw a knob. An object of this type is passed to the function that draws the knob.
  * */
 struct KnobDrawData
 {
-  KnobLayout layout;
+  float angleOffset = pi / 4;
   ImVec2 center;
   ImVec2 pointerPosition;
   bool isActive = false;
@@ -141,7 +133,9 @@ DrawSimpleKnob(KnobDrawData const& knob);
  * Knob control associated with a plugin parameter
  * */
 bool
-Knob(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
+Knob(int parameterTag,
+     float angleOffset = pi / 4,
+     std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
 
 /**
  * Knob control associated with a plugin parameter, which also display the name and value of the parameter
@@ -149,7 +143,7 @@ Knob(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&
 
 bool
 KnobWithLabels(int parameterTag,
-               KnobLayout layout,
+               float angleOffset = pi / 4,
                std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
 
 struct ParameterData
@@ -208,25 +202,25 @@ struct KnobOutput
  * An ImGui Knob control
  * */
 KnobOutput
-Knob(const char* name, float inputValue, KnobLayout layout);
+Knob(const char* name, float inputValue, float angleOffset = pi / 4);
 
 /**
  * An ImGui control that display a scalar value as text and allows for user input on double click
  * */
 bool
-EditableScalar(const char* label, ImGuiDataType data_type, void* p_data, void* p_min, void* p_max, const char* format);
+EditableScalar(const char* label, ImGuiDataType data_type, void* p_data, void* p_min, void* p_max, const char* format, bool noHighlight = true);
 
 /**
  * An ImGui control that display a float value as text and allows for user input on double click
  * */
 bool
-EditableFloat(const char* label, float* value, float min, float max, const char* format = "%.3f");
+EditableFloat(const char* label, float* value, float min, float max, const char* format = "%.3f", bool noHighlight = true);
 
 /**
  * An ImGui control that display an int value as text and allows for user input on double click.
  * */
 bool
-EditableInt(const char* label, int* value, int min, int max, const char* format = "%d");
+EditableInt(const char* label, int* value, int min, int max, const char* format = "%d", bool noHighlight = true);
 
 } // namespace detail
 

@@ -105,14 +105,6 @@ Checkbox(int parameterTag, ShowLabel showLabel)
 }
 
 void
-Label(int parameterTag)
-{
-  auto& parameters = Parameters();
-  auto const name = parameters.getName(parameterTag);
-  return ImGui::TextUnformatted(name.c_str());
-}
-
-void
 TextCentered(std::string const& text, ImVec2 size)
 {
   auto const bkgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
@@ -124,7 +116,15 @@ TextCentered(std::string const& text, ImVec2 size)
 }
 
 void
-LabelCentered(int parameterTag, ImVec2 size)
+NameLabel(int parameterTag)
+{
+  auto& parameters = Parameters();
+  auto const name = parameters.getName(parameterTag);
+  return ImGui::TextUnformatted(name.c_str());
+}
+
+void
+NameLabelCentered(int parameterTag, ImVec2 size)
 {
   auto& parameters = Parameters();
   auto const name = parameters.getName(parameterTag);
@@ -132,15 +132,16 @@ LabelCentered(int parameterTag, ImVec2 size)
 }
 
 void
-ValueAsText(int parameterTag)
+ValueLabel(int parameterTag, ShowLabel showLabel)
 {
   auto& parameters = Parameters();
   auto const valueAsText = parameters.getValueAsText(parameterTag);
-  return ImGui::TextUnformatted(valueAsText.c_str());
+  auto const text = showLabel == ShowLabel::yes ? (parameters.getName(parameterTag) + ": " + valueAsText) : valueAsText;
+  return ImGui::TextUnformatted(text.c_str());
 }
 
 void
-ValueAsTextCentered(int parameterTag, ImVec2 size, ShowLabel showLabel)
+ValueLabelCentered(int parameterTag, ImVec2 size, ShowLabel showLabel)
 {
   auto& parameters = Parameters();
   auto const valueAsText = parameters.getValueAsText(parameterTag);
@@ -177,14 +178,14 @@ Control(int parameterTag, std::function<ControlOutput(ParameterData const& param
 }
 
 bool
-ValueAsText(int parameterTag, ShowLabel showLabel, const char* format)
+ValueAsText(int parameterTag, ShowLabel showLabel, const char* format, bool noHighlight)
 {
   return Control(parameterTag, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "FLOATASTEXT");
     auto const formatWithUnit = makeFormat(parameter, format);
     bool const isActive = detail::EditableFloat(
-      controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str());
+      controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), noHighlight);
     auto& parameters = Parameters();
     outputValue = parameters.normalizeValue(parameterTag, outputValue);
     return ControlOutput{ outputValue, isActive };
@@ -224,36 +225,41 @@ DragFloat(int parameterTag, ShowLabel showLabel, float speed, const char* format
 void
 DrawSimpleKnob(KnobDrawData const& knob)
 {
+  auto const radius = 0.5f * ImGui::CalcItemWidth();
   // originally based on https://github.com/ocornut/imgui/issues/942
   ImU32 col32 = ImGui::GetColorU32(knob.isActive    ? ImGuiCol_FrameBgActive
                                    : knob.isHovered ? ImGuiCol_FrameBgHovered
                                                     : ImGuiCol_FrameBg);
   ImU32 col32line = ImGui::GetColorU32(ImGuiCol_SliderGrabActive);
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  auto const numSegments = static_cast<int>(1.5f * knob.layout.radius);
-  draw_list->AddCircleFilled(knob.center, knob.layout.radius, col32, numSegments);
+  auto const numSegments = static_cast<int>(1.5f * radius);
+  draw_list->AddCircleFilled(knob.center, radius, col32, numSegments);
   draw_list->AddLine(knob.center, knob.pointerPosition, col32line, 1);
 }
 
 bool
-Knob(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> const& drawer)
+Knob(int parameterTag, float angleOffset, std::function<void(KnobDrawData const&)> const& drawer)
 {
   return Control(parameterTag, [&](ParameterData const& parameter) {
     auto controlName = parameter.name + "##KNOB";
-    auto const knobOutput = Knob(controlName.c_str(), static_cast<float>(parameter.valueNormalized), layout);
+    auto const knobOutput = Knob(controlName.c_str(), static_cast<float>(parameter.valueNormalized), angleOffset);
     drawer(knobOutput.drawData);
     return knobOutput.output;
   });
 }
 
 bool
-KnobWithLabels(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> const& drawer)
+KnobWithLabels(int parameterTag, float angleOffset, std::function<void(KnobDrawData const&)> const& drawer)
 {
   auto& parameters = Parameters();
-  auto const size = ImVec2{ layout.radius * 2, 2 * ImGui::GetTextLineHeight() };
-  LabelCentered(parameterTag, size);
-  auto const isActive = Knob(parameterTag, layout, drawer);
-  ValueAsTextCentered(parameterTag, size, ShowLabel::no);
+  auto const width = ImGui::CalcItemWidth();
+  auto const size = ImVec2{ width, 2 * ImGui::GetTextLineHeight() };
+  NameLabelCentered(parameterTag, size);
+  auto const isActive = Knob(parameterTag, angleOffset, drawer);
+  auto const bkgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
+  ImGui::PushStyleColor(ImGuiCol_FrameBg, bkgColor);
+  ValueAsText(parameterTag, ShowLabel::no);
+  ImGui::PopStyleColor();
   return isActive;
 }
 
@@ -283,19 +289,20 @@ applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingStat
 }
 
 KnobOutput
-Knob(const char* name, float const inputValue, KnobLayout layout)
+Knob(const char* name, float const inputValue, float angleOffset)
 {
   // originally based on https://github.com/ocornut/imgui/issues/942
+  auto const radius = 0.5f * ImGui::CalcItemWidth();
   ImGuiStyle& style = ImGui::GetStyle();
   ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
-  ImVec2 center = ImVec2(cursorPosition.x + layout.radius, cursorPosition.y + layout.radius);
+  ImVec2 center = ImVec2(cursorPosition.x + radius, cursorPosition.y + radius);
 
-  auto const currentAngle = (pi - layout.angleOffset) * inputValue * 2.0f + layout.angleOffset;
+  auto const currentAngle = (pi - angleOffset) * inputValue * 2.0f + angleOffset;
 
-  auto const x = -std::sin(currentAngle) * layout.radius + center.x;
-  auto const y = std::cos(currentAngle) * layout.radius + center.y;
+  auto const x = -std::sin(currentAngle) * radius + center.x;
+  auto const y = std::cos(currentAngle) * radius + center.y;
 
-  auto const diameter = 2 * layout.radius;
+  auto const diameter = 2 * radius;
   ImGui::InvisibleButton(name, ImVec2(diameter, diameter));
 
   bool const isActive = ImGui::IsItemActive();
@@ -305,8 +312,8 @@ Knob(const char* name, float const inputValue, KnobLayout layout)
   if (isActive) {
     ImVec2 mp = ImGui::GetIO().MousePos;
     float nextAngle = std::atan2(mp.x - center.x, center.y - mp.y) + pi;
-    nextAngle = std::max(layout.angleOffset, std::min(2.0f * pi - layout.angleOffset, nextAngle));
-    outputValue = 0.5f * (nextAngle - layout.angleOffset) / (pi - layout.angleOffset);
+    nextAngle = std::max(angleOffset, std::min(2.0f * pi - angleOffset, nextAngle));
+    outputValue = 0.5f * (nextAngle - angleOffset) / (pi - angleOffset);
     bool const hasGoneBelowTheBottom = inputValue == 0.0 && outputValue > 0.5;
     bool const hasGoneOverTheTop = inputValue == 1.0 && outputValue < 0.5;
     bool const hasGoneOutsideTheRange = hasGoneBelowTheBottom || hasGoneOverTheTop;
@@ -316,7 +323,7 @@ Knob(const char* name, float const inputValue, KnobLayout layout)
   }
 
   KnobDrawData drawData;
-  drawData.layout = layout;
+  drawData.angleOffset = angleOffset;
   drawData.center = center;
   drawData.pointerPosition = ImVec2(x, y);
   drawData.isActive = isActive;
@@ -326,7 +333,13 @@ Knob(const char* name, float const inputValue, KnobLayout layout)
 }
 
 bool
-EditableScalar(const char* label, ImGuiDataType data_type, void* p_data, void* p_min, void* p_max, const char* format)
+EditableScalar(const char* label,
+               ImGuiDataType data_type,
+               void* p_data,
+               void* p_min,
+               void* p_max,
+               const char* format,
+               bool noHighlight)
 {
   // based on ImGui::DragScalar
   using namespace ImGui;
@@ -379,10 +392,12 @@ EditableScalar(const char* label, ImGuiDataType data_type, void* p_data, void* p
   }
 
   // Draw frame
-  const ImU32 frame_col = GetColorU32(g.ActiveId == id ? ImGuiCol_FrameBgActive
-                                      : hovered        ? ImGuiCol_FrameBgHovered
-                                                       : ImGuiCol_FrameBg);
-  RenderNavHighlight(frame_bb, id);
+  const ImU32 frame_col = GetColorU32(noHighlight        ? ImGuiCol_FrameBg
+                                      : g.ActiveId == id ? ImGuiCol_FrameBgActive
+                                      : hovered          ? ImGuiCol_FrameBgHovered
+                                                         : ImGuiCol_FrameBg);
+  if (!noHighlight)
+    RenderNavHighlight(frame_bb, id);
   RenderFrame(frame_bb.Min, frame_bb.Max, frame_col, true, style.FrameRounding);
 
   // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
@@ -401,15 +416,15 @@ EditableScalar(const char* label, ImGuiDataType data_type, void* p_data, void* p
 }
 
 bool
-EditableFloat(const char* label, float* value, float min, float max, const char* format)
+EditableFloat(const char* label, float* value, float min, float max, const char* format, bool noHighlight)
 {
-  return EditableScalar(label, ImGuiDataType_Float, value, &min, &max, format);
+  return EditableScalar(label, ImGuiDataType_Float, value, &min, &max, format, noHighlight);
 }
 
 bool
-EditableInt(const char* label, int* value, int min, int max, const char* format)
+EditableInt(const char* label, int* value, int min, int max, const char* format, bool noHighlight)
 {
-  return EditableScalar(label, ImGuiDataType_S32, value, &min, &max, format);
+  return EditableScalar(label, ImGuiDataType_S32, value, &min, &max, format, noHighlight);
 }
 
 } // namespace detail

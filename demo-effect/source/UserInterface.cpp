@@ -44,10 +44,12 @@ DemoEffectUserInterface::paint()
   KnobLayout knobLayout;
   knobLayout.radius = 80 * p;
 
-  //  SliderFloat(ParamTag::gain);
   KnobWithLabels(ParamTag::gain, knobLayout);
-  //  auto c = false;
-  //  ImGui::ShowDemoWindow(&c);
+
+  DragFloat(ParamTag::gain);
+  SliderFloat(ParamTag::gain);
+  //    auto c = false;
+  //    ImGui::ShowDemoWindow(&c);
 
   ImGui::End();
 }

@@ -23,17 +23,23 @@ namespace unplug {
 
 inline constexpr auto pi = (float)M_PI;
 
+enum class ShowLabel
+{
+  no,
+  yes
+};
+
 /**
  * Combo ImGui control associated with a plugin parameter
  * */
 bool
-Combo(int parameterTag);
+Combo(int parameterTag, ShowLabel showLabel = ShowLabel::yes);
 
 /**
  * Checkbox ImGui control associated with a plugin parameter
  * */
 bool
-Checkbox(int parameterTag);
+Checkbox(int parameterTag, ShowLabel showLabel = ShowLabel::yes);
 
 /**
  * Displays some text centered in the rectangle between the current position and size
@@ -63,10 +69,10 @@ ValueAsText(int parameterTag);
  * Displays the value of a parameter as text, centered in the rectangle between the current position and size
  * */
 void
-ValueAsTextCentered(int parameterTag, ImVec2 size);
+ValueAsTextCentered(int parameterTag, ImVec2 size, ShowLabel showLabel = ShowLabel::yes);
 
 /**
- * Data that characterize the state of a parameter
+ * Data to characterize the state of a parameter
  * */
 struct ParameterData
 {
@@ -81,32 +87,30 @@ struct ParameterData
   ParameterData(ParameterAccess& parameters, int parameterTag);
 };
 
-/**
- * Data that characterize the state of a control
- * */
-struct ControlOutput
-{
-  float value = 0.f;
-  bool isActive = false;
-};
-
-/**
- * Controls a parameter with a custom control, used internally by knobs and sliders
- * */
 bool
-Control(int parameterTag, std::function<ControlOutput(ParameterData const& parameter)> const& control);
+DragFloat(int parameterTag,
+          ShowLabel showLabel = ShowLabel::no,
+          float speed = 0.01f,
+          const char* format = "%.3f",
+          ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
 
 /**
  * SliderFloat ImGui control associated with a plugin parameter
  * */
 bool
-SliderFloat(int parameterTag, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
+SliderFloat(int parameterTag,
+            ShowLabel showLabel = ShowLabel::no,
+            const char* format = "%.3f",
+            ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
 
 /**
  * SliderInt ImGui control associated with a plugin parameter
  * */
 bool
-SliderInt(int parameterTag, const char* format = "%df", ImGuiSliderFlags flags = 0);
+SliderInt(int parameterTag,
+          ShowLabel showLabel = ShowLabel::no,
+          const char* format = "%df",
+          ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
 
 /**
  * Knob control stuff, originally based on https://github.com/ocornut/imgui/issues/942
@@ -155,6 +159,21 @@ KnobWithLabels(int parameterTag,
                std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
 
 /**
+ * Data to characterize the state of a control
+ * */
+struct ControlOutput
+{
+  float value = 0.f;
+  bool isActive = false;
+};
+
+/**
+ * Controls a parameter with a custom control, used internally by most control that allows to edit a parameter
+ * */
+bool
+Control(int parameterTag, std::function<ControlOutput(ParameterData const& parameter)> const& control);
+
+/**
  * implementation details that can be useful to implement custom controls
  * */
 namespace detail {
@@ -168,7 +187,7 @@ struct EditingState
 };
 
 void
-applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingState editingState, float outputValue);
+applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingState editingState, float valueNormalized);
 
 struct KnobOutput
 {

@@ -17,8 +17,14 @@ namespace unplug {
 
 using namespace detail;
 
+static std::string
+makeLabel(ShowLabel showLabel, std::string const& parameterName, const char* controlSuffix)
+{
+  return showLabel == ShowLabel::yes ? parameterName + "##" + controlSuffix : "##" + parameterName + controlSuffix;
+}
+
 bool
-Combo(int parameterTag)
+Combo(int parameterTag, ShowLabel showLabel)
 {
   using namespace ImGui;
 
@@ -41,7 +47,7 @@ Combo(int parameterTag)
   bool const gotNumStepsOk = parameters.getNumSteps(parameterTag, numSteps);
   assert(gotNumStepsOk);
 
-  auto controlName = parameterName + "_COMBO";
+  auto controlName = makeLabel(showLabel, parameterName, "COMBO");
 
   if (!BeginCombo(controlName.c_str(), valueAsText.c_str(), ImGuiComboFlags_None))
     return false;
@@ -70,34 +76,21 @@ Combo(int parameterTag)
     parameters.setValueNormalized(parameterTag, newValue);
     parameters.endEdit(parameterTag);
     auto& g = *GImGui;
-    MarkItemEdited(g.CurrentWindow->DC.LastItemId);
+    MarkItemEdited(g.LastItemData.ID);
   }
 
   return hasValueChanged;
 }
 
 bool
-Checkbox(int parameterTag)
+Checkbox(int parameterTag, ShowLabel showLabel)
 {
-  using namespace ImGui;
-
-  auto& parameters = Parameters();
-
-  double const value = parameters.getValue(parameterTag);
-  std::string parameterName;
-  bool const gotNameOk = parameters.getName(parameterTag, parameterName);
-  assert(gotNameOk);
-
-  bool newValue = value != 0;
-  auto controlName = parameterName + "_CHECKBOX";
-  bool const hasValueChanged = ImGui::Checkbox(controlName.c_str(), &newValue);
-  if (hasValueChanged) {
-    parameters.beginEdit(parameterTag);
-    parameters.setValueNormalized(parameterTag, newValue);
-    parameters.endEdit(parameterTag);
-  }
-
-  return hasValueChanged;
+  return Control(parameterTag, [=](ParameterData const& parameter) {
+    auto isChecked = parameter.value != 0.0;
+    auto const controlName = makeLabel(showLabel, parameter.name, "CHECKBOX");
+    bool const isActive = ImGui::Checkbox(controlName.c_str(), &isChecked);
+    return ControlOutput{ isChecked ? 1.f : 0.f, isActive };
+  });
 }
 
 void
@@ -124,7 +117,7 @@ LabelCentered(int parameterTag, ImVec2 size)
 {
   auto& parameters = Parameters();
   auto const name = parameters.getName(parameterTag);
-  TextCentered(name, size);
+  TextCentered(name + "##LABELCENTERED", size);
 }
 
 void
@@ -136,11 +129,14 @@ ValueAsText(int parameterTag)
 }
 
 void
-ValueAsTextCentered(int parameterTag, ImVec2 size)
+ValueAsTextCentered(int parameterTag, ImVec2 size, ShowLabel showLabel)
 {
   auto& parameters = Parameters();
   auto const valueAsText = parameters.getValueAsText(parameterTag);
-  TextCentered(valueAsText, size);
+  auto const text =
+    (showLabel == ShowLabel::yes ? (parameters.getName(parameterTag) + ": " + valueAsText) : valueAsText) +
+    "##VALUUEASTEXTCENTERED";
+  TextCentered(text, size);
 }
 
 ParameterData::ParameterData(ParameterAccess& parameters, int parameterTag)
@@ -162,11 +158,11 @@ void
 detail::applyRangedParameters(ParameterAccess& parameters,
                               int parameterTag,
                               EditingState editingState,
-                              float outputValue)
+                              float valueNormalized)
 {
   if (editingState.isParameterBeingEdited) {
     if (editingState.isControlActive) {
-      bool const setValueOk = parameters.setValueNormalized(parameterTag, outputValue);
+      bool const setValueOk = parameters.setValueNormalized(parameterTag, valueNormalized);
       assert(setValueOk);
     }
     else {
@@ -178,7 +174,7 @@ detail::applyRangedParameters(ParameterAccess& parameters,
     if (editingState.isControlActive) {
       bool const beginEditOk = parameters.beginEdit(parameterTag);
       assert(beginEditOk);
-      bool const setValueOk = parameters.setValueNormalized(parameterTag, outputValue);
+      bool const setValueOk = parameters.setValueNormalized(parameterTag, valueNormalized);
       assert(setValueOk);
     }
   }
@@ -196,13 +192,29 @@ Control(int parameterTag, std::function<ControlOutput(ParameterData const& param
 }
 
 bool
-SliderFloat(int parameterTag, const char* format, ImGuiSliderFlags flags)
+SliderFloat(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
 {
   return Control(parameterTag, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
-    auto controlName = parameter.name + "_SLIDERFLOAT";
-    bool isActive =
+    auto const controlName = makeLabel(showLabel, parameter.name, "SLIDERFLOAT");
+    bool const isActive =
       ImGui::SliderFloat(controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, format, flags);
+    auto& parameters = Parameters();
+    outputValue = parameters.normalizeValue(parameterTag, outputValue);
+    return ControlOutput{ outputValue, isActive };
+  });
+}
+
+bool
+DragFloat(int parameterTag, ShowLabel showLabel, float speed, const char* format, ImGuiSliderFlags flags)
+{
+  return Control(parameterTag, [=](ParameterData const& parameter) {
+    auto outputValue = static_cast<float>(parameter.value);
+    auto const controlName = makeLabel(showLabel, parameter.name, "DRAGFLOAT");
+    bool const isActive =
+      ImGui::DragFloat(controlName.c_str(), &outputValue, speed, parameter.minValue, parameter.maxValue, format, flags);
+    auto& parameters = Parameters();
+    outputValue = parameters.normalizeValue(parameterTag, outputValue);
     return ControlOutput{ outputValue, isActive };
   });
 }
@@ -266,7 +278,7 @@ bool
 Knob(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> const& drawer)
 {
   return Control(parameterTag, [&](ParameterData const& parameter) {
-    auto controlName = parameter.name + "_K NOB";
+    auto controlName = parameter.name + "##KNOB";
     auto const knobOutput = Knob(controlName.c_str(), static_cast<float>(parameter.valueNormalized), layout);
     drawer(knobOutput.drawData);
     return knobOutput.output;
@@ -280,7 +292,7 @@ KnobWithLabels(int parameterTag, KnobLayout layout, std::function<void(KnobDrawD
   auto const size = ImVec2{ layout.radius * 2, 2 * ImGui::GetTextLineHeight() };
   LabelCentered(parameterTag, size);
   auto const isActive = Knob(parameterTag, layout, drawer);
-  ValueAsTextCentered(parameterTag, size);
+  ValueAsTextCentered(parameterTag, size, ShowLabel::no);
   return isActive;
 }
 

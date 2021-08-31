@@ -108,7 +108,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE pugl)
 
 # Dear ImGui & ImPlot
 add_library(imgui STATIC)
-target_compile_definitions(imgui PUBLIC IMGUI_USER_CONFIG="imgui_user_config.h" IMGUI_DISABLE_OBSOLETE_FUNCTIONS)
+target_compile_definitions(imgui PUBLIC IMGUI_USER_CONFIG="imgui_user_config.h" IMGUI_DISABLE_OBSOLETE_FUNCTIONS IMGUI_DEFINE_MATH_OPERATORS)
 include_directories("${unplug_SOURCE_DIR}/libs/imgui" "${unplug_SOURCE_DIR}/libs/imgui/backends" "${unplug_SOURCE_DIR}/unplug/imgui")
 file(GLOB imgui_src "${unplug_SOURCE_DIR}/libs/imgui/*.cpp")
 target_sources(imgui PRIVATE ${imgui_src} "${unplug_SOURCE_DIR}/unplug/imgui/imgui_tls_context.cpp" "${unplug_SOURCE_DIR}/libs/imgui/backends/imgui_impl_opengl2.cpp")

@@ -11,6 +11,11 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
+/*
+ * This file includes code adapted from https://github.com/ocornut/imgui/blob/master/imgui_widgets.cpp
+ * Copyright (c) 2014-2021 Omar Cornut, MIT LICENSE
+ * */
+
 #include "unplug/Controls.hpp"
 
 namespace unplug {
@@ -21,6 +26,12 @@ static std::string
 makeLabel(ShowLabel showLabel, std::string const& parameterName, const char* controlSuffix)
 {
   return showLabel == ShowLabel::yes ? parameterName + "##" + controlSuffix : "##" + parameterName + controlSuffix;
+}
+
+static std::string
+makeFormat(ParameterData const& parameter, const char* format)
+{
+  return !parameter.measureUnit.empty() ? format + parameter.measureUnit : format;
 }
 
 bool
@@ -145,7 +156,7 @@ ParameterData::ParameterData(ParameterAccess& parameters, int parameterTag)
   , value(static_cast<float>(parameters.valueFromNormalized(parameterTag, valueNormalized)))
   , minValue(static_cast<float>(parameters.getMinValue(parameterTag)))
   , maxValue(static_cast<float>(parameters.getMaxValue(parameterTag)))
-  , valueAsText(parameters.convertToText(parameterTag, value))
+  , measureUnit(parameters.getMeasureUnit(parameterTag))
   , isBeingEdited(parameters.isBeingEdited(parameterTag))
 {}
 
@@ -154,11 +165,102 @@ EditingState::EditingState(const ParameterData& parameterData, bool isControlAct
   , isControlActive(isControlActive)
 {}
 
+bool
+Control(int parameterTag, std::function<ControlOutput(ParameterData const& parameter)> const& control)
+{
+  auto& parameters = Parameters();
+  auto const parameter = ParameterData{ parameters, parameterTag };
+  auto const output = control(parameter);
+  auto const editingState = EditingState{ parameter, output.isActive };
+  applyRangedParameters(parameters, parameterTag, editingState, output.value);
+  return output.isActive;
+}
+
+bool
+ValueAsText(int parameterTag, ShowLabel showLabel, const char* format)
+{
+  return Control(parameterTag, [=](ParameterData const& parameter) {
+    auto outputValue = static_cast<float>(parameter.value);
+    auto const controlName = makeLabel(showLabel, parameter.name, "FLOATASTEXT");
+    auto const formatWithUnit = makeFormat(parameter, format);
+    bool const isActive = detail::EditableFloat(
+      controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str());
+    auto& parameters = Parameters();
+    outputValue = parameters.normalizeValue(parameterTag, outputValue);
+    return ControlOutput{ outputValue, isActive };
+  });
+}
+
+bool
+SliderFloat(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
+{
+  return Control(parameterTag, [=](ParameterData const& parameter) {
+    auto outputValue = static_cast<float>(parameter.value);
+    auto const controlName = makeLabel(showLabel, parameter.name, "SLIDERFLOAT");
+    auto const formatWithUnit = makeFormat(parameter, format);
+    bool const isActive = ImGui::SliderFloat(
+      controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
+    auto& parameters = Parameters();
+    outputValue = parameters.normalizeValue(parameterTag, outputValue);
+    return ControlOutput{ outputValue, isActive };
+  });
+}
+
+bool
+DragFloat(int parameterTag, ShowLabel showLabel, float speed, const char* format, ImGuiSliderFlags flags)
+{
+  return Control(parameterTag, [=](ParameterData const& parameter) {
+    auto outputValue = static_cast<float>(parameter.value);
+    auto const controlName = makeLabel(showLabel, parameter.name, "DRAGFLOAT");
+    auto const formatWithUnit = makeFormat(parameter, format);
+    bool const isActive = ImGui::DragFloat(
+      controlName.c_str(), &outputValue, speed, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
+    auto& parameters = Parameters();
+    outputValue = parameters.normalizeValue(parameterTag, outputValue);
+    return ControlOutput{ outputValue, isActive };
+  });
+}
+
 void
-detail::applyRangedParameters(ParameterAccess& parameters,
-                              int parameterTag,
-                              EditingState editingState,
-                              float valueNormalized)
+DrawSimpleKnob(KnobDrawData const& knob)
+{
+  // originally based on https://github.com/ocornut/imgui/issues/942
+  ImU32 col32 = ImGui::GetColorU32(knob.isActive    ? ImGuiCol_FrameBgActive
+                                   : knob.isHovered ? ImGuiCol_FrameBgHovered
+                                                    : ImGuiCol_FrameBg);
+  ImU32 col32line = ImGui::GetColorU32(ImGuiCol_SliderGrabActive);
+  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+  auto const numSegments = static_cast<int>(1.5f * knob.layout.radius);
+  draw_list->AddCircleFilled(knob.center, knob.layout.radius, col32, numSegments);
+  draw_list->AddLine(knob.center, knob.pointerPosition, col32line, 1);
+}
+
+bool
+Knob(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> const& drawer)
+{
+  return Control(parameterTag, [&](ParameterData const& parameter) {
+    auto controlName = parameter.name + "##KNOB";
+    auto const knobOutput = Knob(controlName.c_str(), static_cast<float>(parameter.valueNormalized), layout);
+    drawer(knobOutput.drawData);
+    return knobOutput.output;
+  });
+}
+
+bool
+KnobWithLabels(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> const& drawer)
+{
+  auto& parameters = Parameters();
+  auto const size = ImVec2{ layout.radius * 2, 2 * ImGui::GetTextLineHeight() };
+  LabelCentered(parameterTag, size);
+  auto const isActive = Knob(parameterTag, layout, drawer);
+  ValueAsTextCentered(parameterTag, size, ShowLabel::no);
+  return isActive;
+}
+
+namespace detail {
+
+void
+applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingState editingState, float valueNormalized)
 {
   if (editingState.isParameterBeingEdited) {
     if (editingState.isControlActive) {
@@ -180,48 +282,10 @@ detail::applyRangedParameters(ParameterAccess& parameters,
   }
 }
 
-bool
-Control(int parameterTag, std::function<ControlOutput(ParameterData const& parameter)> const& control)
-{
-  auto& parameters = Parameters();
-  auto const parameter = ParameterData{ parameters, parameterTag };
-  auto const output = control(parameter);
-  auto const editingState = EditingState{ parameter, output.isActive };
-  applyRangedParameters(parameters, parameterTag, editingState, output.value);
-  return output.isActive;
-}
-
-bool
-SliderFloat(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
-{
-  return Control(parameterTag, [=](ParameterData const& parameter) {
-    auto outputValue = static_cast<float>(parameter.value);
-    auto const controlName = makeLabel(showLabel, parameter.name, "SLIDERFLOAT");
-    bool const isActive =
-      ImGui::SliderFloat(controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, format, flags);
-    auto& parameters = Parameters();
-    outputValue = parameters.normalizeValue(parameterTag, outputValue);
-    return ControlOutput{ outputValue, isActive };
-  });
-}
-
-bool
-DragFloat(int parameterTag, ShowLabel showLabel, float speed, const char* format, ImGuiSliderFlags flags)
-{
-  return Control(parameterTag, [=](ParameterData const& parameter) {
-    auto outputValue = static_cast<float>(parameter.value);
-    auto const controlName = makeLabel(showLabel, parameter.name, "DRAGFLOAT");
-    bool const isActive =
-      ImGui::DragFloat(controlName.c_str(), &outputValue, speed, parameter.minValue, parameter.maxValue, format, flags);
-    auto& parameters = Parameters();
-    outputValue = parameters.normalizeValue(parameterTag, outputValue);
-    return ControlOutput{ outputValue, isActive };
-  });
-}
-
 KnobOutput
-detail::Knob(const char* name, float const inputValue, KnobLayout layout)
+Knob(const char* name, float const inputValue, KnobLayout layout)
 {
+  // originally based on https://github.com/ocornut/imgui/issues/942
   ImGuiStyle& style = ImGui::GetStyle();
   ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
   ImVec2 center = ImVec2(cursorPosition.x + layout.radius, cursorPosition.y + layout.radius);
@@ -261,39 +325,92 @@ detail::Knob(const char* name, float const inputValue, KnobLayout layout)
   return { drawData, outputValue, isActive };
 }
 
-void
-DrawSimpleKnob(KnobDrawData const& knob)
+bool
+EditableScalar(const char* label, ImGuiDataType data_type, void* p_data, void* p_min, void* p_max, const char* format)
 {
-  ImU32 col32 = ImGui::GetColorU32(knob.isActive    ? ImGuiCol_FrameBgActive
-                                   : knob.isHovered ? ImGuiCol_FrameBgHovered
-                                                    : ImGuiCol_FrameBg);
-  ImU32 col32line = ImGui::GetColorU32(ImGuiCol_SliderGrabActive);
-  ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  auto const numSegments = static_cast<int>(1.5f * knob.layout.radius);
-  draw_list->AddCircleFilled(knob.center, knob.layout.radius, col32, numSegments);
-  draw_list->AddLine(knob.center, knob.pointerPosition, col32line, 1);
+  // based on ImGui::DragScalar
+  using namespace ImGui;
+  ImGuiWindow* window = GetCurrentWindow();
+  if (window->SkipItems)
+    return false;
+
+  ImGuiContext& g = *GImGui;
+  const ImGuiStyle& style = g.Style;
+  const ImGuiID id = window->GetID(label);
+  const float w = CalcItemWidth();
+
+  const ImVec2 label_size = CalcTextSize(label, NULL, true);
+  const ImRect frame_bb(window->DC.CursorPos,
+                        window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2.0f));
+  const ImRect total_bb(
+    frame_bb.Min, frame_bb.Max + ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
+
+  ItemSize(total_bb, style.FramePadding.y);
+  if (!ItemAdd(total_bb, id, &frame_bb, ImGuiItemAddFlags_Focusable))
+    return false;
+
+  // Tabbing or CTRL-clicking on Drag turns it into an InputText
+  const bool hovered = ItemHoverable(frame_bb, id);
+  bool temp_input_is_active = TempInputIsActive(id);
+  if (!temp_input_is_active) {
+    const bool focus_requested = (g.LastItemData.StatusFlags & ImGuiItemStatusFlags_Focused) != 0;
+    const bool clicked = (hovered && g.IO.MouseClicked[0]);
+    const bool double_clicked = (hovered && g.IO.MouseDoubleClicked[0]);
+    if (focus_requested || clicked || double_clicked || g.NavActivateId == id || g.NavInputId == id) {
+      SetActiveID(id, window);
+      SetFocusID(id, window);
+      FocusWindow(window);
+      g.ActiveIdUsingNavDirMask = (1 << ImGuiDir_Left) | (1 << ImGuiDir_Right);
+      if (focus_requested || (clicked && g.IO.KeyCtrl) || double_clicked || g.NavInputId == id)
+        temp_input_is_active = true;
+    }
+    if (!temp_input_is_active)
+      if (/*g.IO.ConfigDragClickToInputText && */ g.ActiveId == id && hovered && g.IO.MouseReleased[0]) {
+        g.NavInputId = id;
+        temp_input_is_active = true;
+      }
+  }
+
+  if (temp_input_is_active) {
+    // Only clamp CTRL+Click input when ImGuiSliderFlags_AlwaysClamp is set
+    const bool is_clamp_input = (p_min == NULL || p_max == NULL || DataTypeCompare(data_type, p_min, p_max) < 0);
+    return TempInputScalar(
+      frame_bb, id, label, data_type, p_data, format, is_clamp_input ? p_min : NULL, is_clamp_input ? p_max : NULL);
+  }
+
+  // Draw frame
+  const ImU32 frame_col = GetColorU32(g.ActiveId == id ? ImGuiCol_FrameBgActive
+                                      : hovered        ? ImGuiCol_FrameBgHovered
+                                                       : ImGuiCol_FrameBg);
+  RenderNavHighlight(frame_bb, id);
+  RenderFrame(frame_bb.Min, frame_bb.Max, frame_col, true, style.FrameRounding);
+
+  // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
+  char value_buf[64];
+  const char* value_buf_end =
+    value_buf + DataTypeFormatString(value_buf, IM_ARRAYSIZE(value_buf), data_type, p_data, format);
+  if (g.LogEnabled)
+    LogSetNextTextDecoration("{", "}");
+  RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, NULL, ImVec2(0.5f, 0.5f));
+
+  if (label_size.x > 0.0f)
+    RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label);
+
+  IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags);
+  return false;
 }
 
 bool
-Knob(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> const& drawer)
+EditableFloat(const char* label, float* value, float min, float max, const char* format)
 {
-  return Control(parameterTag, [&](ParameterData const& parameter) {
-    auto controlName = parameter.name + "##KNOB";
-    auto const knobOutput = Knob(controlName.c_str(), static_cast<float>(parameter.valueNormalized), layout);
-    drawer(knobOutput.drawData);
-    return knobOutput.output;
-  });
+  return EditableScalar(label, ImGuiDataType_Float, value, &min, &max, format);
 }
 
 bool
-KnobWithLabels(int parameterTag, KnobLayout layout, std::function<void(KnobDrawData const&)> const& drawer)
+EditableInt(const char* label, int* value, int min, int max, const char* format)
 {
-  auto& parameters = Parameters();
-  auto const size = ImVec2{ layout.radius * 2, 2 * ImGui::GetTextLineHeight() };
-  LabelCentered(parameterTag, size);
-  auto const isActive = Knob(parameterTag, layout, drawer);
-  ValueAsTextCentered(parameterTag, size, ShowLabel::no);
-  return isActive;
+  return EditableScalar(label, ImGuiDataType_S32, value, &min, &max, format);
 }
 
+} // namespace detail
 } // namespace unplug

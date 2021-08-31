@@ -60,32 +60,26 @@ void
 LabelCentered(int parameterTag, ImVec2 size);
 
 /**
- * Displays the value of a parameter as text
+ * Displays the value of a parameter as text. Not editable
  * */
 void
-ValueAsText(int parameterTag);
+ValueLabel(int parameterTag);
 
 /**
  * Displays the value of a parameter as text, centered in the rectangle between the current position and size
  * */
 void
-ValueAsTextCentered(int parameterTag, ImVec2 size, ShowLabel showLabel = ShowLabel::yes);
+ValueLabelCentered(int parameterTag, ImVec2 size, ShowLabel showLabel = ShowLabel::yes);
+
+/**
+ * Displays the value of a parameter as text, allowing user input upon click or double click, centered in the rectangle between the current position and size
+ * */
+bool
+ValueAsText(int parameterTag, ShowLabel showLabel = ShowLabel::yes, const char* format = "%.3f");
 
 /**
  * Data to characterize the state of a parameter
  * */
-struct ParameterData
-{
-  std::string name;
-  float valueNormalized;
-  float value;
-  float minValue;
-  float maxValue;
-  std::string valueAsText;
-  bool isBeingEdited;
-
-  ParameterData(ParameterAccess& parameters, int parameterTag);
-};
 
 bool
 DragFloat(int parameterTag,
@@ -109,11 +103,11 @@ SliderFloat(int parameterTag,
 bool
 SliderInt(int parameterTag,
           ShowLabel showLabel = ShowLabel::no,
-          const char* format = "%df",
+          const char* format = "%d",
           ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
 
 /**
- * Knob control stuff, originally based on https://github.com/ocornut/imgui/issues/942
+ * Knob control stuff
  * */
 
 /**
@@ -158,6 +152,19 @@ KnobWithLabels(int parameterTag,
                KnobLayout layout,
                std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
 
+struct ParameterData
+{
+  std::string name;
+  float valueNormalized;
+  float value;
+  float minValue;
+  float maxValue;
+  std::string measureUnit;
+  bool isBeingEdited;
+
+  ParameterData(ParameterAccess& parameters, int parameterTag);
+};
+
 /**
  * Data to characterize the state of a control
  * */
@@ -198,9 +205,28 @@ struct KnobOutput
 };
 
 /**
- * ImGui Knob control, not assocciated with any parameter*/
+ * An ImGui Knob control
+ * */
 KnobOutput
 Knob(const char* name, float inputValue, KnobLayout layout);
+
+/**
+ * An ImGui control that display a scalar value as text and allows for user input on double click
+ * */
+bool
+EditableScalar(const char* label, ImGuiDataType data_type, void* p_data, void* p_min, void* p_max, const char* format);
+
+/**
+ * An ImGui control that display a float value as text and allows for user input on double click
+ * */
+bool
+EditableFloat(const char* label, float* value, float min, float max, const char* format = "%.3f");
+
+/**
+ * An ImGui control that display an int value as text and allows for user input on double click.
+ * */
+bool
+EditableInt(const char* label, int* value, int min, int max, const char* format = "%d");
 
 } // namespace detail
 

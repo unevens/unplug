@@ -417,7 +417,7 @@ ParameterAccess::getEditingControl(int tag) const
 }
 
 void
-ParameterAccess::setMidiMapping(int parameterTag, MidiCC midiControl, int channel)
+ParameterAccess::setMidiMapping(int parameterTag, int midiControl, int channel)
 {
   midiMapping.mapParameter(parameterTag, midiControl, channel);
 }

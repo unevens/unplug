@@ -115,9 +115,9 @@ public:
 
   int isBypass(int tag);
 
-  void setMidiMapping(int parameterTag, MidiCC midiControl, int channel);
+  void setMidiMapping(int parameterTag, int midiControl, int channel);
 
-  void setMidiMapping(int parameterTag, MidiCC midiControl) { midiMapping.mapParameter(parameterTag, midiControl); }
+  void setMidiMapping(int parameterTag, int midiControl) { midiMapping.mapParameter(parameterTag, midiControl); }
 
   static void setCurrent(ParameterAccess* parameterAccess);
 

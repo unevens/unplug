@@ -17,7 +17,8 @@
 
 namespace unplug {
 
-enum class MidiCC
+namespace MidiCC {
+enum MidiCC
 {
   BankSelect = 0,
   ModulationWheelCoarse,
@@ -89,6 +90,7 @@ enum class MidiCC
   AfterTouch,
   PitchBend
 };
+}
 
 namespace detail {
 class MidiMappingSingleChannel final
@@ -98,9 +100,9 @@ public:
 
   MidiMappingSingleChannel() { std::fill(midiMapping.begin(), midiMapping.end(), unmapped); }
 
-  void mapParameter(int parameterTag, MidiCC controller) { midiMapping[static_cast<int>(controller)] = parameterTag; }
+  void mapParameter(int parameterTag, int controller) { midiMapping[static_cast<int>(controller)] = parameterTag; }
 
-  int getParameter(MidiCC controller) const { return midiMapping[static_cast<int>(controller)]; }
+  int getParameter(int controller) const { return midiMapping[static_cast<int>(controller)]; }
 
 private:
   std::array<int, 130> midiMapping;
@@ -112,7 +114,7 @@ class MidiMapping final
 public:
   static constexpr auto unmapped = detail::MidiMappingSingleChannel::unmapped;
 
-  void mapParameter(int parameterTag, MidiCC controller, int channel)
+  void mapParameter(int parameterTag, int controller, int channel)
   {
     assert(channel < midiMappingByChannel.size());
     if (channel < midiMappingByChannel.size()) {
@@ -120,14 +122,14 @@ public:
     }
   }
 
-  void mapParameter(int parameterTag, MidiCC controller)
+  void mapParameter(int parameterTag, int controller)
   {
     for (auto& channelMidiMapping : midiMappingByChannel) {
       channelMidiMapping.mapParameter(parameterTag, controller);
     }
   }
 
-  int getParameter(MidiCC controller, int channel) const
+  int getParameter(int controller, int channel) const
   {
     assert(channel < midiMappingByChannel.size());
     if (channel < midiMappingByChannel.size()) {

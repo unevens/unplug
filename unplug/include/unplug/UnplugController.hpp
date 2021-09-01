@@ -33,7 +33,6 @@ class UnplugController
 public:
   using FUnknown = FUnknown;
   using IEditController = IEditController;
-  using MidiCC = unplug::MidiCC;
   using MidiMapping = unplug::MidiMapping;
 
   UnplugController() = default;
@@ -133,7 +132,7 @@ UnplugController<View, Parameters>::initialize(FUnknown* context)
       } break;
     }
 
-    if (description.hasDefaultMidiMapping) {
+    if (description.defaultMidiMapping.isEnabled()) {
       auto const& mapping = description.defaultMidiMapping;
       if (description.defaultMidiMapping.listensToAllChannels()) {
         midiMapping.mapParameter(description.tag, mapping.control);
@@ -190,10 +189,10 @@ UnplugController<View, Parameters>::setState(IBStream* state)
       return true;
     }
   };
-  std::array<int64,2> loadedSize{};
-  if(!loadInteger(loadedSize[0]))
+  std::array<int64, 2> loadedSize{};
+  if (!loadInteger(loadedSize[0]))
     return kResultFalse;
-  if(!loadInteger(loadedSize[1]))
+  if (!loadInteger(loadedSize[1]))
     return kResultFalse;
   lastViewSize[0] = loadedSize[0];
   lastViewSize[1] = loadedSize[1];
@@ -241,8 +240,7 @@ UnplugController<View, Parameters>::getMidiControllerAssignment(int32 busIndex,
                                                                 ParamID& tag)
 {
   if (busIndex == 0) {
-    auto const controller = static_cast<MidiCC>(midiControllerNumber);
-    auto const mappedParameter = midiMapping.getParameter(controller, channel);
+    auto const mappedParameter = midiMapping.getParameter(static_cast<int>(midiControllerNumber), channel);
     if (mappedParameter != MidiMapping::unmapped) {
       tag = mappedParameter;
       return kResultTrue;

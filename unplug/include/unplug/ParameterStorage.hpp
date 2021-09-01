@@ -47,12 +47,12 @@ struct ParameterDescription
   int numSteps;
   std::vector<std::string> labels;
   bool isBypass = false;
-  bool hasDefaultMidiMapping = false;
   struct
   {
-    MidiCC control;
+    int control = -1;
     int channel = -1;
     bool listensToAllChannels() const { return channel == -1; }
+    bool isEnabled() const { return control > -1; }
   } defaultMidiMapping;
 
   ParameterDescription(int tag, std::string name_, std::vector<std::string> labels_, int defaultValue = 0)
@@ -99,11 +99,16 @@ struct ParameterDescription
     return *this;
   }
 
-  ParameterDescription MidiMapping(MidiCC control) { return MidiMapping(control, -1); }
-
-  ParameterDescription MidiMapping(MidiCC control, int channel)
+  ParameterDescription MidiMapping(int control)
   {
-    hasDefaultMidiMapping = true;
+    assert(control > -1 && control < 130);
+    return MidiMapping(control, -1);
+  }
+
+  ParameterDescription MidiMapping(int control, int channel)
+  {
+    assert(control > -1 && control < 130);
+    assert(channel > -1 && channel < 17);
     defaultMidiMapping.control = control;
     defaultMidiMapping.channel = channel;
     return *this;

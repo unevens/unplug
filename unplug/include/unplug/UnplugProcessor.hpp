@@ -136,7 +136,6 @@ tresult PLUGIN_API
 UnplugProcessor<Parameters>::setState(IBStream* state)
 {
   using namespace Steinberg;
-
   IBStreamer streamer(state, kLittleEndian);
   for (int i = 0; i < Parameters::numParameters; ++i) {
     double value;
@@ -156,8 +155,6 @@ tresult PLUGIN_API
 UnplugProcessor<Parameters>::getState(IBStream* state)
 {
   using namespace Steinberg;
-  // saves the state
-  //
   IBStreamer streamer(state, kLittleEndian);
   for (int i = 0; i < Parameters::numParameters; ++i) {
     double const value = parameterStorage.get(i);

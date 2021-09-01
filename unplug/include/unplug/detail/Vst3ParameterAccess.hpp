@@ -15,7 +15,7 @@
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "unplug/MidiMapping.hpp"
 #include "unplug/StringConversion.hpp"
-#include <unordered_set>
+#include <unordered_map>
 
 namespace unplug::vst3 {
 
@@ -31,10 +31,10 @@ static constexpr auto kResultFalse = Steinberg::kResultFalse;
 /**
  * The ParameterAccess class exposes the plugin parameters to the user interface.
  * */
-
 class ParameterAccess final
 {
 public:
+
   ParameterAccess(EditControllerEx1& controller, MidiMapping& midiMapping);
 
   ~ParameterAccess();
@@ -67,9 +67,13 @@ public:
 
   bool setValueNormalized(int tag, double value);
 
-  bool beginEdit(int tag);
+  bool beginEdit(int tag, std::string control);
 
-  bool endEdit(int tag);
+  bool endEdit(int tag, std::string control);
+
+  bool isBeingEdited(int tag) const;
+
+  std::string getEditingControl(int tag) const;
 
   bool convertToText(int tag, double valueNormalized, std::string& result);
 
@@ -111,8 +115,6 @@ public:
 
   int isBypass(int tag);
 
-  bool isBeingEdited(int tag) const;
-
   void setMidiMapping(int parameterTag, MidiCC midiControl, int channel);
 
   void setMidiMapping(int parameterTag, MidiCC midiControl) { midiMapping.mapParameter(parameterTag, midiControl); }
@@ -124,7 +126,7 @@ public:
 private:
   EditControllerEx1& controller;
   MidiMapping& midiMapping;
-  std::unordered_set<int> paramsBeingEdited;
+  std::unordered_map<int, std::string> paramsBeingEditedByControls;
   inline static thread_local ParameterAccess* current = nullptr;
 };
 

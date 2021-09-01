@@ -76,7 +76,10 @@ ValueLabelCentered(int parameterTag, ImVec2 size, ShowLabel showLabel = ShowLabe
  * between the current position and size
  * */
 bool
-ValueAsText(int parameterTag, ShowLabel showLabel = ShowLabel::yes, const char* format = "%.3f", bool noHighlight = true);
+ValueAsText(int parameterTag,
+            ShowLabel showLabel = ShowLabel::yes,
+            const char* format = "%.3f",
+            bool noHighlight = true);
 
 /**
  * Data to characterize the state of a parameter
@@ -134,15 +137,16 @@ DrawSimpleKnob(KnobDrawData const& knob);
  * */
 bool
 Knob(int parameterTag,
+     float power = 1.f,
      float angleOffset = pi / 4,
      std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
 
 /**
  * Knob control associated with a plugin parameter, which also display the name and value of the parameter
  * */
-
 bool
 KnobWithLabels(int parameterTag,
+               float power = 1.f,
                float angleOffset = pi / 4,
                std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
 
@@ -164,6 +168,7 @@ struct ParameterData
  * */
 struct ControlOutput
 {
+  std::string controlName;
   float value = 0.f;
   bool isActive = false;
 };
@@ -183,8 +188,9 @@ struct EditingState
 {
   bool isParameterBeingEdited;
   bool isControlActive;
+  std::string controlName;
 
-  EditingState(ParameterData const& parameterData, bool isControlActive);
+  EditingState(ParameterData const& parameterData, bool isControlActive, std::string controlName);
 };
 
 void
@@ -193,7 +199,6 @@ applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingStat
 struct KnobOutput
 {
   KnobDrawData drawData;
-  ControlOutput output;
   double value = 0.f;
   bool isActive = false;
 };
@@ -208,13 +213,24 @@ Knob(const char* name, float inputValue, float angleOffset = pi / 4);
  * An ImGui control that display a scalar value as text and allows for user input on double click
  * */
 bool
-EditableScalar(const char* label, ImGuiDataType data_type, void* p_data, void* p_min, void* p_max, const char* format, bool noHighlight = true);
+EditableScalar(const char* label,
+               ImGuiDataType data_type,
+               void* p_data,
+               void* p_min,
+               void* p_max,
+               const char* format,
+               bool noHighlight = true);
 
 /**
  * An ImGui control that display a float value as text and allows for user input on double click
  * */
 bool
-EditableFloat(const char* label, float* value, float min, float max, const char* format = "%.3f", bool noHighlight = true);
+EditableFloat(const char* label,
+              float* value,
+              float min,
+              float max,
+              const char* format = "%.3f",
+              bool noHighlight = true);
 
 /**
  * An ImGui control that display an int value as text and allows for user input on double click.

@@ -41,7 +41,7 @@ DemoEffectUserInterface::paint()
 
   ImGui::PushItemWidth(main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x);
 
-  KnobWithLabels(ParamTag::gain);
+  KnobWithLabels(ParamTag::gain, 3.f);
 
   DragFloat(ParamTag::gain);
   SliderFloat(ParamTag::gain);

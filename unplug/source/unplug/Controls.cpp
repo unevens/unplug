@@ -58,7 +58,7 @@ Combo(int parameterTag, ShowLabel showLabel)
   bool const gotNumStepsOk = parameters.getNumSteps(parameterTag, numSteps);
   assert(gotNumStepsOk);
 
-  auto controlName = makeLabel(showLabel, parameterName, "COMBO");
+  auto const controlName = makeLabel(showLabel, parameterName, "COMBO");
 
   if (!BeginCombo(controlName.c_str(), valueAsText.c_str(), ImGuiComboFlags_None))
     return false;
@@ -83,10 +83,12 @@ Combo(int parameterTag, ShowLabel showLabel)
 
   EndCombo();
   if (hasValueChanged) {
-    parameters.beginEdit(parameterTag);
+    ImGuiContext const& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    auto const controlId = window->IDStack.back();
+    parameters.beginEdit(parameterTag, controlName);
     parameters.setValueNormalized(parameterTag, newValue);
-    parameters.endEdit(parameterTag);
-    auto& g = *GImGui;
+    parameters.endEdit(parameterTag, controlName);
     MarkItemEdited(g.LastItemData.ID);
   }
 
@@ -100,7 +102,7 @@ Checkbox(int parameterTag, ShowLabel showLabel)
     auto isChecked = parameter.value != 0.0;
     auto const controlName = makeLabel(showLabel, parameter.name, "CHECKBOX");
     bool const isActive = ImGui::Checkbox(controlName.c_str(), &isChecked);
-    return ControlOutput{ isChecked ? 1.f : 0.f, isActive };
+    return ControlOutput{ controlName, isChecked ? 1.f : 0.f, isActive };
   });
 }
 
@@ -161,9 +163,10 @@ ParameterData::ParameterData(ParameterAccess& parameters, int parameterTag)
   , isBeingEdited(parameters.isBeingEdited(parameterTag))
 {}
 
-EditingState::EditingState(const ParameterData& parameterData, bool isControlActive)
+EditingState::EditingState(const ParameterData& parameterData, bool isControlActive, std::string controlName)
   : isParameterBeingEdited(parameterData.isBeingEdited)
   , isControlActive(isControlActive)
+  , controlName(std::move(controlName))
 {}
 
 bool
@@ -172,7 +175,7 @@ Control(int parameterTag, std::function<ControlOutput(ParameterData const& param
   auto& parameters = Parameters();
   auto const parameter = ParameterData{ parameters, parameterTag };
   auto const output = control(parameter);
-  auto const editingState = EditingState{ parameter, output.isActive };
+  auto const editingState = EditingState{ parameter, output.isActive, output.controlName };
   applyRangedParameters(parameters, parameterTag, editingState, output.value);
   return output.isActive;
 }
@@ -188,7 +191,7 @@ ValueAsText(int parameterTag, ShowLabel showLabel, const char* format, bool noHi
       controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), noHighlight);
     auto& parameters = Parameters();
     outputValue = parameters.normalizeValue(parameterTag, outputValue);
-    return ControlOutput{ outputValue, isActive };
+    return ControlOutput{ controlName, outputValue, isActive };
   });
 }
 
@@ -203,7 +206,7 @@ SliderFloat(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSlid
       controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
     auto& parameters = Parameters();
     outputValue = parameters.normalizeValue(parameterTag, outputValue);
-    return ControlOutput{ outputValue, isActive };
+    return ControlOutput{ controlName, outputValue, isActive };
   });
 }
 
@@ -218,7 +221,7 @@ DragFloat(int parameterTag, ShowLabel showLabel, float speed, const char* format
       controlName.c_str(), &outputValue, speed, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
     auto& parameters = Parameters();
     outputValue = parameters.normalizeValue(parameterTag, outputValue);
-    return ControlOutput{ outputValue, isActive };
+    return ControlOutput{ controlName, outputValue, isActive };
   });
 }
 
@@ -238,24 +241,26 @@ DrawSimpleKnob(KnobDrawData const& knob)
 }
 
 bool
-Knob(int parameterTag, float angleOffset, std::function<void(KnobDrawData const&)> const& drawer)
+Knob(int parameterTag, float power, float angleOffset, std::function<void(KnobDrawData const&)> const& drawer)
 {
   return Control(parameterTag, [&](ParameterData const& parameter) {
     auto controlName = parameter.name + "##KNOB";
-    auto const knobOutput = Knob(controlName.c_str(), static_cast<float>(parameter.valueNormalized), angleOffset);
+    auto const scaledInput = std::powf(static_cast<float>(parameter.valueNormalized), 1.f / power);
+    auto const knobOutput = Knob(controlName.c_str(), static_cast<float>(scaledInput), angleOffset);
     drawer(knobOutput.drawData);
-    return knobOutput.output;
+    auto const outputValue = std::powf(knobOutput.value, power);
+    return ControlOutput{ controlName, outputValue, knobOutput.isActive };
   });
 }
 
 bool
-KnobWithLabels(int parameterTag, float angleOffset, std::function<void(KnobDrawData const&)> const& drawer)
+KnobWithLabels(int parameterTag, float power, float angleOffset, std::function<void(KnobDrawData const&)> const& drawer)
 {
   auto& parameters = Parameters();
   auto const width = ImGui::CalcItemWidth();
   auto const size = ImVec2{ width, 2 * ImGui::GetTextLineHeight() };
   NameLabelCentered(parameterTag, size);
-  auto const isActive = Knob(parameterTag, angleOffset, drawer);
+  auto const isActive = Knob(parameterTag, power, angleOffset, drawer);
   auto const bkgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
   ImGui::PushStyleColor(ImGuiCol_FrameBg, bkgColor);
   ValueAsText(parameterTag, ShowLabel::no);
@@ -268,19 +273,24 @@ namespace detail {
 void
 applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingState editingState, float valueNormalized)
 {
+
   if (editingState.isParameterBeingEdited) {
+    auto const controlDoingTheEditing = parameters.getEditingControl(parameterTag);
+    if (editingState.controlName != controlDoingTheEditing) {
+      return;
+    }
     if (editingState.isControlActive) {
       bool const setValueOk = parameters.setValueNormalized(parameterTag, valueNormalized);
       assert(setValueOk);
     }
     else {
-      bool const endEditOk = parameters.endEdit(parameterTag);
+      bool const endEditOk = parameters.endEdit(parameterTag, editingState.controlName);
       assert(endEditOk);
     }
   }
   else {
     if (editingState.isControlActive) {
-      bool const beginEditOk = parameters.beginEdit(parameterTag);
+      bool const beginEditOk = parameters.beginEdit(parameterTag, editingState.controlName);
       assert(beginEditOk);
       bool const setValueOk = parameters.setValueNormalized(parameterTag, valueNormalized);
       assert(setValueOk);

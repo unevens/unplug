@@ -152,8 +152,8 @@ ParameterAccess::setValue(int tag, double value)
 bool
 ParameterAccess::setValueNormalized(int tag, double value)
 {
-  auto const editedIter = paramsBeingEdited.find(tag);
-  if (editedIter == paramsBeingEdited.end()) {
+  auto const editedIter = paramsBeingEditedByControls.find(tag);
+  if (editedIter == paramsBeingEditedByControls.end()) {
     assert(false);
     return false;
   }
@@ -167,16 +167,16 @@ ParameterAccess::setValueNormalized(int tag, double value)
 }
 
 bool
-ParameterAccess::beginEdit(int tag)
+ParameterAccess::beginEdit(int tag, std::string control)
 {
-  auto const editedIter = paramsBeingEdited.find(tag);
-  if (editedIter != paramsBeingEdited.end()) {
+  auto const editedIter = paramsBeingEditedByControls.find(tag);
+  if (editedIter != paramsBeingEditedByControls.end()) {
     assert(false);
     return false;
   }
   if (controller.beginEdit(tag) == kResultTrue) {
     auto const value = getValue(tag);
-    paramsBeingEdited.insert(tag);
+    paramsBeingEditedByControls.emplace(tag, control);
     return true;
   }
   else {
@@ -185,14 +185,14 @@ ParameterAccess::beginEdit(int tag)
 }
 
 bool
-ParameterAccess::endEdit(int tag)
+ParameterAccess::endEdit(int tag, std::string control)
 {
-  auto editedIter = paramsBeingEdited.find(tag);
-  if (editedIter == paramsBeingEdited.end()) {
+  auto editedIter = paramsBeingEditedByControls.find(tag);
+  if (editedIter == paramsBeingEditedByControls.end()) {
     assert(false);
     return false;
   }
-  paramsBeingEdited.erase(tag);
+  paramsBeingEditedByControls.erase(tag);
   return controller.endEdit(tag) == kResultTrue;
 }
 
@@ -405,8 +405,15 @@ ParameterAccess::isBypass(int tag)
 bool
 ParameterAccess::isBeingEdited(int tag) const
 {
-  auto const editedIter = paramsBeingEdited.find(tag);
-  return editedIter != paramsBeingEdited.cend();
+  auto const editedIter = paramsBeingEditedByControls.find(tag);
+  return editedIter != paramsBeingEditedByControls.cend();
+}
+
+std::string
+ParameterAccess::getEditingControl(int tag) const
+{
+  auto const editedIter = paramsBeingEditedByControls.find(tag);
+  return (editedIter != paramsBeingEditedByControls.cend()) ? editedIter->second : "";
 }
 
 void

@@ -109,7 +109,8 @@ UnplugProcessor<Parameters>::UpdateParametersToLastPoint(ProcessData& data)
           ParamValue value;
           int32 sampleOffset;
           paramQueue->getPoint(numPoints - 1, sampleOffset, value);
-          parameterStorage.setNormalized(index, value);
+          auto const parameterTag = paramQueue->getParameterId();
+          parameterStorage.setNormalized(parameterTag, value);
         }
       }
     }

@@ -190,8 +190,14 @@ UnplugController<View, Parameters>::setState(IBStream* state)
       return true;
     }
   };
-  persistentData.load(loadInteger, loadIntegerArray, loadDoubleArray, loadBytes);
-  return kResultTrue;
+  std::array<int64,2> loadedSize{};
+  if(!loadInteger(loadedSize[0]))
+    return kResultFalse;
+  if(!loadInteger(loadedSize[1]))
+    return kResultFalse;
+  lastViewSize[0] = loadedSize[0];
+  lastViewSize[1] = loadedSize[1];
+  return persistentData.load(loadInteger, loadIntegerArray, loadDoubleArray, loadBytes) ? kResultTrue : kResultFalse;
 }
 
 template<class View, class Parameters>
@@ -209,6 +215,8 @@ UnplugController<View, Parameters>::getState(IBStream* state)
     return streamer.writeDoubleArray(x, static_cast<int>(size));
   };
   auto const saveBytes = [&](void const* x, int64_t size) { return streamer.writeRaw(x, static_cast<int>(size)); };
+  saveInteger(lastViewSize[0]);
+  saveInteger(lastViewSize[1]);
   persistentData.save(saveInteger, saveIntegerArray, saveDoubleArray, saveBytes);
   return kResultTrue;
 }

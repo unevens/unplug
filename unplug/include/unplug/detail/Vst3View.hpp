@@ -98,7 +98,7 @@ public:
     puglView->setEventHandler(*eventHandler);
     puglView->setParentWindow((pugl::NativeView)pParent);
     puglView->setWindowTitle(EventHandler::getWindowName().c_str());
-    auto const defaultSize = getDefaultSize();
+    auto const defaultSize = (lastViewSize[0] > -1 && lastViewSize[1] > -1) ? lastViewSize : getDefaultSize();
     puglView->setDefaultSize(defaultSize[0], defaultSize[1]);
     puglView->setAspectRatio(0, 0, 0, 0);
     puglView->setBackend(pugl::glBackend());
@@ -140,8 +140,10 @@ public:
       puglView->setFrame({ (double)r->left, (double)r->top, (double)r->getWidth(), (double)r->getHeight() });
       puglView->postRedisplay();
     }
-    lastViewSize[0] = r->getWidth();
-    lastViewSize[1] = r->getHeight();
+    if (puglView) {
+      lastViewSize[0] = r->getWidth();
+      lastViewSize[1] = r->getHeight();
+    }
     return CPluginView::onSize(r);
   }
 

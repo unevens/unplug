@@ -44,7 +44,7 @@ using ParamID = Steinberg::Vst::ParamID;
  * And an EventHandler class, which takes care of interfacing the UserInterface class of your plugin with the Pugl
  * window system. In this way, you can write the UserInterface class of your plugin against the API of the EventHandler
  * class, without depending on the VST3 SDK. The UserInterface class is then supplied to the EventHandler class and then
- * to the View class through dependency injection - see the files unplug/PluginView.hpp and unplug/DemoView.hpp.
+ * to the View class through dependency injection.
  * */
 
 template<class EventHandler>

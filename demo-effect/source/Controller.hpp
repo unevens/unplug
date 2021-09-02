@@ -15,11 +15,9 @@
 
 #include "Parameters.hpp"
 #include "UserInterface.hpp"
-#include "unplug/PluginView.hpp"
 #include "unplug/UnplugController.hpp"
 
-using ViewClass = unplug::vst3::PluginView<DemoEffectUserInterface>;
-using BaseController = unplug::UnplugController<ViewClass, DemoEffectParameters>;
+using BaseController = unplug::UnplugController<DemoEffectUserInterface, DemoEffectParameters>;
 
 class UnplugDemoEffectController final : public BaseController
 {

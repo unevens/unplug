@@ -21,6 +21,7 @@
 #include "unplug/ParameterStorage.hpp"
 #include "unplug/StringConversion.hpp"
 #include "unplug/ViewPersistentData.hpp"
+#include "unplug/detail/Vst3DBParameter.hpp"
 #include <memory>
 
 namespace Steinberg::Vst {
@@ -108,6 +109,19 @@ UnplugController<View, Parameters>::initialize(FUnknown* context)
             flags |= ParameterInfo::kIsBypass;
           return flags;
         }();
+        if (description.controledInDecibels) {
+          auto parameter = new DBParameter(title.c_str(),
+                                           description.tag,
+                                           description.min,
+                                           description.max,
+                                           description.defaultValue,
+                                           description.linearZeroInDB,
+                                           description.numSteps,
+                                           flags,
+                                           unitId,
+                                           pShortTitle);
+          parameters.addParameter(parameter);
+        }
         auto parameter = new RangeParameter(title.c_str(),
                                             description.tag,
                                             pUnits,

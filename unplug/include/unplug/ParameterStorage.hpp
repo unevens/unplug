@@ -47,6 +47,8 @@ struct ParameterDescription
   int numSteps;
   std::vector<std::string> labels;
   bool isBypass = false;
+  bool controledInDecibels = false;
+  double linearZeroInDB = -90.0;
   struct
   {
     int control = -1;
@@ -111,6 +113,13 @@ struct ParameterDescription
     assert(channel > -1 && channel < 17);
     defaultMidiMapping.control = control;
     defaultMidiMapping.channel = channel;
+    return *this;
+  }
+
+  ParameterDescription ControlledByDecibels(double linearZeroInDB_ = -90.0)
+  {
+    controledInDecibels = true;
+    linearZeroInDB = linearZeroInDB_;
     return *this;
   }
 

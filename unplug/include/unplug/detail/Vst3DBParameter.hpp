@@ -12,12 +12,36 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/detail/EventHandler.hpp"
-#include "unplug/detail/Vst3View.hpp"
 
-namespace unplug::vst3 {
+#include "public.sdk/source/vst/vstparameters.h"
 
-template<class UserInterface>
-  using PluginView = detail::Vst3View<unplug::detail::EventHandler<UserInterface>>;
+namespace Steinberg::Vst {
 
-} // namespace unplug
+class DBParameter : public RangeParameter
+{
+public:
+  DBParameter(const TChar* title,
+              ParamID tag,
+              ParamValue minPlainInDB = 0.0,
+              ParamValue maxPlainInDB = 1.0,
+              ParamValue defaultValuePlain = 0.0,
+              ParamValue linearZeroInDB = -90.0,
+              int32 stepCount = 0,
+              int32 flags = ParameterInfo::kCanAutomate,
+              UnitID unitID = kRootUnitId,
+              const TChar* shortTitle = nullptr);
+
+  double linearToDB(double linear) const;
+
+  double dBToLinear(double dB) const;
+
+  ParamValue toPlain(ParamValue valueNormalized_) const override;
+
+  ParamValue toNormalized(ParamValue plainValueInDB) const override;
+
+  bool fromString(const TChar* string, ParamValue& valueNormalized_) const override;
+
+protected:
+  ParamValue linearZeroInDB;
+};
+}

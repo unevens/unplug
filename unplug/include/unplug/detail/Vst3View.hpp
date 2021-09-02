@@ -48,7 +48,7 @@ using ParamID = Steinberg::Vst::ParamID;
  * */
 
 template<class EventHandler>
-class View final
+class Vst3View final
   : public Steinberg::CPluginView
   , public Steinberg::Vst::IParameterFinder
 {
@@ -61,10 +61,10 @@ public:
     return Steinberg::CPluginView::queryInterface(iid, obj);
   }
 
-  View(EditControllerEx1& controller,
-       ViewPersistentData& persistentData,
-       MidiMapping& midiMapping,
-       std::array<int, 2>& lastViewSize)
+  Vst3View(EditControllerEx1& controller,
+           ViewPersistentData& persistentData,
+           MidiMapping& midiMapping,
+           std::array<int, 2>& lastViewSize)
     : world{ pugl::WorldType::module }
     , parameters{ controller, midiMapping }
     , persistentData{ persistentData }
@@ -73,7 +73,7 @@ public:
     world.setClassName(EventHandler::getWindowName().c_str());
   }
 
-  ~View() = default;
+  ~Vst3View() = default;
 
   tresult PLUGIN_API findParameter(int32 xPos, int32 yPos, ParamID& resultTag) override
   {

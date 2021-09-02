@@ -13,11 +13,23 @@
 
 #pragma once
 #include "unplug/detail/EventHandler.hpp"
+#ifdef UNPLUG_VST3
 #include "unplug/detail/Vst3View.hpp"
-
+#else
+// todo
+#endif
 namespace unplug::vst3 {
 
-template<class UserInterface>
-  using PluginView = detail::Vst3View<unplug::detail::EventHandler<UserInterface>>;
+namespace detail {
+#ifdef UNPLUG_VST3
+template<class EventHandlerClass>
+using View = Vst3View<EventHandlerClass>;
+#else
+// todo
+#endif
+} // namespace detail
 
-} // namespace unplug
+template<class UserInterface>
+using PluginView = detail::View<unplug::detail::EventHandler<UserInterface>>;
+
+} // namespace unplug::vst3

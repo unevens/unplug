@@ -12,14 +12,12 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "MidiMapping.hpp"
+#include "unplug/MidiMapping.hpp"
 #include <algorithm>
 #include <array>
 #include <atomic>
 #include <cassert>
 #include <string>
-#include <utility>
-#include <variant>
 #include <vector>
 
 namespace unplug {
@@ -57,78 +55,28 @@ struct ParameterDescription
     bool isEnabled() const { return control > -1; }
   } defaultMidiMapping;
 
-  ParameterDescription(int tag, std::string name_, std::vector<std::string> labels_, int defaultValue = 0)
-    : type{ Type::list }
-    , tag{ tag }
-    , labels{ std::move(labels_) }
-    , name{ std::move(name_) }
-    , defaultValue{ static_cast<ParameterValueType>(defaultValue) }
-  {
-    numSteps = static_cast<int>(labels.size()) - 1;
-    max = static_cast<ParameterValueType>(numSteps);
-  }
+  ParameterDescription(int tag, std::string name_, std::vector<std::string> labels_, int defaultValue = 0);
 
   ParameterDescription(int tag,
                        std::string name_,
                        ParameterValueType min,
                        ParameterValueType max,
                        ParameterValueType defaultValue = 0,
-                       int numSteps = 0)
-    : type{ Type::numeric }
-    , tag{ tag }
-    , min{ min }
-    , max{ max }
-    , defaultValue{ defaultValue }
-    , numSteps{ numSteps }
-    , name{ std::move(name_) }
-  {}
+                       int numSteps = 0);
 
-  ParameterDescription Automatable(bool isAutomatable)
-  {
-    canBeAutomated = isAutomatable;
-    return *this;
-  }
+  ParameterDescription Automatable(bool isAutomatable);
 
-  ParameterDescription ShortName(std::string shortName_)
-  {
-    shortName = std::move(shortName_);
-    return *this;
-  }
+  ParameterDescription ShortName(std::string shortName_);
 
-  ParameterDescription MeasureUnit(std::string measureUnit_)
-  {
-    measureUnit = std::move(measureUnit_);
-    return *this;
-  }
+  ParameterDescription MeasureUnit(std::string measureUnit_);
 
-  ParameterDescription MidiMapping(int control)
-  {
-    assert(control > -1 && control < 130);
-    return MidiMapping(control, -1);
-  }
+  ParameterDescription MidiMapping(int control);
 
-  ParameterDescription MidiMapping(int control, int channel)
-  {
-    assert(control > -1 && control < 130);
-    assert(channel > -1 && channel < 17);
-    defaultMidiMapping.control = control;
-    defaultMidiMapping.channel = channel;
-    return *this;
-  }
+  ParameterDescription MidiMapping(int control, int channel);
 
-  ParameterDescription ControlledByDecibels(double linearZeroInDB_ = -90.0)
-  {
-    controledInDecibels = true;
-    linearZeroInDB = linearZeroInDB_;
-    return *this;
-  }
+  ParameterDescription ControlledByDecibels(double linearZeroInDB_ = -90.0);
 
-  static ParameterDescription makeBypassParameter(int tag)
-  {
-    auto parameter = ParameterDescription(tag, "Bypass", 0, 1, 0, 1);
-    parameter.isBypass = true;
-    return parameter;
-  }
+  static ParameterDescription makeBypassParameter(int tag);
 };
 
 template<int numParameters>
@@ -208,9 +156,7 @@ public:
   std::vector<ParameterDescription> const& getDescriptions() const { return descriptions; }
 
 private:
-  explicit ParameterInitializer(std::vector<ParameterDescription> descriptions)
-    : descriptions(std::move(descriptions))
-  {}
+  explicit ParameterInitializer(std::vector<ParameterDescription> descriptions);
 
   std::vector<ParameterDescription> descriptions;
 };
@@ -220,17 +166,10 @@ class ParameterCreator final
 public:
   void addParameter(ParameterDescription&& parameterDescription) { descriptions.emplace_back(parameterDescription); }
 
-  ParameterInitializer done()
-  {
-    sortParametersByTag();
-    return ParameterInitializer{ descriptions };
-  }
+  ParameterInitializer done();
 
 private:
-  void sortParametersByTag()
-  {
-    std::sort(descriptions.begin(), descriptions.end(), [](auto& lhs, auto& rhs) { return lhs.tag < rhs.tag; });
-  }
+  void sortParametersByTag();
   std::vector<ParameterDescription> descriptions;
 };
 

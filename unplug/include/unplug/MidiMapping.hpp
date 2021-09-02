@@ -13,7 +13,6 @@
 
 #pragma once
 #include <array>
-#include <cassert>
 
 namespace unplug {
 
@@ -98,11 +97,11 @@ class MidiMappingSingleChannel final
 public:
   static constexpr auto unmapped = -1;
 
-  MidiMappingSingleChannel() { std::fill(midiMapping.begin(), midiMapping.end(), unmapped); }
+  MidiMappingSingleChannel();
 
-  void mapParameter(int parameterTag, int controller) { midiMapping[static_cast<int>(controller)] = parameterTag; }
+  void mapParameter(int parameterTag, int controller);
 
-  int getParameter(int controller) const { return midiMapping[static_cast<int>(controller)]; }
+  int getParameter(int controller) const;
 
 private:
   std::array<int, 130> midiMapping;
@@ -114,30 +113,11 @@ class MidiMapping final
 public:
   static constexpr auto unmapped = detail::MidiMappingSingleChannel::unmapped;
 
-  void mapParameter(int parameterTag, int controller, int channel)
-  {
-    assert(channel < midiMappingByChannel.size());
-    if (channel < midiMappingByChannel.size()) {
-      midiMappingByChannel[channel].mapParameter(parameterTag, controller);
-    }
-  }
+  void mapParameter(int parameterTag, int controller, int channel);
 
-  void mapParameter(int parameterTag, int controller)
-  {
-    for (auto& channelMidiMapping : midiMappingByChannel) {
-      channelMidiMapping.mapParameter(parameterTag, controller);
-    }
-  }
+  void mapParameter(int parameterTag, int controller);
 
-  int getParameter(int controller, int channel) const
-  {
-    assert(channel < midiMappingByChannel.size());
-    if (channel < midiMappingByChannel.size()) {
-      return midiMappingByChannel[channel].getParameter(controller);
-    }
-    else
-      return unmapped;
-  }
+  int getParameter(int controller, int channel) const;
 
 private:
   std::array<detail::MidiMappingSingleChannel, 16> midiMappingByChannel;

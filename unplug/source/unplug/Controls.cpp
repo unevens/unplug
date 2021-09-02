@@ -211,6 +211,51 @@ SliderFloat(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSlid
 }
 
 bool
+VSliderFloat(int parameterTag, ImVec2 size, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
+{
+  return Control(parameterTag, [=](ParameterData const& parameter) {
+    auto outputValue = static_cast<float>(parameter.value);
+    auto const controlName = makeLabel(showLabel, parameter.name, "VSLIDERFLOAT");
+    auto const formatWithUnit = makeFormat(parameter, format);
+    bool const isActive = ImGui::VSliderFloat(
+      controlName.c_str(), size, &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
+    auto& parameters = Parameters();
+    outputValue = parameters.normalizeValue(parameterTag, outputValue);
+    return ControlOutput{ controlName, outputValue, isActive };
+  });
+}
+
+bool
+SliderInt(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
+{
+  return Control(parameterTag, [=](ParameterData const& parameter) {
+    auto outputValue = static_cast<int>(parameter.value);
+    auto const controlName = makeLabel(showLabel, parameter.name, "VSLIDERINT");
+    auto const formatWithUnit = makeFormat(parameter, format);
+    bool const isActive = ImGui::SliderInt(
+      controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
+    auto& parameters = Parameters();
+    outputValue = parameters.normalizeValue(parameterTag, outputValue);
+    return ControlOutput{ controlName, static_cast<float>(outputValue), isActive };
+  });
+}
+
+bool
+VSliderInt(int parameterTag, ImVec2 size, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
+{
+  return Control(parameterTag, [=](ParameterData const& parameter) {
+    auto outputValue = static_cast<int>(parameter.value);
+    auto const controlName = makeLabel(showLabel, parameter.name, "VSLIDERINT");
+    auto const formatWithUnit = makeFormat(parameter, format);
+    bool const isActive = ImGui::VSliderInt(
+      controlName.c_str(), size, &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
+    auto& parameters = Parameters();
+    outputValue = parameters.normalizeValue(parameterTag, outputValue);
+    return ControlOutput{ controlName, static_cast<float>(outputValue), isActive };
+  });
+}
+
+bool
 DragFloat(int parameterTag, ShowLabel showLabel, float speed, const char* format, ImGuiSliderFlags flags)
 {
   return Control(parameterTag, [=](ParameterData const& parameter) {

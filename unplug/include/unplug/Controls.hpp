@@ -17,7 +17,7 @@
 #include "imgui_user_config.h"
 #include "unplug/ParameterAccess.hpp"
 #include <functional>
-#include <utility>
+#include <string>
 
 namespace unplug {
 
@@ -102,6 +102,16 @@ SliderFloat(int parameterTag,
             ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
 
 /**
+ * Vertical SliderFloat ImGui control associated with a plugin parameter
+ * */
+bool
+VSliderFloat(int parameterTag,
+             ImVec2 size,
+             ShowLabel showLabel = ShowLabel::no,
+             const char* format = "%.3f",
+             ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
+
+/**
  * SliderInt ImGui control associated with a plugin parameter
  * */
 bool
@@ -109,6 +119,16 @@ SliderInt(int parameterTag,
           ShowLabel showLabel = ShowLabel::no,
           const char* format = "%d",
           ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
+
+/**
+ * Vertical SliderInt ImGui control associated with a plugin parameter
+ * */
+bool
+VSliderInt(int parameterTag,
+           ImVec2 size,
+           ShowLabel showLabel = ShowLabel::no,
+           const char* format = "%d",
+           ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
 
 /**
  * Knob control stuff
@@ -183,7 +203,6 @@ Control(int parameterTag, std::function<ControlOutput(ParameterData const& param
  * implementation details that can be useful to implement custom controls
  * */
 namespace detail {
-
 struct EditingState
 {
   bool isParameterBeingEdited;

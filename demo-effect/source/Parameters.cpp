@@ -11,13 +11,20 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#pragma once
+#include "unplug/Parameters.hpp"
+#include "Parameters.hpp"
 
-namespace ParamTag {
-enum
+namespace unplug {
+
+ParameterInitializer
+getParameterInitializer()
 {
-  bypass,
-  gain,
-  numParams
-};
+  using namespace unplug;
+  auto params = ParameterCreator{};
+  params.addParameter(ParameterDescription::makeBypassParameter(ParamTag::bypass));
+  params.addParameter(ParameterDescription(ParamTag::gain, "Gain", 0, 1, .5));
+  return params.done();
 }
+
+
+} // namespace unplug

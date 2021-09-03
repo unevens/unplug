@@ -108,6 +108,8 @@ public:
 
   ParameterValueType getNormalized(int index) const { return convert[index].toNormalized(values[index].load()); }
 
+  static consteval int getNumParameters() { return numParameters; }
+
 private:
   void initialize(std::vector<ParameterDescription> const& parameters)
   {

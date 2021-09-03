@@ -12,12 +12,11 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/ParameterStorage.hpp"
 
-namespace ParamTag {
-enum
-{
-  bypass,
-  gain,
-  numParams
-};
-}
+namespace unplug {
+
+ParameterInitializer
+getParameterInitializer();
+
+} // namespace unplug

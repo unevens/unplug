@@ -12,12 +12,8 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "Parameters.hpp"
 
-namespace ParamTag {
-enum
-{
-  bypass,
-  gain,
-  numParams
-};
+namespace unplug::NumParameters {
+inline constexpr int value = ParamTag::numParams;
 }

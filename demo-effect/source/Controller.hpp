@@ -16,9 +16,7 @@
 #include "Parameters.hpp"
 #include "unplug/UnplugController.hpp"
 
-using BaseController = unplug::UnplugController<DemoEffectParameters>;
-
-class UnplugDemoEffectController final : public BaseController
+class UnplugDemoEffectController final : public unplug::UnplugController
 {
 public:
   UnplugDemoEffectController() = default;

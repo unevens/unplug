@@ -16,9 +16,8 @@
 #include "Parameters.hpp"
 #include "unplug/UnplugProcessor.hpp"
 
-using BaseProcessor = unplug::UnplugProcessor<DemoEffectParameters>;
 
-class UnplugDemoEffectProcessor final : public BaseProcessor
+class UnplugDemoEffectProcessor final : public unplug::UnplugProcessor
 {
 public:
   UnplugDemoEffectProcessor();

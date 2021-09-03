@@ -13,8 +13,6 @@
 
 #pragma once
 #include "imgui.h"
-#include "imgui_internal.h"
-#include "imgui_user_config.h"
 #include "unplug/ParameterAccess.hpp"
 #include <functional>
 #include <string>

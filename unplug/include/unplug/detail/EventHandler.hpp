@@ -12,13 +12,14 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "../ParameterAccess.hpp"
 #include "ModifierKeys.h"
 #include "OpaqueGl.h"
 #include "imgui.h"
 #include "imgui_impl_opengl2.h"
 #include "implot.h"
 #include "pugl/gl.hpp"
+#include "unplug/ParameterAccess.hpp"
+#include "unplug/UserInterface.hpp"
 #include <array>
 #include <chrono>
 
@@ -31,7 +32,6 @@ namespace unplug::detail {
  * you are familiar with Dear ImGui, think of the EventHandler class as a Dear ImGui backend.
  */
 
-template<class UserInterface>
 class EventHandler final
 {
   using clock = std::chrono::steady_clock;
@@ -43,18 +43,18 @@ public:
     , parameters(parameters)
   {}
 
-  static void adjustSize(int& width, int& height, int prevWidth, int prevHeight)
+  static std::array<int, 2> adjustSize(int width, int height, int prevWidth, int prevHeight)
   {
-    UserInterface::adjustSize(width, height, prevWidth, prevHeight);
+    return UserInterface::adjustSize(width, height, prevWidth, prevHeight);
   }
 
   static bool isResizingAllowed() { return UserInterface::isResizingAllowed(); }
 
   static std::array<int, 2> getDefaultSize() { return UserInterface::getDefaultSize(); }
 
-  static void initializePersistentData(ViewPersistentData& presistentData)
+  static void initializePersistentData(ViewPersistentData& persistentData)
   {
-    return UserInterface::initializePersistentData(presistentData);
+    return UserInterface::initializePersistentData(persistentData);
   }
 
   static std::string getWindowName() { return UserInterface::getWindowName(); }
@@ -103,7 +103,7 @@ public:
 
   bool getParameterAtCoordinates(int x, int y, int& parameterTag)
   {
-    return ui.getParameterAtCoordinates(x, y, parameterTag);
+    return UserInterface::getParameterAtCoordinates(x, y, parameterTag);
   }
 
   pugl::Status onEvent(const pugl::CreateEvent& event)
@@ -185,9 +185,9 @@ public:
     setCursor(io);
 
     ImGui_ImplOpenGL2_NewFrame();
-    ui.paint();
+    UserInterface::paint();
     ImGui::Render();
-    resizeAndClearViewport(io.DisplaySize.x, io.DisplaySize.y, ui.getBackgroundColor());
+    resizeAndClearViewport(io.DisplaySize.x, io.DisplaySize.y, UserInterface::getBackgroundColor());
     ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 
     resetKeys();
@@ -245,7 +245,7 @@ public:
     }
     else {
       setCurrentContext();
-      return ui.onEvent(event);
+      return pugl::Status::success;
     }
   }
 
@@ -254,7 +254,7 @@ public:
     isMouseCursorIn = true;
     setCurrentContext();
     view.postRedisplay();
-    return ui.onEvent(event);
+    return pugl::Status::success;
   }
 
   pugl::Status onEvent(const pugl::PointerOutEvent& event)
@@ -262,55 +262,7 @@ public:
     isMouseCursorIn = false;
     setCurrentContext();
     view.postRedisplay();
-    return ui.onEvent(event);
-  }
-
-  pugl::Status onEvent(const pugl::CloseEvent& event)
-  {
-    setCurrentContext();
-    return ui.onEvent(event);
-  }
-
-  pugl::Status onEvent(const pugl::MapEvent& event)
-  {
-    setCurrentContext();
-    return ui.onEvent(event);
-  }
-
-  pugl::Status onEvent(const pugl::UnmapEvent& event)
-  {
-    setCurrentContext();
-    return ui.onEvent(event);
-  }
-
-  pugl::Status onEvent(const pugl::FocusInEvent& event)
-  {
-    setCurrentContext();
-    return ui.onEvent(event);
-  }
-
-  pugl::Status onEvent(const pugl::FocusOutEvent& event)
-  {
-    setCurrentContext();
-    return ui.onEvent(event);
-  }
-
-  pugl::Status onEvent(const pugl::LoopEnterEvent& event)
-  {
-    setCurrentContext();
-    return ui.onEvent(event);
-  }
-
-  pugl::Status onEvent(const pugl::LoopLeaveEvent& event)
-  {
-    setCurrentContext();
-    return ui.onEvent(event);
-  }
-
-  pugl::Status onEvent(const pugl::ClientEvent& event)
-  {
-    setCurrentContext();
-    return ui.onEvent(event);
+    return pugl::Status::success;
   }
 
   // Pugl events that should not be dispatched
@@ -332,6 +284,13 @@ public:
     // this event should be left to the host, which will call IPluginView::onKeyUp and IPluginView::onKeyUp
     return pugl::Status::success;
   }
+
+  // for pugl events whose responses are not implemented
+  template<class EventType>
+    pugl::Status onEvent(EventType const& event) const noexcept
+    {
+    return pugl::Status::success;
+    }
 
 private:
   void setCurrentContext()
@@ -409,7 +368,6 @@ private:
   pugl::View& view;
   ImGuiContext* imguiContext = nullptr;
   ImPlotContext* implotContext = nullptr;
-  UserInterface ui;
   time_point prevFrameTime;
   ImGuiMouseCursor lastCursor = -1;
   bool isMouseCursorIn = false;

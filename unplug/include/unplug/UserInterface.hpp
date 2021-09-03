@@ -12,35 +12,36 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "pugl/pugl.hpp"
 #include "unplug/ViewPersistentData.hpp"
 #include <array>
 
-class DemoEffectUserInterface final
-{
-public:
-  void paint();
+namespace unplug::UserInterface {
 
-  static void adjustSize(int& width, int& height, int prevWidth, int prevHeight);
+void
+paint();
 
-  static bool isResizingAllowed() { return true; }
+std::array<int, 2>
+adjustSize(int width, int height, int prevWidth, int prevHeight);
 
-  static std::array<int, 2> getDefaultSize() { return { { 200, 300 } }; }
+bool
+isResizingAllowed();
 
-  static float getMinZoom() { return 0.5f; }
+std::array<int, 2>
+getDefaultSize();
 
-  static void initializePersistentData(unplug::ViewPersistentData& presistentData) {}
+float
+getMinZoom();
 
-  static std::string getWindowName() { return "Demo"; }
+void
+initializePersistentData(unplug::ViewPersistentData& persistentData);
 
-  std::array<float, 4> getBackgroundColor() const { return { { 0, 0, 0, 1 } }; }
+std::string
+getWindowName();
 
-  bool getParameterAtCoordinates(int x, int y, int& parameterTag) const { return false; }
+std::array<float, 4>
+getBackgroundColor();
 
-  // for pugl events whose responses may be implemented here
-  template<class EventType>
-  pugl::Status onEvent(EventType const& event) const noexcept
-  {
-    return pugl::Status::success;
-  }
-};
+bool
+getParameterAtCoordinates(int x, int y, int& parameterTag);
+
+} // namespace unplug::ui

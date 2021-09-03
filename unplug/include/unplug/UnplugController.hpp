@@ -28,7 +28,7 @@
 
 namespace Steinberg::Vst {
 
-template<class UserInterface, class Parameters>
+template<class Parameters>
 class UnplugController
   : public EditControllerEx1
   , public IMidiMapping
@@ -37,7 +37,7 @@ public:
   using FUnknown = FUnknown;
   using IEditController = IEditController;
   using MidiMapping = unplug::MidiMapping;
-  using View = unplug::vst3::detail::Vst3View<unplug::detail::EventHandler<UserInterface>>;
+  using View = unplug::vst3::detail::Vst3View;
 
   UnplugController() = default;
   ~UnplugController() override = default;
@@ -74,9 +74,9 @@ private:
 
 // implementation
 
-template<class UserInterface, class Parameters>
+template<class Parameters>
 tresult PLUGIN_API
-UnplugController<UserInterface, Parameters>::initialize(FUnknown* context)
+UnplugController<Parameters>::initialize(FUnknown* context)
 {
   using namespace unplug;
   using namespace Steinberg;
@@ -165,9 +165,9 @@ UnplugController<UserInterface, Parameters>::initialize(FUnknown* context)
   return kResultOk;
 }
 
-template<class UserInterface, class Parameters>
+template<class Parameters>
 tresult PLUGIN_API
-UnplugController<UserInterface, Parameters>::setComponentState(IBStream* state)
+UnplugController<Parameters>::setComponentState(IBStream* state)
 {
   using namespace Steinberg;
   // loads the dsp state
@@ -184,9 +184,9 @@ UnplugController<UserInterface, Parameters>::setComponentState(IBStream* state)
   return kResultOk;
 }
 
-template<class UserInterface, class Parameters>
+template<class Parameters>
 tresult PLUGIN_API
-UnplugController<UserInterface, Parameters>::setState(IBStream* state)
+UnplugController<Parameters>::setState(IBStream* state)
 {
   using namespace Steinberg;
 
@@ -216,9 +216,9 @@ UnplugController<UserInterface, Parameters>::setState(IBStream* state)
   return persistentData.load(loadInteger, loadIntegerArray, loadDoubleArray, loadBytes) ? kResultTrue : kResultFalse;
 }
 
-template<class UserInterface, class Parameters>
+template<class Parameters>
 tresult PLUGIN_API
-UnplugController<UserInterface, Parameters>::getState(IBStream* state)
+UnplugController<Parameters>::getState(IBStream* state)
 {
   using namespace Steinberg;
   // used to save ui-only data
@@ -237,9 +237,9 @@ UnplugController<UserInterface, Parameters>::getState(IBStream* state)
   return kResultTrue;
 }
 
-template<class UserInterface, class Parameters>
+template<class Parameters>
 IPlugView* PLUGIN_API
-UnplugController<UserInterface, Parameters>::createView(FIDString name)
+UnplugController<Parameters>::createView(FIDString name)
 {
   using namespace Steinberg;
   if (FIDStringsEqual(name, ViewType::kEditor)) {
@@ -249,9 +249,9 @@ UnplugController<UserInterface, Parameters>::createView(FIDString name)
   return nullptr;
 }
 
-template<class UserInterface, class Parameters>
+template<class Parameters>
 tresult
-UnplugController<UserInterface, Parameters>::getMidiControllerAssignment(int32 busIndex,
+UnplugController<Parameters>::getMidiControllerAssignment(int32 busIndex,
                                                                 int16 channel,
                                                                 CtrlNumber midiControllerNumber,
                                                                 ParamID& tag)
@@ -269,6 +269,6 @@ UnplugController<UserInterface, Parameters>::getMidiControllerAssignment(int32 b
 } // namespace Steinberg::Vst
 
 namespace unplug {
-template<class UserInterface, class Parameters>
-using UnplugController = Steinberg::Vst::UnplugController<UserInterface, Parameters>;
+template<class Parameters>
+using UnplugController = Steinberg::Vst::UnplugController<Parameters>;
 }

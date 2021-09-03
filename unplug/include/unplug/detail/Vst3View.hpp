@@ -18,6 +18,7 @@
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/gl.hpp"
 #include "unplug/MidiMapping.hpp"
+#include "unplug/detail/EventHandler.hpp"
 #include "unplug/ViewPersistentData.hpp"
 #include <memory>
 #include <string>
@@ -30,6 +31,7 @@ using char16 = Steinberg::char16;
 using int16 = Steinberg::int16;
 using int32 = Steinberg::int32;
 using ParamID = Steinberg::Vst::ParamID;
+using EventHandler = unplug::detail::EventHandler;
 
 /**
  * The View class implements the Steinberg::IPluginView class that the plugin controller returns to the host
@@ -47,7 +49,6 @@ using ParamID = Steinberg::Vst::ParamID;
  * to the View class through dependency injection.
  * */
 
-template<class EventHandler>
 class Vst3View final
   : public Steinberg::CPluginView
   , public Steinberg::Vst::IParameterFinder
@@ -174,11 +175,11 @@ public:
 
   tresult PLUGIN_API checkSizeConstraint(ViewRect* rect) override
   {
-    int width = rect->getWidth();
-    int height = rect->getHeight();
-    EventHandler::adjustSize(width, height, lastViewSize[0], lastViewSize[1]);
-    rect->right = rect->left + width;
-    rect->bottom = rect->top + height;
+    int requestedWidth = rect->getWidth();
+    int requestedHeight = rect->getHeight();
+    auto const size = EventHandler::adjustSize(requestedWidth, requestedHeight, lastViewSize[0], lastViewSize[1]);
+    rect->right = rect->left + size[0];
+    rect->bottom = rect->top + size[1];
     return kResultTrue;
   }
 

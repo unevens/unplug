@@ -14,10 +14,9 @@
 #pragma once
 
 #include "Parameters.hpp"
-#include "UserInterface.hpp"
 #include "unplug/UnplugController.hpp"
 
-using BaseController = unplug::UnplugController<DemoEffectUserInterface, DemoEffectParameters>;
+using BaseController = unplug::UnplugController<DemoEffectParameters>;
 
 class UnplugDemoEffectController final : public BaseController
 {

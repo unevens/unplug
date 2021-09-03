@@ -11,14 +11,15 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#include "UserInterface.hpp"
+#include "unplug/UserInterface.hpp"
 #include "Parameters.hpp"
 #include "imgui.h"
 #include "unplug/Controls.hpp"
-#include <array>
+
+namespace unplug::UserInterface {
 
 void
-DemoEffectUserInterface::paint()
+paint()
 {
   using namespace unplug;
 
@@ -51,8 +52,8 @@ DemoEffectUserInterface::paint()
   ImGui::End();
 }
 
-void
-DemoEffectUserInterface::adjustSize(int& width, int& height, int prevWidth, int prevHeight)
+std::array<int, 2>
+adjustSize(int width, int height, int prevWidth, int prevHeight)
 {
   auto const referenceSize = getDefaultSize();
   auto const referenceWidth = static_cast<float>(referenceSize[0]);
@@ -60,6 +61,49 @@ DemoEffectUserInterface::adjustSize(int& width, int& height, int prevWidth, int 
   auto const widthRatio = static_cast<float>(width) / referenceWidth;
   auto const heightRatio = static_cast<float>(height) / referenceHeight;
   auto const ratio = std::max(getMinZoom(), std::min(widthRatio, heightRatio));
-  width = static_cast<int>(ratio * referenceWidth);
-  height = static_cast<int>(ratio * referenceHeight);
+  auto const adjustedWidth = static_cast<int>(ratio * referenceWidth);
+  auto const adjustedHeight = static_cast<int>(ratio * referenceHeight);
+  return { { adjustedWidth, adjustedHeight } };
 }
+
+bool
+isResizingAllowed()
+{
+  return true;
+}
+
+std::array<int, 2>
+getDefaultSize()
+{
+  return { { 200, 300 } };
+}
+
+float
+getMinZoom()
+{
+  return 0.5f;
+}
+
+void
+initializePersistentData(unplug::ViewPersistentData& persistentData)
+{}
+
+std::string
+getWindowName()
+{
+  return "Demo";
+}
+
+std::array<float, 4>
+getBackgroundColor()
+{
+  return { { 0, 0, 0, 1 } };
+}
+
+bool
+getParameterAtCoordinates(int x, int y, int& parameterTag)
+{
+  return false;
+}
+
+} // namespace unplug::ui

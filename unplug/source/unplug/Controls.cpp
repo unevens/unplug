@@ -17,6 +17,7 @@
  * */
 
 #include "unplug/Controls.hpp"
+#include "imgui_internal.h"
 
 namespace unplug {
 

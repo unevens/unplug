@@ -13,13 +13,12 @@
 
 #pragma once
 #include "imgui.h"
+#include "unplug/Math.hpp"
 #include "unplug/ParameterAccess.hpp"
 #include <functional>
 #include <string>
 
 namespace unplug {
-
-inline constexpr auto pi = (float)M_PI;
 
 enum class ShowLabel
 {

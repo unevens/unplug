@@ -83,10 +83,10 @@ ParameterDescription::MidiMapping(int control, int channel)
 }
 
 ParameterDescription
-ParameterDescription::ControlledByDecibels(double linearZeroInDB_)
+ParameterDescription::ControlledByDecibels(bool mapMinToLinearZero_)
 {
   controledInDecibels = true;
-  linearZeroInDB = linearZeroInDB_;
+  mapMinToLinearZero = mapMinToLinearZero_;
   return *this;
 }
 

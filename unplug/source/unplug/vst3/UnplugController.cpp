@@ -65,8 +65,7 @@ UnplugController::initialize(FUnknown* context)
                                            description.min,
                                            description.max,
                                            description.defaultValue,
-                                           description.linearZeroInDB,
-                                           description.numSteps,
+                                           description.mapMinToLinearZero,
                                            flags,
                                            unitId,
                                            pShortTitle);

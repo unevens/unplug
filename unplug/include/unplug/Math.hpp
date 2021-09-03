@@ -11,20 +11,23 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#include "unplug/Parameters.hpp"
-#include "Parameters.hpp"
+#pragma once
+#include <cmath>
 
 namespace unplug {
 
-ParameterInitializer
-getParameterInitializer()
+inline static constexpr auto pi = static_cast<float>(M_PI);
+
+inline double
+linearToDB(double linear)
 {
-  using namespace unplug;
-  auto params = ParameterCreator{};
-  params.addParameter(ParameterDescription::makeBypassParameter(ParamTag::bypass));
-  params.addParameter(ParameterDescription(ParamTag::gain, "Gain", -90.0, 6.0, 0.0).ControlledByDecibels());
-  return params.done();
+  return 20.0 * std::log10(std::abs(linear) + std::numeric_limits<double>::epsilon());
 }
 
+inline double
+dBToLinear(double dB)
+{
+  return std::pow(10.0, dB / 20.0);
+}
 
 } // namespace unplug

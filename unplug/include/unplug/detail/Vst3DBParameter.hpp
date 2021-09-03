@@ -17,21 +17,18 @@
 
 namespace Steinberg::Vst {
 
-class DBParameter : public RangeParameter
+class DBParameter : public Parameter
 {
 public:
   DBParameter(const TChar* title,
               ParamID tag,
-              ParamValue minPlainInDB = 0.0,
-              ParamValue maxPlainInDB = 1.0,
+              ParamValue minPlainInDB = -90.0,
+              ParamValue maxPlainInDB = 6.0,
               ParamValue defaultValuePlain = 0.0,
-              ParamValue linearZeroInDB = -90.0,
-              int32 stepCount = 0,
+              bool mapMinToLinearZero = true,
               int32 flags = ParameterInfo::kCanAutomate,
               UnitID unitID = kRootUnitId,
               const TChar* shortTitle = nullptr);
-
-  double linearToDB(double linear) const;
 
   double dBToLinear(double dB) const;
 
@@ -41,7 +38,14 @@ public:
 
   bool fromString(const TChar* string, ParamValue& valueNormalized_) const override;
 
-protected:
-  ParamValue linearZeroInDB;
+  void toString (ParamValue _valueNormalized, String128 string) const override;
+
+private:
+  double normalizedToLinear(double normalized) const;
+  double linearToNormalized(double linear) const;
+
+  ParamValue minLinear;
+  ParamValue maxLinear;
+  bool mapMinToLinearZero;
 };
-}
+} // namespace Steinberg::Vst

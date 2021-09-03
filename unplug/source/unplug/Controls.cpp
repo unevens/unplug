@@ -190,8 +190,6 @@ ValueAsText(int parameterTag, ShowLabel showLabel, const char* format, bool noHi
     auto const formatWithUnit = makeFormat(parameter, format);
     bool const isActive = detail::EditableFloat(
       controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), noHighlight);
-    auto& parameters = Parameters();
-    outputValue = parameters.normalizeValue(parameterTag, outputValue);
     return ControlOutput{ controlName, outputValue, isActive };
   });
 }
@@ -205,8 +203,6 @@ SliderFloat(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSlid
     auto const formatWithUnit = makeFormat(parameter, format);
     bool const isActive = ImGui::SliderFloat(
       controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
-    auto& parameters = Parameters();
-    outputValue = parameters.normalizeValue(parameterTag, outputValue);
     return ControlOutput{ controlName, outputValue, isActive };
   });
 }
@@ -220,8 +216,6 @@ VSliderFloat(int parameterTag, ImVec2 size, ShowLabel showLabel, const char* for
     auto const formatWithUnit = makeFormat(parameter, format);
     bool const isActive = ImGui::VSliderFloat(
       controlName.c_str(), size, &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
-    auto& parameters = Parameters();
-    outputValue = parameters.normalizeValue(parameterTag, outputValue);
     return ControlOutput{ controlName, outputValue, isActive };
   });
 }
@@ -235,8 +229,6 @@ SliderInt(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSlider
     auto const formatWithUnit = makeFormat(parameter, format);
     bool const isActive = ImGui::SliderInt(
       controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
-    auto& parameters = Parameters();
-    outputValue = parameters.normalizeValue(parameterTag, outputValue);
     return ControlOutput{ controlName, static_cast<float>(outputValue), isActive };
   });
 }
@@ -250,8 +242,6 @@ VSliderInt(int parameterTag, ImVec2 size, ShowLabel showLabel, const char* forma
     auto const formatWithUnit = makeFormat(parameter, format);
     bool const isActive = ImGui::VSliderInt(
       controlName.c_str(), size, &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
-    auto& parameters = Parameters();
-    outputValue = parameters.normalizeValue(parameterTag, outputValue);
     return ControlOutput{ controlName, static_cast<float>(outputValue), isActive };
   });
 }
@@ -265,8 +255,6 @@ DragFloat(int parameterTag, ShowLabel showLabel, float speed, const char* format
     auto const formatWithUnit = makeFormat(parameter, format);
     bool const isActive = ImGui::DragFloat(
       controlName.c_str(), &outputValue, speed, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
-    auto& parameters = Parameters();
-    outputValue = parameters.normalizeValue(parameterTag, outputValue);
     return ControlOutput{ controlName, outputValue, isActive };
   });
 }
@@ -291,10 +279,12 @@ Knob(int parameterTag, float power, float angleOffset, std::function<void(KnobDr
 {
   return Control(parameterTag, [&](ParameterData const& parameter) {
     auto controlName = parameter.name + "##KNOB";
-    auto const scaledInput = std::powf(static_cast<float>(parameter.valueNormalized), 1.f / power);
-    auto const knobOutput = Knob(controlName.c_str(), static_cast<float>(scaledInput), angleOffset);
+    auto const scaledInput =
+      std::powf((parameter.value - parameter.minValue) / (parameter.maxValue - parameter.minValue), 1.f / power);
+    auto const knobOutput = Knob(controlName.c_str(), scaledInput, angleOffset);
     drawer(knobOutput.drawData);
-    auto const outputValue = std::powf(knobOutput.value, power);
+    auto const outputValue =
+      parameter.minValue + (parameter.maxValue - parameter.minValue) * std::powf(knobOutput.value, power);
     return ControlOutput{ controlName, outputValue, knobOutput.isActive };
   });
 }
@@ -317,7 +307,7 @@ KnobWithLabels(int parameterTag, float power, float angleOffset, std::function<v
 namespace detail {
 
 void
-applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingState editingState, float valueNormalized)
+applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingState editingState, float value)
 {
 
   if (editingState.isParameterBeingEdited) {
@@ -326,7 +316,7 @@ applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingStat
       return;
     }
     if (editingState.isControlActive) {
-      bool const setValueOk = parameters.setValueNormalized(parameterTag, valueNormalized);
+      bool const setValueOk = parameters.setValue(parameterTag, value);
       assert(setValueOk);
     }
     else {
@@ -338,7 +328,7 @@ applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingStat
     if (editingState.isControlActive) {
       bool const beginEditOk = parameters.beginEdit(parameterTag, editingState.controlName);
       assert(beginEditOk);
-      bool const setValueOk = parameters.setValueNormalized(parameterTag, valueNormalized);
+      bool const setValueOk = parameters.setValue(parameterTag, value);
       assert(setValueOk);
     }
   }

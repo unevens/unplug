@@ -13,8 +13,8 @@
 
 #include "unplug/detail/Vst3DBParameter.hpp"
 #include "pluginterfaces/base/ustring.h"
+#include "unplug/Math.hpp"
 #include "unplug/StringConversion.hpp"
-#include <cmath>
 
 namespace Steinberg::Vst {
 DBParameter::DBParameter(const TChar* title,
@@ -22,67 +22,71 @@ DBParameter::DBParameter(const TChar* title,
                          ParamValue minPlainInDB,
                          ParamValue maxPlainInDB,
                          ParamValue defaultValuePlain,
-                         ParamValue linearZeroInDB,
-                         int32 stepCount,
+                         bool mapMinToLinearZero,
                          int32 flags,
                          UnitID unitID,
                          const TChar* shortTitle)
-  : RangeParameter(title,
-                   tag,
-                   unplug::ToVstTChar{}("dB").c_str(),
-                   dBToLinear(minPlainInDB),
-                   dBToLinear(maxPlainInDB),
-                   defaultValuePlain,
-                   stepCount,
-                   flags,
-                   unitID,
-                   shortTitle)
-  , linearZeroInDB(linearZeroInDB)
+  : Parameter(title, tag, unplug::ToVstTChar{}("dB").c_str(), defaultValuePlain, 0, flags, unitID, shortTitle)
+  , mapMinToLinearZero(mapMinToLinearZero)
+  , minLinear(dBToLinear(minPlainInDB))
+  , maxLinear(dBToLinear(maxPlainInDB))
 {}
 
 double
-DBParameter::linearToDB(double linear) const
-{
-  auto const inDB = 10.0 * std::log10(std::abs(linear) + std::numeric_limits<double>::epsilon());
-  return std::max(inDB, linearZeroInDB);
-}
-double
 DBParameter::dBToLinear(double dB) const
 {
-  if (dB <= linearZeroInDB)
+  auto const linear = unplug::dBToLinear(dB);
+  if (mapMinToLinearZero && linear <= minLinear)
     return 0.0;
   else
-    return std::pow(10.0, dB / 10.0);
+    return linear;
 }
+
+double
+DBParameter::normalizedToLinear(double normalized) const
+{
+  return minLinear + normalized * (maxLinear - minLinear);
+}
+double
+DBParameter::linearToNormalized(double linear) const
+{
+  return (linear - minLinear) / (maxLinear - minLinear);
+}
+
 ParamValue
 DBParameter::toPlain(ParamValue valueNormalized_) const
 {
-  auto const valueInLinearScale = RangeParameter::toPlain(valueNormalized_);
-  auto const valueInDB = linearToDB(valueInLinearScale);
+  auto const valueInLinearScale = normalizedToLinear(valueNormalized_);
+  auto const valueInDB = unplug::linearToDB(valueInLinearScale);
   return valueInDB;
 }
+
 ParamValue
 DBParameter::toNormalized(ParamValue plainValueInDB) const
 {
   auto const valueInLinearScale = dBToLinear(plainValueInDB);
-  auto const valueNormalized = RangeParameter::toNormalized(valueInLinearScale);
+  auto const valueNormalized = linearToNormalized(valueInLinearScale);
   return valueNormalized;
 }
+
 bool
 DBParameter::fromString(const TChar* string, ParamValue& valueNormalized_) const
 {
-  if (info.stepCount > 1) {
-    return RangeParameter::fromString(string, valueNormalized_);
-  }
   UString wrapper(const_cast<TChar*>(string), tstrlen(string));
   double valueInDB;
   if (wrapper.scanFloat(valueInDB)) {
     auto valueInLinearScale = dBToLinear(valueInDB);
-    valueInLinearScale = std::max(getMin(), std::min(getMax(), valueInLinearScale));
-    valueNormalized_ = RangeParameter::toNormalized(valueInLinearScale);
+    valueInLinearScale = std::max(minLinear, std::min(maxLinear, valueInLinearScale));
+    valueNormalized_ = linearToNormalized(valueInLinearScale);
     return true;
   }
   return false;
+}
+
+void
+DBParameter::toString(ParamValue valueNormalized_, String128 string) const
+{
+  Parameter::toString(toPlain(valueNormalized_), string);
 }
 
 } // namespace Steinberg::Vst

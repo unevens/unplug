@@ -39,7 +39,7 @@ ParameterAccess::~ParameterAccess()
 double
 ParameterAccess::normalizeValue(int tag, double value)
 {
-  return controller.normalizedParamToPlain(tag, value);
+  return controller.plainParamToNormalized(tag, value);
 }
 
 double
@@ -73,7 +73,7 @@ ParameterAccess::getDefaultValue(int tag)
 double
 ParameterAccess::valueFromNormalized(int tag, double value)
 {
-  return controller.plainParamToNormalized(tag, value);
+  return controller.normalizedParamToPlain(tag, value);
 }
 
 bool
@@ -145,7 +145,7 @@ ParameterAccess::getMaxValue(int tag)
 bool
 ParameterAccess::setValue(int tag, double value)
 {
-  value = valueFromNormalized(tag, value);
+  value = normalizeValue(tag, value);
   return setValueNormalized(tag, value);
 }
 

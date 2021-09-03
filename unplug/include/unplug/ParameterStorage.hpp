@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/Math.hpp"
 #include "unplug/MidiMapping.hpp"
 #include <algorithm>
 #include <array>
@@ -46,7 +47,7 @@ struct ParameterDescription
   std::vector<std::string> labels;
   bool isBypass = false;
   bool controledInDecibels = false;
-  double linearZeroInDB = -90.0;
+  bool mapMinToLinearZero = true;
   struct
   {
     int control = -1;
@@ -74,7 +75,7 @@ struct ParameterDescription
 
   ParameterDescription MidiMapping(int control, int channel);
 
-  ParameterDescription ControlledByDecibels(double linearZeroInDB_ = -90.0);
+  ParameterDescription ControlledByDecibels(bool mapMinToLinearZero = true);
 
   static ParameterDescription makeBypassParameter(int tag);
 };
@@ -108,8 +109,6 @@ public:
 
   ParameterValueType getNormalized(int index) const { return convert[index].toNormalized(values[index].load()); }
 
-  static consteval int getNumParameters() { return numParameters; }
-
 private:
   void initialize(std::vector<ParameterDescription> const& parameters)
   {
@@ -119,8 +118,12 @@ private:
 
   void initializeConversions(std::vector<ParameterDescription> const& parameters)
   {
-    for (int i = 0; i < parameters.size(); ++i) {
-      convert[i] = ParameterNormalization{ parameters[i].min, parameters[i].max };
+    int i = 0;
+    for (auto& parameter : parameters) {
+      auto const min = parameter.controledInDecibels ? dBToLinear(parameter.min) : parameter.min;
+      auto const max = parameter.controledInDecibels ? dBToLinear(parameter.max) : parameter.max;
+      convert[i] = ParameterNormalization{ min, max };
+      ++i;
     }
   }
 

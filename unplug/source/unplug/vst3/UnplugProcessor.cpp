@@ -11,8 +11,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#pragma once
-
 #include "unplug/UnplugProcessor.hpp"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
@@ -94,7 +92,7 @@ UnplugProcessor::setState(IBStream* state)
 {
   using namespace Steinberg;
   IBStreamer streamer(state, kLittleEndian);
-  for (int i = 0; i < ParameterStorage::getNumParameters(); ++i) {
+  for (int i = 0; i < unplug::NumParameters::value; ++i) {
     double value;
     if (!streamer.readDouble(value)) {
       return kResultFalse;
@@ -113,7 +111,7 @@ UnplugProcessor::getState(IBStream* state)
 {
   using namespace Steinberg;
   IBStreamer streamer(state, kLittleEndian);
-  for (int i = 0; i < ParameterStorage::getNumParameters(); ++i) {
+  for (int i = 0; i < unplug::NumParameters::value; ++i) {
     double const value = parameterStorage.get(i);
     if (!streamer.writeDouble(value)) {
       return kResultFalse;

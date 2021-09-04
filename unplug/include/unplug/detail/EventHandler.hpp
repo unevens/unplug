@@ -48,8 +48,6 @@ public:
 
   void handleModifierKeys(ModifierKeys modifiers);
 
-  bool getParameterAtCoordinates(int x, int y, int& parameterTag);
-
   pugl::Status onEvent(const pugl::CreateEvent& event);
 
   pugl::Status onEvent(const pugl::DestroyEvent& event);

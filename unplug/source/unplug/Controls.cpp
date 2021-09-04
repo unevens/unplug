@@ -39,6 +39,8 @@ bool Combo(int parameterTag, ShowLabel showLabel)
 
   auto& parameters = Parameters();
 
+  auto const areaInfo = beginRegisterArea();
+
   bool isList = false;
   parameters.isList(parameterTag, isList);
   assert(isList);
@@ -58,8 +60,10 @@ bool Combo(int parameterTag, ShowLabel showLabel)
 
   auto const controlName = makeLabel(showLabel, parameterName, "COMBO");
 
-  if (!BeginCombo(controlName.c_str(), valueAsText.c_str(), ImGuiComboFlags_None))
+  if (!BeginCombo(controlName.c_str(), valueAsText.c_str(), ImGuiComboFlags_None)) {
+    endRegisterArea(parameters, parameterTag, areaInfo);
     return false;
+  }
 
   auto const numItems = numSteps + 1;
 
@@ -89,6 +93,8 @@ bool Combo(int parameterTag, ShowLabel showLabel)
     parameters.endEdit(parameterTag);
     MarkItemEdited(g.LastItemData.ID);
   }
+
+  endRegisterArea(parameters, parameterTag, areaInfo);
 
   return hasValueChanged;
 }
@@ -165,7 +171,9 @@ bool Control(int parameterTag, std::function<ControlOutput(ParameterData const& 
 {
   auto& parameters = Parameters();
   auto const parameter = ParameterData{ parameters, parameterTag };
+  auto const areaInfo = beginRegisterArea();
   auto const output = control(parameter);
+  endRegisterArea(parameters, parameterTag, areaInfo);
   auto const editingState = EditingState{ parameter, output.isActive, output.controlName };
   applyRangedParameters(parameters, parameterTag, editingState, output.value);
   return output.isActive;
@@ -450,6 +458,19 @@ bool EditableFloat(const char* label, float* value, float min, float max, const 
 bool EditableInt(const char* label, int* value, int min, int max, const char* format, bool noHighlight)
 {
   return EditableScalar(label, ImGuiDataType_S32, value, &min, &max, format, noHighlight);
+}
+
+BeginRegisteAreaInfo beginRegisterArea()
+{
+  auto const width = 0.5f * ImGui::CalcItemWidth();
+  auto const leftTop = ImGui::GetCursorScreenPos();
+  return { static_cast<int>(leftTop.x), static_cast<int>(leftTop.y), static_cast<int>(leftTop.x + width) };
+}
+
+void endRegisterArea(ParameterAccess& parameters, int parameterTag, BeginRegisteAreaInfo const& area)
+{
+  auto const bottom = static_cast<int>(ImGui::GetCursorScreenPos().y);
+  parameters.addParameterRectangle(parameterTag, area[0], area[1], area[2], bottom);
 }
 
 } // namespace detail

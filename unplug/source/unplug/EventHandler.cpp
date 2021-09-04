@@ -66,12 +66,6 @@ void EventHandler::handleModifierKeys(ModifierKeys modifiers)
   io.KeySuper = modifiers.command;
 }
 
-bool EventHandler::getParameterAtCoordinates(int x, int y, int& parameterTag)
-{
-  // todo by registering the controls coordinates in parameter access
-    return false;
-}
-
 pugl::Status EventHandler::onEvent(const pugl::CreateEvent& event)
 {
   IMGUI_CHECKVERSION();
@@ -153,7 +147,7 @@ pugl::Status EventHandler::onEvent(const pugl::ExposeEvent& event)
   ImGui_ImplOpenGL2_NewFrame();
   UserInterface::setupStyle();
   ImGui::NewFrame();
-
+  parameters.clearParameterRectangles();
   const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_None);
   ImGui::SetNextWindowSize(main_viewport->Size, ImGuiCond_None);

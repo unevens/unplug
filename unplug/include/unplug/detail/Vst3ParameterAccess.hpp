@@ -16,6 +16,7 @@
 #include "unplug/MidiMapping.hpp"
 #include "unplug/StringConversion.hpp"
 #include "unplug/detail/EditRegister.hpp"
+#include "unplug/detail/ParameterFromUserInterfaceCoordinates.hpp"
 
 namespace unplug::vst3 {
 
@@ -118,6 +119,12 @@ public:
 
   void setMidiMapping(int parameterTag, int midiControl);
 
+  bool findParameterFromUserInterfaceCoordinates(int xPos, int yPos, int& parameterTag);
+
+  void addParameterRectangle(int parameterTag, int left, int top, int right, int bottom);
+
+  void clearParameterRectangles();
+
   static void setCurrent(ParameterAccess* parameterAccess);
 
   static ParameterAccess* getCurrent();
@@ -126,6 +133,7 @@ private:
   EditControllerEx1& controller;
   MidiMapping& midiMapping;
   unplug::detail::ParameterEditRegister editRegister;
+  unplug::detail::ParameterFromUserInterfaceCoordinates parameterFinder;
   inline static thread_local ParameterAccess* current = nullptr;
 };
 

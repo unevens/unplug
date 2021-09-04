@@ -235,6 +235,15 @@ bool EditableFloat(const char* label,
  * */
 bool EditableInt(const char* label, int* value, int min, int max, const char* format = "%d", bool noHighlight = true);
 
+/**
+ * utilities to register what areas in the ui controls which parameters and report it to the host
+ */
+using BeginRegisteAreaInfo = std::array<int, 3>;
+
+BeginRegisteAreaInfo beginRegisterArea();
+
+void endRegisterArea(ParameterAccess& parameters, int parameterTag, BeginRegisteAreaInfo const& area);
+
 } // namespace detail
 
 } // namespace unplug

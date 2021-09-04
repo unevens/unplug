@@ -396,6 +396,18 @@ void ParameterAccess::setMidiMapping(int parameterTag, int midiControl)
 {
   midiMapping.mapParameter(parameterTag, midiControl);
 }
+bool ParameterAccess::findParameterFromUserInterfaceCoordinates(int xPos, int yPos, int& parameterTag)
+{
+  return parameterFinder.findParameterFromUserInterfaceCoordinates(xPos, yPos, parameterTag);
+}
+
+void ParameterAccess::addParameterRectangle(int parameterTag, int left, int top, int right, int bottom)
+{
+  parameterFinder.addParameterRectangle(parameterTag, left, top, right, bottom);
+}
+void ParameterAccess::clearParameterRectangles() {
+  parameterFinder.clear();
+}
 
 ParameterAccess& Parameters()
 {

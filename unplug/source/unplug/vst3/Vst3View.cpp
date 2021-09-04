@@ -37,17 +37,14 @@ tresult Vst3View::queryInterface(const char* iid, void** obj)
 
 tresult Vst3View::findParameter(int32 xPos, int32 yPos, ParamID& resultTag)
 {
-  if (eventHandler) {
-    int tag = 0;
-    if (eventHandler->getParameterAtCoordinates(xPos, yPos, tag)) {
-      resultTag = tag;
-      return kResultTrue;
-    }
-    else {
-      return kResultFalse;
-    }
+  int tag = 0;
+  if (parameters.findParameterFromUserInterfaceCoordinates(xPos, yPos, tag)) {
+    resultTag = static_cast<ParamID>(tag);
+    return kResultTrue;
   }
-  return kResultFalse;
+  else {
+    return kResultFalse;
+  }
 }
 
 tresult Vst3View::attached(void* pParent, FIDString type)

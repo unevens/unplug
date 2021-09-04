@@ -15,7 +15,7 @@
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "unplug/MidiMapping.hpp"
 #include "unplug/StringConversion.hpp"
-#include <unordered_map>
+#include "unplug/detail/EditRegister.hpp"
 
 namespace unplug::vst3 {
 
@@ -68,7 +68,7 @@ public:
 
   bool beginEdit(int tag, std::string control);
 
-  bool endEdit(int tag, std::string control);
+  bool endEdit(int tag);
 
   bool isBeingEdited(int tag) const;
 
@@ -116,10 +116,7 @@ public:
 
   void setMidiMapping(int parameterTag, int midiControl, int channel);
 
-  void setMidiMapping(int parameterTag, int midiControl)
-  {
-    midiMapping.mapParameter(parameterTag, midiControl);
-  }
+  void setMidiMapping(int parameterTag, int midiControl);
 
   static void setCurrent(ParameterAccess* parameterAccess);
 
@@ -128,7 +125,7 @@ public:
 private:
   EditControllerEx1& controller;
   MidiMapping& midiMapping;
-  std::unordered_map<int, std::string> paramsBeingEditedByControls;
+  unplug::detail::ParameterEditRegister editRegister;
   inline static thread_local ParameterAccess* current = nullptr;
 };
 

@@ -13,6 +13,7 @@
 
 #include "unplug/detail/Vst3ParameterAccess.hpp"
 #include <cassert>
+#include <utility>
 
 namespace unplug::vst3 {
 
@@ -138,8 +139,8 @@ bool ParameterAccess::setValue(int tag, double value)
 
 bool ParameterAccess::setValueNormalized(int tag, double value)
 {
-  auto const editedIter = paramsBeingEditedByControls.find(tag);
-  if (editedIter == paramsBeingEditedByControls.end()) {
+  bool const isBeingEdited = editRegister.isParameterBeingEdited(tag);
+  if (!isBeingEdited) {
     assert(false);
     return false;
   }
@@ -154,14 +155,14 @@ bool ParameterAccess::setValueNormalized(int tag, double value)
 
 bool ParameterAccess::beginEdit(int tag, std::string control)
 {
-  auto const editedIter = paramsBeingEditedByControls.find(tag);
-  if (editedIter != paramsBeingEditedByControls.end()) {
+  bool const isBeingEdited = editRegister.isParameterBeingEdited(tag);
+  if (isBeingEdited) {
     assert(false);
     return false;
   }
   if (controller.beginEdit(tag) == kResultTrue) {
     auto const value = getValue(tag);
-    paramsBeingEditedByControls.emplace(tag, control);
+    editRegister.registerEdit(tag, std::move(control));
     return true;
   }
   else {
@@ -169,14 +170,14 @@ bool ParameterAccess::beginEdit(int tag, std::string control)
   }
 }
 
-bool ParameterAccess::endEdit(int tag, std::string control)
+bool ParameterAccess::endEdit(int tag)
 {
-  auto editedIter = paramsBeingEditedByControls.find(tag);
-  if (editedIter == paramsBeingEditedByControls.end()) {
+  bool const isBeingEdited = editRegister.isParameterBeingEdited(tag);
+  if (!isBeingEdited) {
     assert(false);
     return false;
   }
-  paramsBeingEditedByControls.erase(tag);
+  editRegister.unregisterEdit(tag);
   return controller.endEdit(tag) == kResultTrue;
 }
 
@@ -368,14 +369,12 @@ int ParameterAccess::isBypass(int tag)
 
 bool ParameterAccess::isBeingEdited(int tag) const
 {
-  auto const editedIter = paramsBeingEditedByControls.find(tag);
-  return editedIter != paramsBeingEditedByControls.cend();
+  return editRegister.isParameterBeingEdited(tag);
 }
 
 std::string ParameterAccess::getEditingControl(int tag) const
 {
-  auto const editedIter = paramsBeingEditedByControls.find(tag);
-  return (editedIter != paramsBeingEditedByControls.cend()) ? editedIter->second : "";
+  return editRegister.getControllerEditingParameter(tag);
 }
 
 void ParameterAccess::setMidiMapping(int parameterTag, int midiControl, int channel)
@@ -391,6 +390,11 @@ void ParameterAccess::setCurrent(ParameterAccess* parameterAccess)
 ParameterAccess* ParameterAccess::getCurrent()
 {
   return current;
+}
+
+void ParameterAccess::setMidiMapping(int parameterTag, int midiControl)
+{
+  midiMapping.mapParameter(parameterTag, midiControl);
 }
 
 ParameterAccess& Parameters()

@@ -86,7 +86,7 @@ bool Combo(int parameterTag, ShowLabel showLabel)
     auto const controlId = window->IDStack.back();
     parameters.beginEdit(parameterTag, controlName);
     parameters.setValueNormalized(parameterTag, newValue);
-    parameters.endEdit(parameterTag, controlName);
+    parameters.endEdit(parameterTag);
     MarkItemEdited(g.LastItemData.ID);
   }
 
@@ -303,7 +303,7 @@ void applyRangedParameters(ParameterAccess& parameters, int parameterTag, Editin
       assert(setValueOk);
     }
     else {
-      bool const endEditOk = parameters.endEdit(parameterTag, editingState.controlName);
+      bool const endEditOk = parameters.endEdit(parameterTag);
       assert(endEditOk);
     }
   }

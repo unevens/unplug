@@ -69,6 +69,7 @@ void EventHandler::handleModifierKeys(ModifierKeys modifiers)
 bool EventHandler::getParameterAtCoordinates(int x, int y, int& parameterTag)
 {
   // todo by registering the controls coordinates in parameter access
+    return false;
 }
 
 pugl::Status EventHandler::onEvent(const pugl::CreateEvent& event)

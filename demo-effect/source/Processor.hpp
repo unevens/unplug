@@ -27,8 +27,5 @@ public:
     return (Steinberg::Vst::IAudioProcessor*)new UnplugDemoEffectProcessor;
   }
 
-  /** Reports if the plugin supports 32/64 bit floating point audio */
-  Steinberg::tresult PLUGIN_API canProcessSampleSize(Steinberg::int32 symbolicSampleSize) override;
-
   Steinberg::tresult PLUGIN_API process(Steinberg::Vst::ProcessData& data) override;
 };

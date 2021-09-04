@@ -78,9 +78,6 @@ tresult PLUGIN_API UnplugProcessor::setupProcessing(ProcessSetup& newSetup)
   onSetupProcessing(newSetup);
   return kResultOk;
 }
-/**
- * loads the state. may be called by either the Processing Thread or the UI Thread
- * */
 
 tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
 {
@@ -96,10 +93,6 @@ tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
   return kResultOk;
 }
 
-/**
- * saves the state. may be called by either the Processing Thread or the UI Thread
- * */
-
 tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
 {
   using namespace Steinberg;
@@ -111,6 +104,17 @@ tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
     }
   }
   return kResultOk;
+}
+
+tresult PLUGIN_API UnplugProcessor::canProcessSampleSize(int32 symbolicSampleSize)
+{
+  if (symbolicSampleSize == Vst::kSample32)
+    return kResultTrue;
+
+  if (symbolicSampleSize == Vst::kSample64)
+    return supportsDoublePrecision();
+
+  return kResultFalse;
 }
 
 } // namespace Steinberg::Vst

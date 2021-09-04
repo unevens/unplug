@@ -23,17 +23,6 @@ UnplugDemoEffectProcessor::UnplugDemoEffectProcessor()
 
 UnplugDemoEffectProcessor::~UnplugDemoEffectProcessor() = default;
 
-tresult PLUGIN_API UnplugDemoEffectProcessor::canProcessSampleSize(int32 symbolicSampleSize)
-{
-  if (symbolicSampleSize == Vst::kSample32)
-    return kResultTrue;
-
-  if (symbolicSampleSize == Vst::kSample64)
-    return kResultTrue;
-
-  return kResultFalse;
-}
-
 tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data)
 {
   UpdateParametersToLastPoint(data);

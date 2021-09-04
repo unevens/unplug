@@ -36,6 +36,10 @@ public:
   tresult PLUGIN_API setState(IBStream* state) override;
   tresult PLUGIN_API getState(IBStream* state) override;
 
+
+  /** Reports if the plugin supports 32/64 bit floating point audio */
+  Steinberg::tresult PLUGIN_API canProcessSampleSize(Steinberg::int32 symbolicSampleSize) override;
+
 protected:
   void UpdateParametersToLastPoint(ProcessData& data);
 
@@ -52,6 +56,9 @@ private:
    * where to allocate resources that depend on those.
    * */
   virtual void onSetupProcessing(ProcessSetup& newSetup) {}
+
+  virtual bool supportsDoublePrecision() { return true; }
+
 
 protected:
   using ParameterStorage = unplug::ParameterStorage<unplug::NumParameters::value>;

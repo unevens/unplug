@@ -51,41 +51,6 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
   UString setUnitName(unitInfo.name, 128);
   setUnitName.fromAscii("Root");
 
-  auto const& presets = Presets::get();
-
-  if (presets.empty()) {
-    unitInfo.programListId = kNoProgramListId;
-  }
-  else {
-    unitInfo.programListId = kPresetParam;
-    auto const presetParameterTag = unplug::NumParameters::value;
-    parameters.addParameter(new RangeParameter(STR16("Preset"),
-                                               presetParameterTag,
-                                               STR16(""),
-                                               0,
-                                               presets.size() - 1,
-                                               0,
-                                               presets.size() - 1,
-                                               ParameterInfo::kIsProgramChange));
-
-    auto list = new ProgramListWithPitchNames(STR16("Factory Presets"), 0, kRootUnitId);
-
-    int programIndex = 0;
-    for (auto& preset : presets) {
-      String128 programName;
-      UString(programName, str16BufferSize(String128)).assign(ToVstTChar{}(preset.name).c_str());
-      list->addProgram(programName);
-      for (auto [pitch, name] : preset.pitchNames) {
-        String128 pitchName;
-        UString(pitchName, str16BufferSize(String128)).assign(ToVstTChar{}(name).c_str());
-        list->setPitchName(programIndex, static_cast<int16>(pitch), pitchName);
-      }
-      ++programIndex;
-    }
-
-    addProgramList(list);
-  }
-
   auto const initializeParameter = [this, unitId = kRootUnitId](unplug::ParameterDescription const& description) {
     TString title = ToVstTChar{}(description.name);
     TString shortTitle = ToVstTChar{}(description.shortName);
@@ -155,6 +120,41 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
 
   unplug::getParameterInitializer().initializeParameters(initializeParameter);
 
+  auto const& presets = Presets::get();
+
+  if (presets.empty()) {
+    unitInfo.programListId = kNoProgramListId;
+  }
+  else {
+    unitInfo.programListId = kPresetParam;
+    auto const presetParameterTag = unplug::NumParameters::value;
+    parameters.addParameter(new RangeParameter(STR16("Preset"),
+                                               presetParameterTag,
+                                               STR16(""),
+                                               0,
+                                               presets.size() - 1,
+                                               0,
+                                               presets.size() - 1,
+                                               ParameterInfo::kIsProgramChange));
+
+    auto list = new ProgramListWithPitchNames(STR16("Factory Presets"), 0, kRootUnitId);
+
+    int programIndex = 0;
+    for (auto& preset : presets) {
+      String128 programName;
+      UString(programName, str16BufferSize(String128)).assign(ToVstTChar{}(preset.name).c_str());
+      list->addProgram(programName);
+      for (auto [pitch, name] : preset.pitchNames) {
+        String128 pitchName;
+        UString(pitchName, str16BufferSize(String128)).assign(ToVstTChar{}(name).c_str());
+        list->setPitchName(programIndex, static_cast<int16>(pitch), pitchName);
+      }
+      ++programIndex;
+    }
+
+    addProgramList(list);
+  }
+
   return kResultOk;
 }
 
@@ -170,7 +170,8 @@ tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
     if (!streamer.readDouble(value))
       return kResultFalse;
     auto parameter = parameters.getParameterByIndex(i);
-    bool const isProgramChange = parameter->getInfo().flags & ParameterInfo::kIsProgramChange != 0;
+    bool const isProgramChange = (parameter->getInfo().flags & ParameterInfo::kIsProgramChange) != 0;
+    assert(!isProgramChange);
     if (!isProgramChange)
       setParamNormalized(parameter->getInfo().id, parameter->toNormalized(value));
   }
@@ -255,7 +256,7 @@ tresult UnplugController::setParamNormalized(ParamID tag, ParamValue value)
 {
   if (Parameter* parameter = getParameterObject(tag)) {
     parameter->setNormalized(value);
-    bool const isProgramChange = parameter->getInfo().flags & ParameterInfo::kIsProgramChange != 0;
+    bool const isProgramChange = (parameter->getInfo().flags & ParameterInfo::kIsProgramChange) != 0;
     if (isProgramChange) {
       int const selectedPreset = static_cast<int>(std::round(value * static_cast<double>(Presets::get().size())));
       applyPreset(selectedPreset);

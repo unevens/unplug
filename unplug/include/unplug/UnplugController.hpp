@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "NumParameters.hpp"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "unplug/MidiMapping.hpp"
 #include "unplug/ParameterStorage.hpp"
@@ -51,12 +52,20 @@ public:
                                                  CtrlNumber midiControllerNumber,
                                                  ParamID& tag) override;
 
+  tresult PLUGIN_API setParamNormalized(ParamID tag, ParamValue value) override;
+
+  tresult PLUGIN_API notify(IMessage* message) override;
+
+private:
+  void applyPreset(int presetIndex);
+
 protected:
   unplug::MidiMapping midiMapping;
 
 private:
   unplug::ViewPersistentData persistentData;
   std::array<int, 2> lastViewSize{ { -1, -1 } };
+  unplug::ParameterStorage<unplug::NumParameters::value>* parameterStorage{ nullptr };
 
   DEFINE_INTERFACES
   DEF_INTERFACE(IMidiMapping);

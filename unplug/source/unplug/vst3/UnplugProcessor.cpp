@@ -14,6 +14,7 @@
 #include "unplug/UnplugProcessor.hpp"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
+#include "unplug/detail/Vst3MessageIds.hpp"
 
 namespace Steinberg::Vst {
 
@@ -36,6 +37,12 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
   }
 
   unplug::getParameterInitializer().initializeStorage(parameterStorage);
+
+  auto message = owned(allocateMessage());
+  message->setMessageID(unplug::vst3::initializationMessage);
+  auto address = reinterpret_cast<uintptr_t>(&parameterStorage);
+  message->getAttributes()->setBinary(unplug::vst3::parameterStorageId, &address, sizeof(uintptr_t));
+  sendMessage(message);
 
   onInitialization();
 

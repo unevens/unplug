@@ -16,12 +16,21 @@
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/base/ustring.h"
 #include "unplug/Parameters.hpp"
+#include "unplug/Presets.hpp"
 #include "unplug/StringConversion.hpp"
 #include "unplug/UserInterface.hpp"
+#include "unplug/detail/Vst3MessageIds.hpp"
 #include "unplug/detail/Vst3NonlinearParameter.hpp"
 #include <memory>
 
 namespace Steinberg::Vst {
+
+enum
+{
+  kPresetParam = std::numeric_limits<uint32>::max()
+};
+
+using Presets = unplug::detail::Presets;
 
 tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
 {
@@ -41,6 +50,41 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
   unitInfo.parentUnitId = kNoParentUnitId;
   UString setUnitName(unitInfo.name, 128);
   setUnitName.fromAscii("Root");
+
+  auto const& presets = Presets::get();
+
+  if (presets.empty()) {
+    unitInfo.programListId = kNoProgramListId;
+  }
+  else {
+    unitInfo.programListId = kPresetParam;
+    auto const presetParameterTag = unplug::NumParameters::value;
+    parameters.addParameter(new RangeParameter(STR16("Preset"),
+                                               presetParameterTag,
+                                               STR16(""),
+                                               0,
+                                               presets.size() - 1,
+                                               0,
+                                               presets.size() - 1,
+                                               ParameterInfo::kIsProgramChange));
+
+    auto list = new ProgramListWithPitchNames(STR16("Factory Presets"), 0, kRootUnitId);
+
+    int programIndex = 0;
+    for (auto& preset : presets) {
+      String128 programName;
+      UString(programName, str16BufferSize(String128)).assign(ToVstTChar{}(preset.name).c_str());
+      list->addProgram(programName);
+      for (auto [pitch, name] : preset.pitchNames) {
+        String128 pitchName;
+        UString(pitchName, str16BufferSize(String128)).assign(ToVstTChar{}(name).c_str());
+        list->setPitchName(programIndex, static_cast<int16>(pitch), pitchName);
+      }
+      ++programIndex;
+    }
+
+    addProgramList(list);
+  }
 
   auto const initializeParameter = [this, unitId = kRootUnitId](unplug::ParameterDescription const& description) {
     TString title = ToVstTChar{}(description.name);
@@ -126,7 +170,9 @@ tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
     if (!streamer.readDouble(value))
       return kResultFalse;
     auto parameter = parameters.getParameterByIndex(i);
-    setParamNormalized(parameter->getInfo().id, parameter->toNormalized(value));
+    bool const isProgramChange = parameter->getInfo().flags & ParameterInfo::kIsProgramChange != 0;
+    if (!isProgramChange)
+      setParamNormalized(parameter->getInfo().id, parameter->toNormalized(value));
   }
   return kResultOk;
 }
@@ -203,6 +249,56 @@ tresult UnplugController::getMidiControllerAssignment(int32 busIndex,
     }
   }
   return kResultFalse;
+}
+
+tresult UnplugController::setParamNormalized(ParamID tag, ParamValue value)
+{
+  if (Parameter* parameter = getParameterObject(tag)) {
+    parameter->setNormalized(value);
+    bool const isProgramChange = parameter->getInfo().flags & ParameterInfo::kIsProgramChange != 0;
+    if (isProgramChange) {
+      int const selectedPreset = static_cast<int>(std::round(value * static_cast<double>(Presets::get().size())));
+      applyPreset(selectedPreset);
+    }
+    return kResultTrue;
+  }
+  return kResultFalse;
+}
+
+void UnplugController::applyPreset(int presetIndex)
+{
+  if (Presets::get().size() > presetIndex) {
+    auto& preset = Presets::get()[presetIndex];
+    for (auto [parameterTag, value] : preset.parameterValues) {
+      auto const valueNormalized = parameters.getParameter(parameterTag)->toNormalized(value);
+      setParamNormalized(parameterTag, valueNormalized);
+      bool const setOk = setParamNormalized(parameterTag, valueNormalized) == kResultTrue;
+      assert(setOk);
+      assert(parameterStorage);
+      if (setOk && parameterStorage) {
+        parameterStorage->set(parameterTag, value);
+      }
+    }
+  }
+}
+tresult UnplugController::notify(IMessage* message)
+{
+  if (!message)
+    return kInvalidArgument;
+
+  if (FIDStringsEqual(message->getMessageID(), unplug::vst3::initializationMessage)) {
+    void const* binary = nullptr;
+    uint32 size = 0;
+    message->getAttributes()->getBinary(unplug::vst3::parameterStorageId, binary, size);
+    assert(binary);
+    if (binary) {
+      auto address = *static_cast<uintptr_t const*>(binary);
+      parameterStorage = reinterpret_cast<unplug::ParameterStorage<unplug::NumParameters::value>*>(address);
+    }
+    return kResultOk;
+  }
+
+  return EditController::notify(message);
 }
 
 } // namespace Steinberg::Vst

@@ -71,17 +71,19 @@ UnplugController::initialize(FUnknown* context)
                                            pShortTitle);
           parameters.addParameter(parameter);
         }
-        auto parameter = new RangeParameter(title.c_str(),
-                                            description.tag,
-                                            pUnits,
-                                            description.min,
-                                            description.max,
-                                            description.defaultValue,
-                                            description.numSteps,
-                                            flags,
-                                            unitId,
-                                            pShortTitle);
-        parameters.addParameter(parameter);
+        else {
+          auto parameter = new RangeParameter(title.c_str(),
+                                              description.tag,
+                                              pUnits,
+                                              description.min,
+                                              description.max,
+                                              description.defaultValue,
+                                              description.numSteps,
+                                              flags,
+                                              unitId,
+                                              pShortTitle);
+          parameters.addParameter(parameter);
+        }
       } break;
       case ParameterDescription::Type::list: {
         int32 const flags =

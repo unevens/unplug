@@ -282,6 +282,7 @@ void UnplugController::applyPreset(int presetIndex)
     }
   }
 }
+
 tresult UnplugController::notify(IMessage* message)
 {
   if (!message)

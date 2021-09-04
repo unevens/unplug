@@ -38,16 +38,6 @@ class EventHandler final
 public:
   EventHandler(pugl::View& view, ParameterAccess& parameters);
 
-  static std::array<int, 2> adjustSize(int width, int height, int prevWidth, int prevHeight);
-
-  static bool isResizingAllowed();
-
-  static std::array<int, 2> getDefaultSize();
-
-  static void initializePersistentData(ViewPersistentData& persistentData);
-
-  static std::string getWindowName();
-
   void handleScroll(float dx, float dy);
 
   bool wantsCaptureKeyboard();

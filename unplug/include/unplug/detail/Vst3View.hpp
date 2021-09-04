@@ -85,7 +85,6 @@ public:
 
   tresult PLUGIN_API onKeyUp(char16 key, int16 keyMsg, int16 modifiers) override;
 
-  static void initializePersistentData(ViewPersistentData& presistentData);
 
 private:
   std::array<int, 2> getDefaultSize() const;

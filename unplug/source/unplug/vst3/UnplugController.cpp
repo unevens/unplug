@@ -17,6 +17,7 @@
 #include "pluginterfaces/base/ustring.h"
 #include "unplug/Parameters.hpp"
 #include "unplug/StringConversion.hpp"
+#include "unplug/UserInterface.hpp"
 #include "unplug/detail/Vst3DBParameter.hpp"
 #include <memory>
 
@@ -34,7 +35,7 @@ UnplugController::initialize(FUnknown* context)
     return result;
   }
 
-  View::initializePersistentData(persistentData);
+  UserInterface::initializePersistentData(persistentData);
 
   UnitInfo unitInfo;
   unitInfo.id = kRootUnitId;

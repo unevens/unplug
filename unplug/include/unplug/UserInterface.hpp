@@ -14,17 +14,24 @@
 #pragma once
 #include "unplug/ViewPersistentData.hpp"
 #include <array>
+#include <string_view>
 
 namespace unplug::UserInterface {
 
 void
 paint();
 
-std::array<int, 2>
-adjustSize(int width, int height, int prevWidth, int prevHeight);
+void
+setupStyle();
+
+void
+adjustSize(int& width, int& height, int prevWidth, int prevHeight);
 
 bool
 isResizingAllowed();
+
+bool
+keepDefaultRatio();
 
 std::array<int, 2>
 getDefaultSize();
@@ -35,13 +42,10 @@ getMinZoom();
 void
 initializePersistentData(unplug::ViewPersistentData& persistentData);
 
-std::string
+const char*
 getWindowName();
 
-std::array<float, 4>
+std::array<float, 3>
 getBackgroundColor();
 
-bool
-getParameterAtCoordinates(int x, int y, int& parameterTag);
-
-} // namespace unplug::ui
+} // namespace unplug::UserInterface

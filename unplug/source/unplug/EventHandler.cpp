@@ -24,36 +24,6 @@ EventHandler::EventHandler(pugl::View& view, ParameterAccess& parameters)
   , parameters(parameters)
 {}
 
-std::array<int, 2>
-EventHandler::adjustSize(int width, int height, int prevWidth, int prevHeight)
-{
-  return UserInterface::adjustSize(width, height, prevWidth, prevHeight);
-}
-
-bool
-EventHandler::isResizingAllowed()
-{
-  return UserInterface::isResizingAllowed();
-}
-
-std::array<int, 2>
-EventHandler::getDefaultSize()
-{
-  return UserInterface::getDefaultSize();
-}
-
-void
-EventHandler::initializePersistentData(ViewPersistentData& persistentData)
-{
-  return UserInterface::initializePersistentData(persistentData);
-}
-
-std::string
-EventHandler::getWindowName()
-{
-  return UserInterface::getWindowName();
-}
-
 void
 EventHandler::handleScroll(float dx, float dy)
 {
@@ -104,7 +74,7 @@ EventHandler::handleModifierKeys(ModifierKeys modifiers)
 bool
 EventHandler::getParameterAtCoordinates(int x, int y, int& parameterTag)
 {
-  return UserInterface::getParameterAtCoordinates(x, y, parameterTag);
+  //todo by registering the controls coordinates in parameter access
 }
 
 pugl::Status
@@ -191,8 +161,20 @@ EventHandler::onEvent(const pugl::ExposeEvent& event)
   setCursor(io);
 
   ImGui_ImplOpenGL2_NewFrame();
-  UserInterface::paint();
+  UserInterface::setupStyle();
+  ImGui::NewFrame();
+
+  const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_None);
+  ImGui::SetNextWindowSize(main_viewport->Size, ImGuiCond_None);
+  if (ImGui::Begin(UserInterface::getWindowName(), NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove)) {
+    // do not paint if the windows is collapsed - will probably never happen with plugins
+    UserInterface::paint();
+  }
+  ImGui::End();
+
   ImGui::Render();
+
   resizeAndClearViewport(io.DisplaySize.x, io.DisplaySize.y, UserInterface::getBackgroundColor());
   ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 

@@ -26,10 +26,10 @@ namespace unplug {
 namespace detail {
 
 void
-resizeAndClearViewport(float width, float height, std::array<float, 4> color)
+resizeAndClearViewport(float width, float height, std::array<float, 3> color)
 {
   glViewport(0, 0, static_cast<int>(width), static_cast<int>(height));
-  glClearColor(color[0],color[1],color[2],color[3]);
+  glClearColor(color[0],color[1],color[2],1.f);
   glClear(GL_COLOR_BUFFER_BIT);
 }
 

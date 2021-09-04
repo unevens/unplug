@@ -13,6 +13,7 @@
 
 #include "unplug/detail/Vst3View.hpp"
 #include "pugl/gl.hpp"
+#include "unplug/UserInterface.hpp"
 
 namespace unplug::vst3::detail {
 
@@ -25,7 +26,7 @@ detail::Vst3View::Vst3View(EditControllerEx1& controller,
   , persistentData{ persistentData }
   , lastViewSize{ lastViewSize }
 {
-  world.setClassName(EventHandler::getWindowName().c_str());
+  world.setClassName(UserInterface::getWindowName());
 }
 
 tresult
@@ -59,7 +60,7 @@ Vst3View::attached(void* pParent, FIDString type)
   eventHandler = std::make_unique<EventHandler>(*puglView, parameters);
   puglView->setEventHandler(*eventHandler);
   puglView->setParentWindow((pugl::NativeView)pParent);
-  puglView->setWindowTitle(EventHandler::getWindowName().c_str());
+  puglView->setWindowTitle(UserInterface::getWindowName());
   auto const defaultSize = (lastViewSize[0] > -1 && lastViewSize[1] > -1) ? lastViewSize : getDefaultSize();
   puglView->setDefaultSize(defaultSize[0], defaultSize[1]);
   puglView->setAspectRatio(0, 0, 0, 0);
@@ -134,8 +135,21 @@ Vst3View::isPlatformTypeSupported(FIDString type)
 tresult
 Vst3View::canResize()
 {
-  bool const isResizable = EventHandler::isResizingAllowed();
+  bool const isResizable = UserInterface::isResizingAllowed();
   return isResizable ? kResultTrue : kResultFalse;
+}
+
+static void
+adjustSizeToDefaultRatio(int& width, int& height)
+{
+  auto const referenceSize = UserInterface::getDefaultSize();
+  auto const referenceWidth = static_cast<float>(referenceSize[0]);
+  auto const referenceHeight = static_cast<float>(referenceSize[1]);
+  auto const widthRatio = static_cast<float>(width) / referenceWidth;
+  auto const heightRatio = static_cast<float>(height) / referenceHeight;
+  auto const ratio = std::max(UserInterface::getMinZoom(), std::min(widthRatio, heightRatio));
+  width = static_cast<int>(ratio * referenceWidth);
+  height = static_cast<int>(ratio * referenceHeight);
 }
 
 tresult
@@ -143,9 +157,12 @@ Vst3View::checkSizeConstraint(ViewRect* rect)
 {
   int requestedWidth = rect->getWidth();
   int requestedHeight = rect->getHeight();
-  auto const size = EventHandler::adjustSize(requestedWidth, requestedHeight, lastViewSize[0], lastViewSize[1]);
-  rect->right = rect->left + size[0];
-  rect->bottom = rect->top + size[1];
+  UserInterface::adjustSize(requestedWidth, requestedHeight, lastViewSize[0], lastViewSize[1]);
+  if (UserInterface::keepDefaultRatio()) {
+    adjustSizeToDefaultRatio(requestedWidth, requestedHeight);
+  }
+  rect->right = rect->left + requestedWidth;
+  rect->bottom = rect->top + requestedHeight;
   return kResultTrue;
 }
 
@@ -168,18 +185,11 @@ Vst3View::onKeyUp(char16 key, int16 keyMsg, int16 modifiers)
   return onKeyEvent(key, keyMsg, modifiers, false);
 }
 
-void
-Vst3View::initializePersistentData(ViewPersistentData& presistentData)
-{
-  return EventHandler::initializePersistentData(presistentData);
-}
-
-
 std::array<int, 2>
 Vst3View::getDefaultSize() const
 {
   bool const hasLastViewSize = lastViewSize[0] > -1 && lastViewSize[1] > -1;
-  return hasLastViewSize ? lastViewSize : EventHandler::getDefaultSize();
+  return hasLastViewSize ? lastViewSize : UserInterface::getDefaultSize();
 }
 
 Steinberg::tresult

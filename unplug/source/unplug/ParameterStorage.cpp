@@ -87,7 +87,13 @@ ParameterDescription ParameterDescription::ControlledByDecibels(bool mapMinToLin
     else
       return unplug::dBToLinear(db);
   };
-  return Nonlinear(unplug::linearToDB, dBToLinear);
+  auto linearToDB = [minInDB = min, minInLinear = unplug::dBToLinear(min), mapMinToLinearZero](double linear) {
+    if (mapMinToLinearZero && linear <= minInLinear)
+      return minInDB;
+    else
+      return unplug::linearToDB(linear);
+  };
+  return Nonlinear(linearToDB, dBToLinear);
 }
 
 ParameterDescription ParameterDescription::makeBypassParameter(int tag)
@@ -96,6 +102,7 @@ ParameterDescription ParameterDescription::makeBypassParameter(int tag)
   parameter.isBypass = true;
   return parameter;
 }
+
 ParameterDescription ParameterDescription::Nonlinear(std::function<double(double)> linearToNonlinear_,
                                                      std::function<double(double)> nonlinearToLinear_)
 {

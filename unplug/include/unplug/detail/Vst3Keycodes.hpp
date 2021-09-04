@@ -12,7 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "ModifierKeys.h"
+#include "ModifierKeys.hpp"
 #include "pluginterfaces/base/keycodes.h"
 
 namespace unplug::vst3::detail {

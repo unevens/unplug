@@ -11,7 +11,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#include "unplug/detail/OpaqueGl.h"
+#include "unplug/detail/OpaqueGl.hpp"
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>

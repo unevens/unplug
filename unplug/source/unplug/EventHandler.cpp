@@ -15,7 +15,7 @@
 #include "imgui_impl_opengl2.h"
 #include "pugl/gl.hpp"
 #include "unplug/UserInterface.hpp"
-#include "unplug/detail/OpaqueGl.h"
+#include "unplug/detail/OpaqueGl.hpp"
 
 namespace unplug::detail {
 

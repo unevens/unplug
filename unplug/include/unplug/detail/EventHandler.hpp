@@ -12,7 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "ModifierKeys.h"
+#include "ModifierKeys.hpp"
 #include "imgui.h"
 #include "implot.h"
 #include "pugl/pugl.hpp"

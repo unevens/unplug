@@ -23,8 +23,7 @@
 
 namespace Steinberg::Vst {
 
-tresult PLUGIN_API
-UnplugController::initialize(FUnknown* context)
+tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
 {
   using namespace unplug;
   using namespace Steinberg;
@@ -114,8 +113,7 @@ UnplugController::initialize(FUnknown* context)
   return kResultOk;
 }
 
-tresult PLUGIN_API
-UnplugController::setComponentState(IBStream* state)
+tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
 {
   using namespace Steinberg;
   // loads the dsp state
@@ -132,8 +130,7 @@ UnplugController::setComponentState(IBStream* state)
   return kResultOk;
 }
 
-tresult PLUGIN_API
-UnplugController::setState(IBStream* state)
+tresult PLUGIN_API UnplugController::setState(IBStream* state)
 {
   using namespace Steinberg;
 
@@ -163,8 +160,7 @@ UnplugController::setState(IBStream* state)
   return persistentData.load(loadInteger, loadIntegerArray, loadDoubleArray, loadBytes) ? kResultTrue : kResultFalse;
 }
 
-tresult PLUGIN_API
-UnplugController::getState(IBStream* state)
+tresult PLUGIN_API UnplugController::getState(IBStream* state)
 {
   using namespace Steinberg;
   // used to save ui-only data
@@ -183,8 +179,7 @@ UnplugController::getState(IBStream* state)
   return kResultTrue;
 }
 
-IPlugView* PLUGIN_API
-UnplugController::createView(FIDString name)
+IPlugView* PLUGIN_API UnplugController::createView(FIDString name)
 {
   using namespace Steinberg;
   if (FIDStringsEqual(name, ViewType::kEditor)) {
@@ -194,11 +189,10 @@ UnplugController::createView(FIDString name)
   return nullptr;
 }
 
-tresult
-UnplugController::getMidiControllerAssignment(int32 busIndex,
-                                              int16 channel,
-                                              CtrlNumber midiControllerNumber,
-                                              ParamID& tag)
+tresult UnplugController::getMidiControllerAssignment(int32 busIndex,
+                                                      int16 channel,
+                                                      CtrlNumber midiControllerNumber,
+                                                      ParamID& tag)
 {
   if (busIndex == 0) {
     auto const mappedParameter = midiMapping.getParameter(static_cast<int>(midiControllerNumber), channel);

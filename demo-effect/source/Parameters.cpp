@@ -16,8 +16,7 @@
 
 namespace unplug {
 
-ParameterInitializer
-getParameterInitializer()
+ParameterInitializer getParameterInitializer()
 {
   using namespace unplug;
   auto params = ParameterCreator{};
@@ -25,6 +24,5 @@ getParameterInitializer()
   params.addParameter(ParameterDescription(ParamTag::gain, "Gain", -90.0, 6.0, 0.0).ControlledByDecibels());
   return params.done();
 }
-
 
 } // namespace unplug

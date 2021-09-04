@@ -15,7 +15,7 @@
 #ifdef UNPLUG_VST3
 #include "unplug/detail/Vst3ParameterAccess.hpp"
 #else
-//todo for other targets
+// todo for other targets
 #endif
 
 namespace unplug {
@@ -28,7 +28,7 @@ namespace unplug {
 using ParameterAccess = vst3::ParameterAccess;
 using vst3::Parameters;
 #else
-//todo for other targets
+// todo for other targets
 #endif
 
-} // namespace unplug::vst3
+} // namespace unplug

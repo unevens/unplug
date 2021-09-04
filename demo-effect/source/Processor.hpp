@@ -16,7 +16,6 @@
 #include "Parameters.hpp"
 #include "unplug/UnplugProcessor.hpp"
 
-
 class UnplugDemoEffectProcessor final : public unplug::UnplugProcessor
 {
 public:
@@ -32,5 +31,4 @@ public:
   Steinberg::tresult PLUGIN_API canProcessSampleSize(Steinberg::int32 symbolicSampleSize) override;
 
   Steinberg::tresult PLUGIN_API process(Steinberg::Vst::ProcessData& data) override;
-
 };

@@ -13,9 +13,9 @@
 
 #pragma once
 
+#include "NumParameters.hpp"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "unplug/Parameters.hpp"
-#include "NumParameters.hpp"
 
 namespace Steinberg::Vst {
 

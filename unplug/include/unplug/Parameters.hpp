@@ -16,7 +16,6 @@
 
 namespace unplug {
 
-ParameterInitializer
-getParameterInitializer();
+ParameterInitializer getParameterInitializer();
 
 } // namespace unplug

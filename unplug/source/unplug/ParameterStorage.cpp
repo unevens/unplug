@@ -44,36 +44,31 @@ ParameterDescription::ParameterDescription(int tag,
   , name{ std::move(name_) }
 {}
 
-ParameterDescription
-ParameterDescription::Automatable(bool isAutomatable)
+ParameterDescription ParameterDescription::Automatable(bool isAutomatable)
 {
   canBeAutomated = isAutomatable;
   return *this;
 }
 
-ParameterDescription
-ParameterDescription::ShortName(std::string shortName_)
+ParameterDescription ParameterDescription::ShortName(std::string shortName_)
 {
   shortName = std::move(shortName_);
   return *this;
 }
 
-ParameterDescription
-ParameterDescription::MeasureUnit(std::string measureUnit_)
+ParameterDescription ParameterDescription::MeasureUnit(std::string measureUnit_)
 {
   measureUnit = std::move(measureUnit_);
   return *this;
 }
 
-ParameterDescription
-ParameterDescription::MidiMapping(int control)
+ParameterDescription ParameterDescription::MidiMapping(int control)
 {
   assert(control > -1 && control < 130);
   return MidiMapping(control, -1);
 }
 
-ParameterDescription
-ParameterDescription::MidiMapping(int control, int channel)
+ParameterDescription ParameterDescription::MidiMapping(int control, int channel)
 {
   assert(control > -1 && control < 130);
   assert(channel > -1 && channel < 17);
@@ -82,31 +77,27 @@ ParameterDescription::MidiMapping(int control, int channel)
   return *this;
 }
 
-ParameterDescription
-ParameterDescription::ControlledByDecibels(bool mapMinToLinearZero_)
+ParameterDescription ParameterDescription::ControlledByDecibels(bool mapMinToLinearZero_)
 {
   controledInDecibels = true;
   mapMinToLinearZero = mapMinToLinearZero_;
   return *this;
 }
 
-ParameterDescription
-ParameterDescription::makeBypassParameter(int tag)
+ParameterDescription ParameterDescription::makeBypassParameter(int tag)
 {
   auto parameter = ParameterDescription(tag, "Bypass", 0, 1, 0, 1);
   parameter.isBypass = true;
   return parameter;
 }
 
-ParameterInitializer
-ParameterCreator::done()
+ParameterInitializer ParameterCreator::done()
 {
   sortParametersByTag();
   return ParameterInitializer{ descriptions };
 }
 
-void
-ParameterCreator::sortParametersByTag()
+void ParameterCreator::sortParametersByTag()
 {
   std::sort(descriptions.begin(), descriptions.end(), [](auto& lhs, auto& rhs) { return lhs.tag < rhs.tag; });
 }

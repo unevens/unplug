@@ -12,14 +12,14 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/detail/Vst3Keycodes.hpp"
-#include "unplug/detail/Vst3ParameterAccess.hpp"
 #include "pluginterfaces/vst/ivstplugview.h"
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/pugl.hpp"
 #include "unplug/MidiMapping.hpp"
-#include "unplug/detail/EventHandler.hpp"
 #include "unplug/ViewPersistentData.hpp"
+#include "unplug/detail/EventHandler.hpp"
+#include "unplug/detail/Vst3Keycodes.hpp"
+#include "unplug/detail/Vst3ParameterAccess.hpp"
 #include <memory>
 #include <string>
 
@@ -84,7 +84,6 @@ public:
   tresult PLUGIN_API onKeyDown(char16 key, int16 keyMsg, int16 modifiers) override;
 
   tresult PLUGIN_API onKeyUp(char16 key, int16 keyMsg, int16 modifiers) override;
-
 
 private:
   std::array<int, 2> getDefaultSize() const;

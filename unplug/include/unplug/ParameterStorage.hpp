@@ -52,8 +52,14 @@ struct ParameterDescription
   {
     int control = -1;
     int channel = -1;
-    bool listensToAllChannels() const { return channel == -1; }
-    bool isEnabled() const { return control > -1; }
+    bool listensToAllChannels() const
+    {
+      return channel == -1;
+    }
+    bool isEnabled() const
+    {
+      return control > -1;
+    }
   } defaultMidiMapping;
 
   ParameterDescription(int tag, std::string name_, std::vector<std::string> labels_, int defaultValue = 0);
@@ -92,8 +98,14 @@ class ParameterStorage final
       : range(max - min)
       , offset(min)
     {}
-    ParameterValueType toNormalized(ParameterValueType x) const { return (x - offset) * range; }
-    ParameterValueType fromNormalized(ParameterValueType x) const { return x * range + offset; }
+    ParameterValueType toNormalized(ParameterValueType x) const
+    {
+      return (x - offset) * range;
+    }
+    ParameterValueType fromNormalized(ParameterValueType x) const
+    {
+      return x * range + offset;
+    }
 
   private:
     ParameterValueType offset;
@@ -101,13 +113,25 @@ class ParameterStorage final
   };
 
 public:
-  void set(int index, ParameterValueType value) { values[index].store(value); }
+  void set(int index, ParameterValueType value)
+  {
+    values[index].store(value);
+  }
 
-  ParameterValueType get(int index) const { return values[index].load(); }
+  ParameterValueType get(int index) const
+  {
+    return values[index].load();
+  }
 
-  void setNormalized(int index, ParameterValueType value) { values[index].store(convert[index].fromNormalized(value)); }
+  void setNormalized(int index, ParameterValueType value)
+  {
+    values[index].store(convert[index].fromNormalized(value));
+  }
 
-  ParameterValueType getNormalized(int index) const { return convert[index].toNormalized(values[index].load()); }
+  ParameterValueType getNormalized(int index) const
+  {
+    return convert[index].toNormalized(values[index].load());
+  }
 
 private:
   void initialize(std::vector<ParameterDescription> const& parameters)
@@ -158,7 +182,10 @@ public:
     storage.initialize(descriptions);
   }
 
-  std::vector<ParameterDescription> const& getDescriptions() const { return descriptions; }
+  std::vector<ParameterDescription> const& getDescriptions() const
+  {
+    return descriptions;
+  }
 
 private:
   explicit ParameterInitializer(std::vector<ParameterDescription> descriptions);
@@ -169,7 +196,10 @@ private:
 class ParameterCreator final
 {
 public:
-  void addParameter(ParameterDescription&& parameterDescription) { descriptions.emplace_back(parameterDescription); }
+  void addParameter(ParameterDescription&& parameterDescription)
+  {
+    descriptions.emplace_back(parameterDescription);
+  }
 
   ParameterInitializer done();
 

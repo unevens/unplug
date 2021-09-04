@@ -16,7 +16,6 @@
 
 namespace unplug::detail {
 
-void
-resizeAndClearViewport(float width, float height, std::array<float, 3> color = { { 0, 0, 0 } });
+void resizeAndClearViewport(float width, float height, std::array<float, 3> color = { { 0, 0, 0 } });
 
-} // namespace unplug
+} // namespace unplug::detail

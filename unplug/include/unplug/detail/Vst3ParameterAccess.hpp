@@ -34,7 +34,6 @@ static constexpr auto kResultFalse = Steinberg::kResultFalse;
 class ParameterAccess final
 {
 public:
-
   ParameterAccess(EditControllerEx1& controller, MidiMapping& midiMapping);
 
   ~ParameterAccess();
@@ -117,7 +116,10 @@ public:
 
   void setMidiMapping(int parameterTag, int midiControl, int channel);
 
-  void setMidiMapping(int parameterTag, int midiControl) { midiMapping.mapParameter(parameterTag, midiControl); }
+  void setMidiMapping(int parameterTag, int midiControl)
+  {
+    midiMapping.mapParameter(parameterTag, midiControl);
+  }
 
   static void setCurrent(ParameterAccess* parameterAccess);
 
@@ -130,7 +132,6 @@ private:
   inline static thread_local ParameterAccess* current = nullptr;
 };
 
-ParameterAccess&
-Parameters();
+ParameterAccess& Parameters();
 
 } // namespace unplug::vst3

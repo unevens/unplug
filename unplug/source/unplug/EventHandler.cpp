@@ -24,8 +24,7 @@ EventHandler::EventHandler(pugl::View& view, ParameterAccess& parameters)
   , parameters(parameters)
 {}
 
-void
-EventHandler::handleScroll(float dx, float dy)
+void EventHandler::handleScroll(float dx, float dy)
 {
   setCurrentContext();
   ImGuiIO& io = ImGui::GetIO();
@@ -34,15 +33,13 @@ EventHandler::handleScroll(float dx, float dy)
   view.postRedisplay();
 }
 
-bool
-EventHandler::wantsCaptureKeyboard()
+bool EventHandler::wantsCaptureKeyboard()
 {
   setCurrentContext();
   return ImGui::GetIO().WantCaptureKeyboard;
 }
 
-void
-EventHandler::onAsciiKeyEvent(int key, bool isDown)
+void EventHandler::onAsciiKeyEvent(int key, bool isDown)
 {
   setCurrentContext();
   ImGuiIO& io = ImGui::GetIO();
@@ -51,8 +48,7 @@ EventHandler::onAsciiKeyEvent(int key, bool isDown)
     io.AddInputCharacterUTF16(key);
 }
 
-void
-EventHandler::onNonAsciiKeyEvent(int virtualKeyCode, bool isDown)
+void EventHandler::onNonAsciiKeyEvent(int virtualKeyCode, bool isDown)
 {
   setCurrentContext();
   ImGuiIO& io = ImGui::GetIO();
@@ -61,8 +57,7 @@ EventHandler::onNonAsciiKeyEvent(int virtualKeyCode, bool isDown)
     io.AddInputCharacter(' ');
 }
 
-void
-EventHandler::handleModifierKeys(ModifierKeys modifiers)
+void EventHandler::handleModifierKeys(ModifierKeys modifiers)
 {
   ImGuiIO& io = ImGui::GetIO();
   io.KeyCtrl = modifiers.control;
@@ -71,14 +66,12 @@ EventHandler::handleModifierKeys(ModifierKeys modifiers)
   io.KeySuper = modifiers.command;
 }
 
-bool
-EventHandler::getParameterAtCoordinates(int x, int y, int& parameterTag)
+bool EventHandler::getParameterAtCoordinates(int x, int y, int& parameterTag)
 {
-  //todo by registering the controls coordinates in parameter access
+  // todo by registering the controls coordinates in parameter access
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::CreateEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::CreateEvent& event)
 {
   IMGUI_CHECKVERSION();
   if (imguiContext == nullptr) {
@@ -120,8 +113,7 @@ EventHandler::onEvent(const pugl::CreateEvent& event)
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::DestroyEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::DestroyEvent& event)
 {
   setCurrentContext();
   ImGui_ImplOpenGL2_Shutdown();
@@ -130,8 +122,7 @@ EventHandler::onEvent(const pugl::DestroyEvent& event)
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::ConfigureEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::ConfigureEvent& event)
 {
   setCurrentContext();
   ImGuiIO& io = ImGui::GetIO();
@@ -139,15 +130,13 @@ EventHandler::onEvent(const pugl::ConfigureEvent& event)
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::UpdateEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::UpdateEvent& event)
 {
   view.postRedisplay();
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::ExposeEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::ExposeEvent& event)
 {
   setCurrentContext();
   ImGuiIO& io = ImGui::GetIO();
@@ -183,8 +172,7 @@ EventHandler::onEvent(const pugl::ExposeEvent& event)
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::ButtonPressEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::ButtonPressEvent& event)
 {
   view.grabFocus();
   if (!isMouseCursorIn)
@@ -197,8 +185,7 @@ EventHandler::onEvent(const pugl::ButtonPressEvent& event)
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::ButtonReleaseEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::ButtonReleaseEvent& event)
 {
   if (!isMouseCursorIn)
     return pugl::Status::failure;
@@ -209,8 +196,7 @@ EventHandler::onEvent(const pugl::ButtonReleaseEvent& event)
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::MotionEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::MotionEvent& event)
 {
   if (!isMouseCursorIn)
     return pugl::Status::failure;
@@ -220,15 +206,13 @@ EventHandler::onEvent(const pugl::MotionEvent& event)
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::ScrollEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::ScrollEvent& event)
 {
   handleScroll(static_cast<float>(event.dx), static_cast<float>(event.dy));
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::TimerEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::TimerEvent& event)
 {
   if (event.id == redrawTimerId) {
     view.postRedisplay();
@@ -240,8 +224,7 @@ EventHandler::onEvent(const pugl::TimerEvent& event)
   }
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::PointerInEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::PointerInEvent& event)
 {
   isMouseCursorIn = true;
   setCurrentContext();
@@ -249,8 +232,7 @@ EventHandler::onEvent(const pugl::PointerInEvent& event)
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::PointerOutEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::PointerOutEvent& event)
 {
   isMouseCursorIn = false;
   setCurrentContext();
@@ -258,29 +240,25 @@ EventHandler::onEvent(const pugl::PointerOutEvent& event)
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::KeyPressEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::KeyPressEvent& event)
 {
   // this event should be left to the host, which will call IPluginView::onKeyDown
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::KeyReleaseEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::KeyReleaseEvent& event)
 {
   // this event should be left to the host, which will call IPluginView::onKeyDown
   return pugl::Status::success;
 }
 
-pugl::Status
-EventHandler::onEvent(const pugl::TextEvent& event)
+pugl::Status EventHandler::onEvent(const pugl::TextEvent& event)
 {
   // this event should be left to the host, which will call IPluginView::onKeyUp and IPluginView::onKeyUp
   return pugl::Status::success;
 }
 
-void
-EventHandler::setCurrentContext()
+void EventHandler::setCurrentContext()
 {
   assert(imguiContext);
   ImGui::SetCurrentContext(imguiContext);
@@ -288,8 +266,7 @@ EventHandler::setCurrentContext()
   ParameterAccess::setCurrent(&parameters);
 }
 
-int
-EventHandler::convertButtonCode(int code)
+int EventHandler::convertButtonCode(int code)
 {
   switch (code) {
     case 1: // left
@@ -303,8 +280,7 @@ EventHandler::convertButtonCode(int code)
   }
 }
 
-void
-EventHandler::setCursor(const ImGuiIO& io)
+void EventHandler::setCursor(const ImGuiIO& io)
 {
   ImGuiMouseCursor cursor = io.MouseDrawCursor ? ImGuiMouseCursor_None : ImGui::GetMouseCursor();
   if (lastCursor == cursor)
@@ -346,8 +322,7 @@ EventHandler::setCursor(const ImGuiIO& io)
   }
 }
 
-void
-EventHandler::resetKeys()
+void EventHandler::resetKeys()
 {
   ImGuiIO& io = ImGui::GetIO();
   std::fill(std::begin(io.KeysDown), std::end(io.KeysDown), false);

@@ -38,7 +38,7 @@ public:
 
   bool fromString(const TChar* string, ParamValue& valueNormalized_) const override;
 
-  void toString (ParamValue _valueNormalized, String128 string) const override;
+  void toString(ParamValue _valueNormalized, String128 string) const override;
 
 private:
   double normalizedToLinear(double normalized) const;

@@ -17,8 +17,7 @@
 
 namespace unplug::UserInterface {
 
-void
-paint()
+void paint()
 {
   auto const main_viewport = ImGui::GetMainViewport();
   ImGui::PushItemWidth(main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x);
@@ -28,53 +27,40 @@ paint()
   SliderFloat(ParamTag::gain);
 }
 
-std::array<int, 2>
-getDefaultSize()
+std::array<int, 2> getDefaultSize()
 {
   return { { 200, 300 } };
 }
 
-bool
-isResizingAllowed()
+bool isResizingAllowed()
 {
   return true;
 }
 
-float
-getMinZoom()
+float getMinZoom()
 {
   return 1.f;
 }
 
-bool
-keepDefaultRatio()
+bool keepDefaultRatio()
 {
   return true;
 }
 
-const char*
-getWindowName()
+const char* getWindowName()
 {
   return "Unplug Demo Gain";
 }
 
-std::array<float, 3>
-getBackgroundColor()
+std::array<float, 3> getBackgroundColor()
 {
   return { { 0, 0, 0 } };
 }
 
-void
-setupStyle()
-{}
+void setupStyle() {}
 
-void
-adjustSize(int& width, int& height, int prevWidth, int prevHeight)
-{}
+void adjustSize(int& width, int& height, int prevWidth, int prevHeight) {}
 
-void
-initializePersistentData(unplug::ViewPersistentData& persistentData)
-{}
-
+void initializePersistentData(unplug::ViewPersistentData& persistentData) {}
 
 } // namespace unplug::UserInterface

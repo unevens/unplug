@@ -17,8 +17,7 @@
 
 namespace Steinberg::Vst {
 
-void
-UnplugProcessor::onInitialization()
+void UnplugProcessor::onInitialization()
 {
   //--- create Audio IO ------
   addAudioInput(STR16("Stereo In"), SpeakerArr::kStereo);
@@ -28,8 +27,7 @@ UnplugProcessor::onInitialization()
   addEventInput(STR16("Event In"), 1);
 }
 
-tresult PLUGIN_API
-UnplugProcessor::initialize(FUnknown* context)
+tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
 {
   using namespace Steinberg;
   tresult result = AudioEffect::initialize(context);
@@ -44,15 +42,13 @@ UnplugProcessor::initialize(FUnknown* context)
   return kResultOk;
 }
 
-tresult PLUGIN_API
-UnplugProcessor::terminate()
+tresult PLUGIN_API UnplugProcessor::terminate()
 {
   onTermination();
   return AudioEffect::terminate();
 }
 
-void
-UnplugProcessor::UpdateParametersToLastPoint(ProcessData& data)
+void UnplugProcessor::UpdateParametersToLastPoint(ProcessData& data)
 {
   using namespace Steinberg;
   if (data.inputParameterChanges) {
@@ -72,8 +68,7 @@ UnplugProcessor::UpdateParametersToLastPoint(ProcessData& data)
   }
 }
 
-tresult PLUGIN_API
-UnplugProcessor::setupProcessing(ProcessSetup& newSetup)
+tresult PLUGIN_API UnplugProcessor::setupProcessing(ProcessSetup& newSetup)
 {
   using namespace Steinberg;
   tresult result = AudioEffect::setupProcessing(newSetup);
@@ -87,8 +82,7 @@ UnplugProcessor::setupProcessing(ProcessSetup& newSetup)
  * loads the state. may be called by either the Processing Thread or the UI Thread
  * */
 
-tresult PLUGIN_API
-UnplugProcessor::setState(IBStream* state)
+tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
 {
   using namespace Steinberg;
   IBStreamer streamer(state, kLittleEndian);
@@ -106,8 +100,7 @@ UnplugProcessor::setState(IBStream* state)
  * saves the state. may be called by either the Processing Thread or the UI Thread
  * */
 
-tresult PLUGIN_API
-UnplugProcessor::getState(IBStream* state)
+tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
 {
   using namespace Steinberg;
   IBStreamer streamer(state, kLittleEndian);

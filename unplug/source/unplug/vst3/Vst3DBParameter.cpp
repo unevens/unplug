@@ -32,8 +32,7 @@ DBParameter::DBParameter(const TChar* title,
   , maxLinear(dBToLinear(maxPlainInDB))
 {}
 
-double
-DBParameter::dBToLinear(double dB) const
+double DBParameter::dBToLinear(double dB) const
 {
   auto const linear = unplug::dBToLinear(dB);
   if (mapMinToLinearZero && linear <= minLinear)
@@ -42,35 +41,30 @@ DBParameter::dBToLinear(double dB) const
     return linear;
 }
 
-double
-DBParameter::normalizedToLinear(double normalized) const
+double DBParameter::normalizedToLinear(double normalized) const
 {
   return minLinear + normalized * (maxLinear - minLinear);
 }
-double
-DBParameter::linearToNormalized(double linear) const
+double DBParameter::linearToNormalized(double linear) const
 {
   return (linear - minLinear) / (maxLinear - minLinear);
 }
 
-ParamValue
-DBParameter::toPlain(ParamValue valueNormalized_) const
+ParamValue DBParameter::toPlain(ParamValue valueNormalized_) const
 {
   auto const valueInLinearScale = normalizedToLinear(valueNormalized_);
   auto const valueInDB = unplug::linearToDB(valueInLinearScale);
   return valueInDB;
 }
 
-ParamValue
-DBParameter::toNormalized(ParamValue plainValueInDB) const
+ParamValue DBParameter::toNormalized(ParamValue plainValueInDB) const
 {
   auto const valueInLinearScale = dBToLinear(plainValueInDB);
   auto const valueNormalized = linearToNormalized(valueInLinearScale);
   return valueNormalized;
 }
 
-bool
-DBParameter::fromString(const TChar* string, ParamValue& valueNormalized_) const
+bool DBParameter::fromString(const TChar* string, ParamValue& valueNormalized_) const
 {
   UString wrapper(const_cast<TChar*>(string), tstrlen(string));
   double valueInDB;
@@ -83,8 +77,7 @@ DBParameter::fromString(const TChar* string, ParamValue& valueNormalized_) const
   return false;
 }
 
-void
-DBParameter::toString(ParamValue valueNormalized_, String128 string) const
+void DBParameter::toString(ParamValue valueNormalized_, String128 string) const
 {
   Parameter::toString(toPlain(valueNormalized_), string);
 }

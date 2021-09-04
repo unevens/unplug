@@ -23,4 +23,4 @@ struct ModifierKeys final
   bool command = false;
 };
 
-} // namespace unplug
+} // namespace unplug::detail

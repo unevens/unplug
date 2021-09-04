@@ -18,34 +18,24 @@
 
 namespace unplug::UserInterface {
 
-void
-paint();
+void paint();
 
-void
-setupStyle();
+void setupStyle();
 
-void
-adjustSize(int& width, int& height, int prevWidth, int prevHeight);
+void adjustSize(int& width, int& height, int prevWidth, int prevHeight);
 
-bool
-isResizingAllowed();
+bool isResizingAllowed();
 
-bool
-keepDefaultRatio();
+bool keepDefaultRatio();
 
-std::array<int, 2>
-getDefaultSize();
+std::array<int, 2> getDefaultSize();
 
-float
-getMinZoom();
+float getMinZoom();
 
-void
-initializePersistentData(unplug::ViewPersistentData& persistentData);
+void initializePersistentData(unplug::ViewPersistentData& persistentData);
 
-const char*
-getWindowName();
+const char* getWindowName();
 
-std::array<float, 3>
-getBackgroundColor();
+std::array<float, 3> getBackgroundColor();
 
 } // namespace unplug::UserInterface

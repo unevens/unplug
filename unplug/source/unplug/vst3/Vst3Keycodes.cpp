@@ -16,8 +16,7 @@
 
 namespace unplug::vst3::detail {
 
-unplug::detail::ModifierKeys
-modifierKeysFromBitmask(Steinberg::int16 mask)
+unplug::detail::ModifierKeys modifierKeysFromBitmask(Steinberg::int16 mask)
 {
   unplug::detail::ModifierKeys modifierKeys;
   modifierKeys.shift = mask & Steinberg::kShiftKey;
@@ -27,8 +26,7 @@ modifierKeysFromBitmask(Steinberg::int16 mask)
   return modifierKeys;
 }
 
-int
-convertVirtualKeyCode(Steinberg::int16 virtualKeyCode)
+int convertVirtualKeyCode(Steinberg::int16 virtualKeyCode)
 {
   using namespace Steinberg;
   switch (virtualKeyCode) {
@@ -69,8 +67,7 @@ convertVirtualKeyCode(Steinberg::int16 virtualKeyCode)
   }
 }
 
-int
-convertNumPadKeyCode(Steinberg::int16 virtualKeyCode)
+int convertNumPadKeyCode(Steinberg::int16 virtualKeyCode)
 {
   using namespace Steinberg;
   switch (virtualKeyCode) {

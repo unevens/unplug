@@ -29,15 +29,13 @@ detail::Vst3View::Vst3View(EditControllerEx1& controller,
   world.setClassName(UserInterface::getWindowName());
 }
 
-tresult
-Vst3View::queryInterface(const char* iid, void** obj)
+tresult Vst3View::queryInterface(const char* iid, void** obj)
 {
   QUERY_INTERFACE(iid, obj, Steinberg::Vst::IParameterFinder::iid, Steinberg::Vst::IParameterFinder)
   return Steinberg::CPluginView::queryInterface(iid, obj);
 }
 
-tresult
-Vst3View::findParameter(int32 xPos, int32 yPos, ParamID& resultTag)
+tresult Vst3View::findParameter(int32 xPos, int32 yPos, ParamID& resultTag)
 {
   if (eventHandler) {
     int tag = 0;
@@ -52,8 +50,7 @@ Vst3View::findParameter(int32 xPos, int32 yPos, ParamID& resultTag)
   return kResultFalse;
 }
 
-tresult
-Vst3View::attached(void* pParent, FIDString type)
+tresult Vst3View::attached(void* pParent, FIDString type)
 {
   CPluginView::attached(pParent, type);
   puglView = std::make_unique<pugl::View>(world);
@@ -90,16 +87,14 @@ Vst3View::attached(void* pParent, FIDString type)
   return kResultTrue;
 }
 
-tresult
-Vst3View::removed()
+tresult Vst3View::removed()
 {
   puglView.reset(nullptr);
   eventHandler.reset(nullptr);
   return CPluginView::removed();
 }
 
-tresult
-Vst3View::onSize(ViewRect* r)
+tresult Vst3View::onSize(ViewRect* r)
 {
   if (puglView) {
     puglView->setFrame({ (double)r->left, (double)r->top, (double)r->getWidth(), (double)r->getHeight() });
@@ -112,8 +107,7 @@ Vst3View::onSize(ViewRect* r)
   return CPluginView::onSize(r);
 }
 
-tresult
-Vst3View::isPlatformTypeSupported(FIDString type)
+tresult Vst3View::isPlatformTypeSupported(FIDString type)
 {
   using namespace Steinberg;
 
@@ -132,15 +126,13 @@ Vst3View::isPlatformTypeSupported(FIDString type)
   return kResultFalse;
 }
 
-tresult
-Vst3View::canResize()
+tresult Vst3View::canResize()
 {
   bool const isResizable = UserInterface::isResizingAllowed();
   return isResizable ? kResultTrue : kResultFalse;
 }
 
-static void
-adjustSizeToDefaultRatio(int& width, int& height)
+static void adjustSizeToDefaultRatio(int& width, int& height)
 {
   auto const referenceSize = UserInterface::getDefaultSize();
   auto const referenceWidth = static_cast<float>(referenceSize[0]);
@@ -152,8 +144,7 @@ adjustSizeToDefaultRatio(int& width, int& height)
   height = static_cast<int>(ratio * referenceHeight);
 }
 
-tresult
-Vst3View::checkSizeConstraint(ViewRect* rect)
+tresult Vst3View::checkSizeConstraint(ViewRect* rect)
 {
   int requestedWidth = rect->getWidth();
   int requestedHeight = rect->getHeight();
@@ -166,34 +157,32 @@ Vst3View::checkSizeConstraint(ViewRect* rect)
   return kResultTrue;
 }
 
-tresult
-Vst3View::onWheel(float distance)
+tresult Vst3View::onWheel(float distance)
 {
   eventHandler->handleScroll(0, distance);
   return kResultFalse;
 }
 
-tresult
-Vst3View::onKeyDown(char16 key, int16 keyMsg, int16 modifiers)
+tresult Vst3View::onKeyDown(char16 key, int16 keyMsg, int16 modifiers)
 {
   return onKeyEvent(key, keyMsg, modifiers, true);
 }
 
-tresult
-Vst3View::onKeyUp(char16 key, int16 keyMsg, int16 modifiers)
+tresult Vst3View::onKeyUp(char16 key, int16 keyMsg, int16 modifiers)
 {
   return onKeyEvent(key, keyMsg, modifiers, false);
 }
 
-std::array<int, 2>
-Vst3View::getDefaultSize() const
+std::array<int, 2> Vst3View::getDefaultSize() const
 {
   bool const hasLastViewSize = lastViewSize[0] > -1 && lastViewSize[1] > -1;
   return hasLastViewSize ? lastViewSize : UserInterface::getDefaultSize();
 }
 
-Steinberg::tresult
-Vst3View::onKeyEvent(Steinberg::char16 key, Steinberg::int16 keyMsg, Steinberg::int16 modifiersMask, bool isDown)
+Steinberg::tresult Vst3View::onKeyEvent(Steinberg::char16 key,
+                                        Steinberg::int16 keyMsg,
+                                        Steinberg::int16 modifiersMask,
+                                        bool isDown)
 {
   if (!eventHandler->wantsCaptureKeyboard())
     return Steinberg::kResultFalse;

@@ -38,6 +38,7 @@ double NonlinearParameter::normalizedToLinear(double normalized) const
 {
   return minLinear + normalized * (maxLinear - minLinear);
 }
+
 double NonlinearParameter::linearToNormalized(double linear) const
 {
   return (linear - minLinear) / (maxLinear - minLinear);
@@ -46,8 +47,8 @@ double NonlinearParameter::linearToNormalized(double linear) const
 ParamValue NonlinearParameter::toPlain(ParamValue valueNormalized_) const
 {
   auto const valueInLinearScale = normalizedToLinear(valueNormalized_);
-  auto const valueInDB = linearToNonlinear(valueInLinearScale);
-  return valueInDB;
+  auto const valueInNonlinearScale = linearToNonlinear(valueInLinearScale);
+  return valueInNonlinearScale;
 }
 
 ParamValue NonlinearParameter::toNormalized(ParamValue plainValueInNonlinearScale) const
@@ -60,9 +61,9 @@ ParamValue NonlinearParameter::toNormalized(ParamValue plainValueInNonlinearScal
 bool NonlinearParameter::fromString(const TChar* string, ParamValue& valueNormalized_) const
 {
   UString wrapper(const_cast<TChar*>(string), tstrlen(string));
-  double valueInDB;
-  if (wrapper.scanFloat(valueInDB)) {
-    auto valueInLinearScale = nonlinearToLinear(valueInDB);
+  double valueInNonlinearScale;
+  if (wrapper.scanFloat(valueInNonlinearScale)) {
+    auto valueInLinearScale = nonlinearToLinear(valueInNonlinearScale);
     valueInLinearScale = std::max(minLinear, std::min(maxLinear, valueInLinearScale));
     valueNormalized_ = linearToNormalized(valueInLinearScale);
     return true;

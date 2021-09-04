@@ -103,6 +103,7 @@ ParameterDescription ParameterDescription::Nonlinear(std::function<double(double
   nonlinearToLinear = std::move(nonlinearToLinear_);
   return *this;
 }
+
 bool ParameterDescription::isNonlinear() const
 {
   return linearToNonlinear != nullptr && nonlinearToLinear != nullptr;

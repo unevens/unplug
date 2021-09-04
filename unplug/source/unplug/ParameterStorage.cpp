@@ -13,8 +13,6 @@
 
 #include "unplug/ParameterStorage.hpp"
 
-#include <utility>
-
 namespace unplug {
 
 unplug::ParameterDescription::ParameterDescription(int tag,

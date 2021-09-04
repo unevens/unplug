@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 3.14.0)
 set(unplug_plugin_name "UnPlugDemoEffect")
 set(unplug_plugin_version 1.0.0)
 
+#set the cpp standard you want to use for the plugin (must be at least c++17)
+set(unplug_cpp_standard 20)
+
 # unplug_SOURCE_DIR must be set to the path of your unplug local repo
 set(unplug_SOURCE_DIR "${CMAKE_SOURCE_DIR}/..")
 
@@ -42,8 +45,8 @@ set(SMTG_ADD_VSTGUI OFF)
 add_subdirectory(${vst3sdk_SOURCE_DIR} "${PROJECT_BINARY_DIR}/vst3sdk")
 smtg_enable_vst3_sdk()
 
-# reset to c++17 (vst sdk set it to c++14)
-set(CMAKE_CXX_STANDARD 17)
+# reset c++ standard to the desired one (vst sdk set it to c++14)
+set(CMAKE_CXX_STANDARD ${unplug_cpp_standard})
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS FALSE)
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "")

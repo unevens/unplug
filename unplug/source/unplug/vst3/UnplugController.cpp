@@ -18,7 +18,7 @@
 #include "unplug/Parameters.hpp"
 #include "unplug/StringConversion.hpp"
 #include "unplug/UserInterface.hpp"
-#include "unplug/detail/Vst3DBParameter.hpp"
+#include "unplug/detail/Vst3NonlinearParameter.hpp"
 #include <memory>
 
 namespace Steinberg::Vst {
@@ -59,16 +59,17 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
             flags |= ParameterInfo::kIsBypass;
           return flags;
         }();
-        if (description.controledInDecibels) {
-          auto parameter = new DBParameter(title.c_str(),
-                                           description.tag,
-                                           description.min,
-                                           description.max,
-                                           description.defaultValue,
-                                           description.mapMinToLinearZero,
-                                           flags,
-                                           unitId,
-                                           pShortTitle);
+        if (description.isNonlinear()) {
+          auto parameter = new NonlinearParameter(title.c_str(),
+                                                  description.tag,
+                                                  description.nonlinearToLinear,
+                                                  description.linearToNonlinear,
+                                                  description.min,
+                                                  description.max,
+                                                  description.defaultValue,
+                                                  flags,
+                                                  unitId,
+                                                  pShortTitle);
           parameters.addParameter(parameter);
         }
         else {

@@ -46,8 +46,8 @@ struct ParameterDescription
   int numSteps;
   std::vector<std::string> labels;
   bool isBypass = false;
-  bool controledInDecibels = false;
-  bool mapMinToLinearZero = true;
+  std::function<double(double)> linearToNonlinear;
+  std::function<double(double)> nonlinearToLinear;
   struct
   {
     int control = -1;
@@ -83,7 +83,12 @@ struct ParameterDescription
 
   ParameterDescription ControlledByDecibels(bool mapMinToLinearZero = true);
 
+  ParameterDescription Nonlinear(std::function<double(double)> linearToNonlinear_,
+                                 std::function<double(double)> nonlinearToLinear_);
+
   static ParameterDescription makeBypassParameter(int tag);
+
+  bool isNonlinear() const;
 };
 
 template<int numParameters>
@@ -144,8 +149,8 @@ private:
   {
     int i = 0;
     for (auto& parameter : parameters) {
-      auto const min = parameter.controledInDecibels ? dBToLinear(parameter.min) : parameter.min;
-      auto const max = parameter.controledInDecibels ? dBToLinear(parameter.max) : parameter.max;
+      auto const min = parameter.isNonlinear() ? parameter.nonlinearToLinear(parameter.min) : parameter.min;
+      auto const max = parameter.isNonlinear() ? parameter.nonlinearToLinear(parameter.max) : parameter.max;
       convert[i] = ParameterNormalization{ min, max };
       ++i;
     }

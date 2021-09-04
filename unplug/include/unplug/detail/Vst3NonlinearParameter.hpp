@@ -17,20 +17,19 @@
 
 namespace Steinberg::Vst {
 
-class DBParameter : public Parameter
+class NonlinearParameter : public Parameter
 {
 public:
-  DBParameter(const TChar* title,
-              ParamID tag,
-              ParamValue minPlainInDB = -90.0,
-              ParamValue maxPlainInDB = 6.0,
-              ParamValue defaultValuePlain = 0.0,
-              bool mapMinToLinearZero = true,
-              int32 flags = ParameterInfo::kCanAutomate,
-              UnitID unitID = kRootUnitId,
-              const TChar* shortTitle = nullptr);
-
-  double dBToLinear(double dB) const;
+  NonlinearParameter(const TChar* title,
+                     ParamID tag,
+                     std::function<double(double)> nonlinearToLinear,
+                     std::function<double(double)> linearToNonlinear,
+                     ParamValue minInNonlinearScale = -90.0,
+                     ParamValue maxInNonlinearScale = 6.0,
+                     ParamValue defaultValuePlain = 0.0,
+                     int32 flags = ParameterInfo::kCanAutomate,
+                     UnitID unitID = kRootUnitId,
+                     const TChar* shortTitle = nullptr);
 
   ParamValue toPlain(ParamValue valueNormalized_) const override;
 
@@ -44,8 +43,13 @@ private:
   double normalizedToLinear(double normalized) const;
   double linearToNormalized(double linear) const;
 
+  std::function<double(double)> nonlinearToLinear;
+  std::function<double(double)> linearToNonlinear;
+
   ParamValue minLinear;
   ParamValue maxLinear;
-  bool mapMinToLinearZero;
 };
+
+
+
 } // namespace Steinberg::Vst

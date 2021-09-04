@@ -13,6 +13,8 @@
 
 #include "unplug/ParameterStorage.hpp"
 
+#include <utility>
+
 namespace unplug {
 
 unplug::ParameterDescription::ParameterDescription(int tag,
@@ -77,11 +79,15 @@ ParameterDescription ParameterDescription::MidiMapping(int control, int channel)
   return *this;
 }
 
-ParameterDescription ParameterDescription::ControlledByDecibels(bool mapMinToLinearZero_)
+ParameterDescription ParameterDescription::ControlledByDecibels(bool mapMinToLinearZero)
 {
-  controledInDecibels = true;
-  mapMinToLinearZero = mapMinToLinearZero_;
-  return *this;
+  auto dBToLinear = [minInDB = min, mapMinToLinearZero](double db) {
+    if (mapMinToLinearZero && db <= minInDB)
+      return 0.0;
+    else
+      return unplug::dBToLinear(db);
+  };
+  return Nonlinear(unplug::linearToDB, dBToLinear);
 }
 
 ParameterDescription ParameterDescription::makeBypassParameter(int tag)
@@ -89,6 +95,17 @@ ParameterDescription ParameterDescription::makeBypassParameter(int tag)
   auto parameter = ParameterDescription(tag, "Bypass", 0, 1, 0, 1);
   parameter.isBypass = true;
   return parameter;
+}
+ParameterDescription ParameterDescription::Nonlinear(std::function<double(double)> linearToNonlinear_,
+                                                     std::function<double(double)> nonlinearToLinear_)
+{
+  linearToNonlinear = std::move(linearToNonlinear_);
+  nonlinearToLinear = std::move(nonlinearToLinear_);
+  return *this;
+}
+bool ParameterDescription::isNonlinear() const
+{
+  return linearToNonlinear != nullptr && nonlinearToLinear != nullptr;
 }
 
 ParameterInitializer ParameterCreator::done()

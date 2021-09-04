@@ -42,7 +42,7 @@ set(SMTG_ADD_VSTGUI OFF)
 add_subdirectory(${vst3sdk_SOURCE_DIR} "${PROJECT_BINARY_DIR}/vst3sdk")
 smtg_enable_vst3_sdk()
 
-# reset to c++20 (vst sdk set it to c++14)
+# reset to c++17 (vst sdk set it to c++14)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS FALSE)

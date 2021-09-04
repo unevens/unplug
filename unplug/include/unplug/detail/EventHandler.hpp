@@ -13,13 +13,11 @@
 
 #pragma once
 #include "ModifierKeys.h"
-#include "OpaqueGl.h"
 #include "imgui.h"
-#include "imgui_impl_opengl2.h"
 #include "implot.h"
-#include "pugl/gl.hpp"
+#include "pugl/pugl.hpp"
 #include "unplug/ParameterAccess.hpp"
-#include "unplug/UserInterface.hpp"
+#include "unplug/ViewPersistentData.hpp"
 #include <array>
 #include <chrono>
 
@@ -38,330 +36,79 @@ class EventHandler final
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
 
 public:
-  explicit EventHandler(pugl::View& view, ParameterAccess& parameters)
-    : view(view)
-    , parameters(parameters)
-  {}
+  EventHandler(pugl::View& view, ParameterAccess& parameters);
 
-  static std::array<int, 2> adjustSize(int width, int height, int prevWidth, int prevHeight)
-  {
-    return UserInterface::adjustSize(width, height, prevWidth, prevHeight);
-  }
+  static std::array<int, 2> adjustSize(int width, int height, int prevWidth, int prevHeight);
 
-  static bool isResizingAllowed() { return UserInterface::isResizingAllowed(); }
+  static bool isResizingAllowed();
 
-  static std::array<int, 2> getDefaultSize() { return UserInterface::getDefaultSize(); }
+  static std::array<int, 2> getDefaultSize();
 
-  static void initializePersistentData(ViewPersistentData& persistentData)
-  {
-    return UserInterface::initializePersistentData(persistentData);
-  }
+  static void initializePersistentData(ViewPersistentData& persistentData);
 
-  static std::string getWindowName() { return UserInterface::getWindowName(); }
+  static std::string getWindowName();
 
-  void handleScroll(float dx, float dy)
-  {
-    setCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.MouseWheelH += dx;
-    io.MouseWheel += dy;
-    view.postRedisplay();
-  }
+  void handleScroll(float dx, float dy);
 
-  bool wantsCaptureKeyboard()
-  {
-    setCurrentContext();
-    return ImGui::GetIO().WantCaptureKeyboard;
-  }
+  bool wantsCaptureKeyboard();
 
-  void onAsciiKeyEvent(int key, bool isDown)
-  {
-    setCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.KeysDown[key] = isDown;
-    if (isDown)
-      io.AddInputCharacterUTF16(key);
-  }
+  void onAsciiKeyEvent(int key, bool isDown);
 
-  void onNonAsciiKeyEvent(int virtualKeyCode, bool isDown)
-  {
-    setCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.KeysDown[virtualKeyCode + 128] = isDown;
-    if (virtualKeyCode == ImGuiKey_Space && isDown)
-      io.AddInputCharacter(' ');
-  }
+  void onNonAsciiKeyEvent(int virtualKeyCode, bool isDown);
 
-  void handleModifierKeys(ModifierKeys modifiers)
-  {
-    ImGuiIO& io = ImGui::GetIO();
-    io.KeyCtrl = modifiers.control;
-    io.KeyShift = modifiers.shift;
-    io.KeyAlt = modifiers.alt;
-    io.KeySuper = modifiers.command;
-  }
+  void handleModifierKeys(ModifierKeys modifiers);
 
-  bool getParameterAtCoordinates(int x, int y, int& parameterTag)
-  {
-    return UserInterface::getParameterAtCoordinates(x, y, parameterTag);
-  }
+  bool getParameterAtCoordinates(int x, int y, int& parameterTag);
 
-  pugl::Status onEvent(const pugl::CreateEvent& event)
-  {
-    IMGUI_CHECKVERSION();
-    if (imguiContext == nullptr) {
-      imguiContext = ImGui::CreateContext();
-      implotContext = ImPlot::CreateContext();
-      setCurrentContext();
-    }
-    ImGuiIO& io = ImGui::GetIO();
-    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    ImGui::StyleColorsDark();
+  pugl::Status onEvent(const pugl::CreateEvent& event);
 
-    io.BackendPlatformName = "imgui_impl_unplug_pugl";
+  pugl::Status onEvent(const pugl::DestroyEvent& event);
 
-    // the first 128 keys are ASCII, then the special characters from the ImGuiKey_ enum
-    for (auto i = 0; i < ImGuiKey_COUNT; ++i) {
-      io.KeyMap[i] = i + 128;
-    }
-    io.KeyMap[ImGuiKey_A] = 'A';
-    io.KeyMap[ImGuiKey_C] = 'C';
-    io.KeyMap[ImGuiKey_V] = 'V';
-    io.KeyMap[ImGuiKey_X] = 'X';
-    io.KeyMap[ImGuiKey_Y] = 'Y';
-    io.KeyMap[ImGuiKey_Z] = 'Z';
+  pugl::Status onEvent(const pugl::ConfigureEvent& event);
 
-#if defined(_WIN32)
-    io.ImeWindowHandle = (void*)view.nativeWindow();
-    io.ClipboardUserData = io.ImeWindowHandle;
-#endif
+  pugl::Status onEvent(const pugl::UpdateEvent& event);
 
-    // todo maybe put a wrapper around puglSetClipboard in io.SetClipboardTextFn. (and same thing for the getter)
+  pugl::Status onEvent(const pugl::ExposeEvent& event);
 
-    ImGui_ImplOpenGL2_Init();
+  pugl::Status onEvent(const pugl::ButtonPressEvent& event);
 
-    prevFrameTime = clock::now();
-    lastCursor = -1;
+  pugl::Status onEvent(const pugl::ButtonReleaseEvent& event);
 
-    view.startTimer(redrawTimerId, 1.0 / 60.0);
+  pugl::Status onEvent(const pugl::MotionEvent& event);
 
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::DestroyEvent& event)
-  {
-    setCurrentContext();
-    ImGui_ImplOpenGL2_Shutdown();
-    ImGui::DestroyContext();
-    view.stopTimer(redrawTimerId);
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::ConfigureEvent& event)
-  {
-    setCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize = { (float)event.width, (float)event.height };
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::UpdateEvent& event)
-  {
-    view.postRedisplay();
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::ExposeEvent& event)
-  {
-    setCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-
-    // time
-    using namespace std::chrono;
-    auto time = clock::now();
-    io.DeltaTime = duration_cast<duration<float>>(time - prevFrameTime).count();
-    prevFrameTime = time;
-
-    setCursor(io);
-
-    ImGui_ImplOpenGL2_NewFrame();
-    UserInterface::paint();
-    ImGui::Render();
-    resizeAndClearViewport(io.DisplaySize.x, io.DisplaySize.y, UserInterface::getBackgroundColor());
-    ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
-
-    resetKeys();
-
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::ButtonPressEvent& event)
-  {
-    view.grabFocus();
-    if (!isMouseCursorIn)
-      return pugl::Status::failure;
-    setCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    auto imguiButtonCode = convertButtonCode(event.button);
-    io.MouseDown[imguiButtonCode] = true;
-    view.postRedisplay();
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::ButtonReleaseEvent& event)
-  {
-    if (!isMouseCursorIn)
-      return pugl::Status::failure;
-    setCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    auto imguiButtonCode = convertButtonCode(event.button);
-    io.MouseDown[imguiButtonCode] = false;
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::MotionEvent& event)
-  {
-    if (!isMouseCursorIn)
-      return pugl::Status::failure;
-    setCurrentContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.MousePos = { (float)event.x, (float)event.y };
-    return pugl::Status::success;
-  }
-
-  pugl::Status onEvent(const pugl::ScrollEvent& event)
-  {
-    handleScroll(static_cast<float>(event.dx), static_cast<float>(event.dy));
-    return pugl::Status::success;
-  }
+  pugl::Status onEvent(const pugl::ScrollEvent& event);
 
   // Pugl events that may be handled by the UserInterface
 
-  pugl::Status onEvent(const pugl::TimerEvent& event)
-  {
-    if (event.id == redrawTimerId) {
-      view.postRedisplay();
-      return pugl::Status::success;
-    }
-    else {
-      setCurrentContext();
-      return pugl::Status::success;
-    }
-  }
+  pugl::Status onEvent(const pugl::TimerEvent& event);
 
-  pugl::Status onEvent(const pugl::PointerInEvent& event)
-  {
-    isMouseCursorIn = true;
-    setCurrentContext();
-    view.postRedisplay();
-    return pugl::Status::success;
-  }
+  pugl::Status onEvent(const pugl::PointerInEvent& event);
 
-  pugl::Status onEvent(const pugl::PointerOutEvent& event)
-  {
-    isMouseCursorIn = false;
-    setCurrentContext();
-    view.postRedisplay();
-    return pugl::Status::success;
-  }
+  pugl::Status onEvent(const pugl::PointerOutEvent& event);
 
-  // Pugl events that should not be dispatched
+  // these text key related Pugl events are left to the host on Windows, and are never called on macOS
 
-  pugl::Status onEvent(const pugl::KeyPressEvent& event)
-  {
-    // this event should be left to the host, which will call IPluginView::onKeyDown
-    return pugl::Status::success;
-  }
+  pugl::Status onEvent(const pugl::KeyPressEvent& event);
 
-  pugl::Status onEvent(const pugl::KeyReleaseEvent& event)
-  {
-    // this event should be left to the host, which will call IPluginView::onKeyDown
-    return pugl::Status::success;
-  }
+  pugl::Status onEvent(const pugl::KeyReleaseEvent& event);
 
-  pugl::Status onEvent(const pugl::TextEvent& event)
-  {
-    // this event should be left to the host, which will call IPluginView::onKeyUp and IPluginView::onKeyUp
-    return pugl::Status::success;
-  }
+  pugl::Status onEvent(const pugl::TextEvent& event);
 
   // for pugl events whose responses are not implemented
   template<class EventType>
-    pugl::Status onEvent(EventType const& event) const noexcept
-    {
+  pugl::Status onEvent(EventType const& event) const noexcept
+  {
     return pugl::Status::success;
-    }
+  }
 
 private:
-  void setCurrentContext()
-  {
-    assert(imguiContext);
-    ImGui::SetCurrentContext(imguiContext);
-    ImPlot::SetCurrentContext(implotContext);
-    ParameterAccess::setCurrent(&parameters);
-  }
+  void setCurrentContext();
 
-  int convertButtonCode(int code)
-  {
-    switch (code) {
-      case 1: // left
-        return 0;
-      case 2: // center
-        return 2;
-      case 3: // right
-        return 1;
-      default: // extra buttons, unused
-        return code - 1;
-    }
-  }
+  int convertButtonCode(int code);
 
-  void setCursor(ImGuiIO const& io)
-  {
-    ImGuiMouseCursor cursor = io.MouseDrawCursor ? ImGuiMouseCursor_None : ImGui::GetMouseCursor();
-    if (lastCursor == cursor)
-      return;
-    lastCursor = cursor;
-    switch (cursor) {
-      case ImGuiMouseCursor_None:
-        puglSetCursor(view.cobj(), PUGL_CURSOR_CROSSHAIR);
-        break;
-      case ImGuiMouseCursor_Arrow:
-        puglSetCursor(view.cobj(), PUGL_CURSOR_ARROW);
-        break;
-      case ImGuiMouseCursor_TextInput:
-        puglSetCursor(view.cobj(), PUGL_CURSOR_CARET);
-        break;
-      case ImGuiMouseCursor_ResizeAll:
-        puglSetCursor(view.cobj(), PUGL_CURSOR_CROSSHAIR);
-        break;
-      case ImGuiMouseCursor_ResizeNS:
-        puglSetCursor(view.cobj(), PUGL_CURSOR_UP_DOWN);
-        break;
-      case ImGuiMouseCursor_ResizeEW:
-        puglSetCursor(view.cobj(), PUGL_CURSOR_LEFT_RIGHT);
-        break;
-      case ImGuiMouseCursor_ResizeNESW:
-        puglSetCursor(view.cobj(), PUGL_CURSOR_CROSSHAIR);
-        break;
-      case ImGuiMouseCursor_ResizeNWSE:
-        puglSetCursor(view.cobj(), PUGL_CURSOR_CROSSHAIR);
-        break;
-      case ImGuiMouseCursor_Hand:
-        puglSetCursor(view.cobj(), PUGL_CURSOR_HAND);
-        break;
-      case ImGuiMouseCursor_NotAllowed:
-        puglSetCursor(view.cobj(), PUGL_CURSOR_NO);
-        break;
-      default:
-        break;
-    }
-  }
+  void setCursor(ImGuiIO const& io);
 
-  void resetKeys()
-  {
-    ImGuiIO& io = ImGui::GetIO();
-    std::fill(std::begin(io.KeysDown), std::end(io.KeysDown), false);
-  }
+  void resetKeys();
 
 private:
   ParameterAccess& parameters;

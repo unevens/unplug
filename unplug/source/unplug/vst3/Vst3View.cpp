@@ -1,0 +1,216 @@
+//------------------------------------------------------------------------
+// Copyright(c) 2021 Dario Mambro.
+//
+// Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
+// granted, provided that the above copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+// AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+//------------------------------------------------------------------------
+
+#include "unplug/detail/Vst3View.hpp"
+#include "pugl/gl.hpp"
+
+namespace unplug::vst3::detail {
+
+detail::Vst3View::Vst3View(EditControllerEx1& controller,
+                           ViewPersistentData& persistentData,
+                           MidiMapping& midiMapping,
+                           std::array<int, 2>& lastViewSize)
+  : world{ pugl::WorldType::module }
+  , parameters{ controller, midiMapping }
+  , persistentData{ persistentData }
+  , lastViewSize{ lastViewSize }
+{
+  world.setClassName(EventHandler::getWindowName().c_str());
+}
+
+tresult
+Vst3View::queryInterface(const char* iid, void** obj)
+{
+  QUERY_INTERFACE(iid, obj, Steinberg::Vst::IParameterFinder::iid, Steinberg::Vst::IParameterFinder)
+  return Steinberg::CPluginView::queryInterface(iid, obj);
+}
+
+tresult
+Vst3View::findParameter(int32 xPos, int32 yPos, ParamID& resultTag)
+{
+  if (eventHandler) {
+    int tag = 0;
+    if (eventHandler->getParameterAtCoordinates(xPos, yPos, tag)) {
+      resultTag = tag;
+      return kResultTrue;
+    }
+    else {
+      return kResultFalse;
+    }
+  }
+  return kResultFalse;
+}
+
+tresult
+Vst3View::attached(void* pParent, FIDString type)
+{
+  CPluginView::attached(pParent, type);
+  puglView = std::make_unique<pugl::View>(world);
+  eventHandler = std::make_unique<EventHandler>(*puglView, parameters);
+  puglView->setEventHandler(*eventHandler);
+  puglView->setParentWindow((pugl::NativeView)pParent);
+  puglView->setWindowTitle(EventHandler::getWindowName().c_str());
+  auto const defaultSize = (lastViewSize[0] > -1 && lastViewSize[1] > -1) ? lastViewSize : getDefaultSize();
+  puglView->setDefaultSize(defaultSize[0], defaultSize[1]);
+  puglView->setAspectRatio(0, 0, 0, 0);
+  puglView->setBackend(pugl::glBackend());
+  puglView->setHint(pugl::ViewHint::resizable, true);
+  puglView->setHint(pugl::ViewHint::samples, 0);
+  puglView->setHint(pugl::ViewHint::doubleBuffer, true);
+  puglView->setHint(pugl::ViewHint::ignoreKeyRepeat, true);
+#ifdef _NDEBUG
+  puglView->setHint(pugl::ViewHint::useDebugContext, false);
+#else
+  puglView->setHint(pugl::ViewHint::useDebugContext, true);
+#endif
+  puglView->setHint(pugl::ViewHint::contextVersionMajor, 2);
+  puglView->setHint(pugl::ViewHint::contextVersionMinor, 0);
+  puglView->setHint(pugl::ViewHint::useCompatProfile, true);
+  pugl::Status status = puglView->realize();
+  if (status != pugl::Status::success) {
+    assert(false);
+    return kResultFalse;
+  }
+  puglView->show();
+  if (plugFrame) {
+    auto viewRect = ViewRect{ 0, 0, defaultSize[0], defaultSize[1] };
+    plugFrame->resizeView(this, &viewRect);
+  }
+  return kResultTrue;
+}
+
+tresult
+Vst3View::removed()
+{
+  puglView.reset(nullptr);
+  eventHandler.reset(nullptr);
+  return CPluginView::removed();
+}
+
+tresult
+Vst3View::onSize(ViewRect* r)
+{
+  if (puglView) {
+    puglView->setFrame({ (double)r->left, (double)r->top, (double)r->getWidth(), (double)r->getHeight() });
+    puglView->postRedisplay();
+  }
+  if (puglView) {
+    lastViewSize[0] = r->getWidth();
+    lastViewSize[1] = r->getHeight();
+  }
+  return CPluginView::onSize(r);
+}
+
+tresult
+Vst3View::isPlatformTypeSupported(FIDString type)
+{
+  using namespace Steinberg;
+
+  if (strcmp(type, kPlatformTypeHWND) == 0)
+    return kResultTrue;
+
+  if (strcmp(type, kPlatformTypeHIView) == 0)
+    return kResultTrue;
+
+  if (strcmp(type, kPlatformTypeNSView) == 0)
+    return kResultTrue;
+
+  if (strcmp(type, kPlatformTypeX11EmbedWindowID) == 0)
+    return kResultTrue;
+
+  return kResultFalse;
+}
+
+tresult
+Vst3View::canResize()
+{
+  bool const isResizable = EventHandler::isResizingAllowed();
+  return isResizable ? kResultTrue : kResultFalse;
+}
+
+tresult
+Vst3View::checkSizeConstraint(ViewRect* rect)
+{
+  int requestedWidth = rect->getWidth();
+  int requestedHeight = rect->getHeight();
+  auto const size = EventHandler::adjustSize(requestedWidth, requestedHeight, lastViewSize[0], lastViewSize[1]);
+  rect->right = rect->left + size[0];
+  rect->bottom = rect->top + size[1];
+  return kResultTrue;
+}
+
+tresult
+Vst3View::onWheel(float distance)
+{
+  eventHandler->handleScroll(0, distance);
+  return kResultFalse;
+}
+
+tresult
+Vst3View::onKeyDown(char16 key, int16 keyMsg, int16 modifiers)
+{
+  return onKeyEvent(key, keyMsg, modifiers, true);
+}
+
+tresult
+Vst3View::onKeyUp(char16 key, int16 keyMsg, int16 modifiers)
+{
+  return onKeyEvent(key, keyMsg, modifiers, false);
+}
+
+void
+Vst3View::initializePersistentData(ViewPersistentData& presistentData)
+{
+  return EventHandler::initializePersistentData(presistentData);
+}
+
+
+std::array<int, 2>
+Vst3View::getDefaultSize() const
+{
+  bool const hasLastViewSize = lastViewSize[0] > -1 && lastViewSize[1] > -1;
+  return hasLastViewSize ? lastViewSize : EventHandler::getDefaultSize();
+}
+
+Steinberg::tresult
+Vst3View::onKeyEvent(Steinberg::char16 key, Steinberg::int16 keyMsg, Steinberg::int16 modifiersMask, bool isDown)
+{
+  if (!eventHandler->wantsCaptureKeyboard())
+    return Steinberg::kResultFalse;
+
+  auto const modifiers = modifierKeysFromBitmask(modifiersMask);
+  bool const isAscii = key > 0;
+  if (isAscii) {
+    eventHandler->onAsciiKeyEvent(key, isDown);
+    eventHandler->handleModifierKeys(modifiers);
+  }
+  else { // not ASCII
+    auto const numPadKeyCode = convertNumPadKeyCode(keyMsg);
+    if (numPadKeyCode > -1) {
+      eventHandler->onAsciiKeyEvent(numPadKeyCode, isDown);
+      eventHandler->handleModifierKeys(modifiers);
+    }
+    else { // not ASCII, not num pad
+      auto const virtualKeyCode = convertVirtualKeyCode(keyMsg);
+      if (virtualKeyCode > -1) {
+        eventHandler->onNonAsciiKeyEvent(virtualKeyCode, isDown);
+        eventHandler->handleModifierKeys(modifiers);
+      }
+      else { // not ASCII, not num pad, not special key
+        eventHandler->handleModifierKeys(modifiers);
+      }
+    }
+  }
+  return Steinberg::kResultTrue;
+}
+} // namespace unplug::vst3::detail

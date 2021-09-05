@@ -159,10 +159,10 @@ tresult UnplugProcessor::setActive(TBool state)
     }
     auto message = owned(allocateMessage());
     message->setMessageID(vst3::messaageIds::meterSharingId);
-    auto const meterStorageAddress = reinterpret_cast<uintptr_t>(meterStorage.get());
+    auto const meterStorageAddress = reinterpret_cast<uintptr_t>(&meterStorage);
     message->getAttributes()->setBinary(
       vst3::messaageIds::meterStorageId, &meterStorageAddress, sizeof(meterStorageAddress));
-    auto const circularBufferStorageAddress = reinterpret_cast<uintptr_t>(circularBufferStorage.get());
+    auto const circularBufferStorageAddress = reinterpret_cast<uintptr_t>(&circularBufferStorage);
     message->getAttributes()->setBinary(
       vst3::messaageIds::circularBuffersId, &circularBufferStorageAddress, sizeof(circularBufferStorageAddress));
     sendMessage(message);

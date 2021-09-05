@@ -289,8 +289,8 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
       auto const address = *reinterpret_cast<const uintptr_t*>(binary);
       return address;
     };
-    meters.reset(reinterpret_cast<MeterStorage*>(getAddress(meterStorageId)));
-    circularBuffers.reset(reinterpret_cast<CircularBufferStorage *>(getAddress(circularBuffersId)));
+    meters = *reinterpret_cast<std::shared_ptr<MeterStorage>*>(getAddress(meterStorageId));
+    circularBuffers = *reinterpret_cast<std::shared_ptr<CircularBufferStorage>*>(getAddress(circularBuffersId));
     return kResultOk;
   }
 

@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #include "unplug/UserInterface.hpp"
+#include "CircularBuffers.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
 #include "unplug/Controls.hpp"
@@ -63,5 +64,10 @@ void setupStyle() {}
 void adjustSize(int& width, int& height, int prevWidth, int prevHeight) {}
 
 void initializePersistentData(unplug::ViewPersistentData& persistentData) {}
+
+float getRefreshRate()
+{
+  return 1.f / 30.f;
+}
 
 } // namespace unplug::UserInterface

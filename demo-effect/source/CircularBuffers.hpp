@@ -12,14 +12,31 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/CircularBuffer.hpp"
 
-namespace unplug::vst3::messaageIds {
+class WaveformCircularBuffer : public unplug::CircularBuffer<std::vector<double>>
+{
+  float getPointsPerSecond() override
+  {
+    return 128;
+  }
 
-inline constexpr auto programChangeId = "unplug program change message";
-inline constexpr auto programIndexId = "unplug program index";
+  float getDurationInSeconds() override
+  {
+    return 60;
+  }
+};
 
-inline constexpr auto meterSharingId = "unplug meters message";
-inline constexpr auto meterStorageId = "unplug meters storage";
-inline constexpr auto circularBuffersId = "unplug circular buffers storage";
+struct CircularBuffers
+{
+  WaveformCircularBuffer waveform;
 
-} // namespace unplug::vst3
+  void resize(float sampleRate, float refreshRate, int maxAudioBlockSize)
+  {
+    waveform.resize(sampleRate, refreshRate, maxAudioBlockSize);
+  }
+};
+
+namespace unplug {
+using CircularBufferStorage = TCircularBufferStorage<CircularBuffers>;
+}

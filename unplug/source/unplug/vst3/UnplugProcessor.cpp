@@ -15,6 +15,7 @@
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "unplug/Presets.hpp"
+#include "unplug/UserInterface.hpp"
 #include "unplug/detail/GetSortedParameterDescriptions.hpp"
 #include "unplug/detail/Vst3MessageIds.hpp"
 
@@ -79,6 +80,11 @@ tresult PLUGIN_API UnplugProcessor::setupProcessing(ProcessSetup& newSetup)
   if (result != kResultOk) {
     return result;
   }
+  if (!circularBufferStorage) {
+    circularBufferStorage = std::make_shared<CircularBufferStorage>();
+  }
+  circularBufferStorage->get().resize(
+    newSetup.sampleRate, UserInterface::getRefreshRate(), newSetup.maxSamplesPerBlock);
   onSetupProcessing(newSetup);
   return kResultOk;
 }
@@ -153,8 +159,12 @@ tresult UnplugProcessor::setActive(TBool state)
     }
     auto message = owned(allocateMessage());
     message->setMessageID(vst3::messaageIds::meterSharingId);
-    auto address = reinterpret_cast<uintptr_t>(meterStorage.get());
-    message->getAttributes()->setBinary(vst3::messaageIds::meterStorageId, &address, sizeof(address));
+    auto const meterStorageAddress = reinterpret_cast<uintptr_t>(meterStorage.get());
+    message->getAttributes()->setBinary(
+      vst3::messaageIds::meterStorageId, &meterStorageAddress, sizeof(meterStorageAddress));
+    auto const circularBufferStorageAddress = reinterpret_cast<uintptr_t>(circularBufferStorage.get());
+    message->getAttributes()->setBinary(
+      vst3::messaageIds::circularBuffersId, &circularBufferStorageAddress, sizeof(circularBufferStorageAddress));
     sendMessage(message);
   }
   return AudioEffect::setActive(state);

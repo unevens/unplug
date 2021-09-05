@@ -12,10 +12,10 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "Meters.hpp"
 #include "pluginterfaces/vst/ivstplugview.h"
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/pugl.hpp"
+#include "CircularBuffers.hpp"
 #include "unplug/MeterStorage.hpp"
 #include "unplug/MidiMapping.hpp"
 #include "unplug/ViewPersistentData.hpp"
@@ -53,7 +53,8 @@ public:
            ViewPersistentData& persistentData,
            MidiMapping& midiMapping,
            std::array<int, 2>& lastViewSize,
-           std::shared_ptr<MeterStorage>& meters);
+           std::shared_ptr<MeterStorage>& meters,
+           std::shared_ptr<CircularBufferStorage>& circularBuffers);
 
   ~Vst3View() override = default;
 
@@ -93,6 +94,7 @@ private:
   ViewPersistentData& persistentData;
   std::array<int, 2>& lastViewSize;
   std::shared_ptr<MeterStorage>& meters;
+  std::shared_ptr<CircularBufferStorage>& circularBuffers;
 };
 
 } // namespace unplug::vst3::detail

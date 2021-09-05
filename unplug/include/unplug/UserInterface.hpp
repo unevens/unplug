@@ -38,4 +38,6 @@ const char* getWindowName();
 
 std::array<float, 3> getBackgroundColor();
 
+float getRefreshRate();
+
 } // namespace unplug::UserInterface

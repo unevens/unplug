@@ -21,12 +21,14 @@ detail::Vst3View::Vst3View(EditControllerEx1& controller,
                            ViewPersistentData& persistentData,
                            MidiMapping& midiMapping,
                            std::array<int, 2>& lastViewSize,
-                           std::shared_ptr<MeterStorage>& meters)
+                           std::shared_ptr<MeterStorage>& meters,
+                           std::shared_ptr<CircularBufferStorage>& circularBuffers)
   : world{ pugl::WorldType::module }
   , parameters{ controller, midiMapping }
   , persistentData{ persistentData }
   , lastViewSize{ lastViewSize }
   , meters{ meters }
+  , circularBuffers{ circularBuffers }
 {
   world.setClassName(UserInterface::getWindowName());
 }
@@ -53,7 +55,7 @@ tresult Vst3View::attached(void* pParent, FIDString type)
 {
   CPluginView::attached(pParent, type);
   puglView = std::make_unique<pugl::View>(world);
-  eventHandler = std::make_unique<EventHandler>(*puglView, parameters, meters);
+  eventHandler = std::make_unique<EventHandler>(*puglView, parameters, meters, circularBuffers);
   puglView->setEventHandler(*eventHandler);
   puglView->setParentWindow((pugl::NativeView)pParent);
   puglView->setWindowTitle(UserInterface::getWindowName());

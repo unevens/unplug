@@ -221,7 +221,7 @@ tresult PLUGIN_API UnplugController::getState(IBStream* state)
 IPlugView* PLUGIN_API UnplugController::createView(FIDString name)
 {
   if (FIDStringsEqual(name, ViewType::kEditor)) {
-    auto ui = new View(*this, persistentData, midiMapping, lastViewSize, meters);
+    auto ui = new View(*this, persistentData, midiMapping, lastViewSize, meters, circularBuffers);
     return ui;
   }
   return nullptr;
@@ -280,13 +280,17 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
     return kInvalidArgument;
 
   if (FIDStringsEqual(message->getMessageID(), meterSharingId)) {
-    const void* binary;
-    uint32 size;
-    bool gotProgramIndexOk = message->getAttributes()->getBinary(meterStorageId, binary, size) == kResultOk;
-    assert(gotProgramIndexOk);
-    assert(size == sizeof(binary));
-    auto address = *reinterpret_cast<const uintptr_t*>(binary);
-    meters.reset(reinterpret_cast<MeterStorage*>(address));
+    auto const getAddress = [&](auto attributeId) {
+      const void* binary;
+      uint32 size;
+      bool gotProgramIndexOk = message->getAttributes()->getBinary(attributeId, binary, size) == kResultOk;
+      assert(gotProgramIndexOk);
+      assert(size == sizeof(binary));
+      auto const address = *reinterpret_cast<const uintptr_t*>(binary);
+      return address;
+    };
+    meters.reset(reinterpret_cast<MeterStorage*>(getAddress(meterStorageId)));
+    circularBuffers.reset(reinterpret_cast<CircularBufferStorage *>(getAddress(circularBuffersId)));
     return kResultOk;
   }
 

@@ -15,6 +15,7 @@
 
 #include "Meters.hpp"
 #include "Parameters.hpp"
+#include "CircularBuffers.hpp"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "unplug/GetParameterDescriptions.hpp"
 #include "unplug/MeterStorage.hpp"
@@ -70,9 +71,9 @@ private:
   }
 
 protected:
-
   unplug::ParameterStorage parameterStorage;
   std::shared_ptr<unplug::MeterStorage> meterStorage;
+  std::shared_ptr<unplug::CircularBufferStorage> circularBufferStorage;
 };
 
 } // namespace Steinberg::Vst

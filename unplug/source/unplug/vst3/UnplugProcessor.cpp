@@ -120,18 +120,26 @@ tresult PLUGIN_API UnplugProcessor::canProcessSampleSize(int32 symbolicSampleSiz
   return kResultFalse;
 }
 
-tresult UnplugProcessor::setActive(TBool state)
+tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
 {
-  if (!sentInitializationMessage) {
-    sentInitializationMessage = true;
-    auto message = owned(allocateMessage());
-    message->setMessageID(unplug::vst3::initializationMessage);
-    auto address = reinterpret_cast<uintptr_t>(&parameterStorage);
-    message->getAttributes()->setBinary(unplug::vst3::parameterStorageId, &address, sizeof(uintptr_t));
-    sendMessage(message);
+  if (!message)
+    return kInvalidArgument;
+
+  if (FIDStringsEqual(message->getMessageID(), unplug::vst3::messaageIds::programChange)) {
+    void const* binary = nullptr;
+    uint32 size = 0;
+    message->getAttributes()->getBinary(unplug::vst3::messaageIds::parameterValues, binary, size);
+    assert(binary);
+    if (binary) {
+      auto values = static_cast<double const*>(binary);
+      for (int i = 0; i < unplug::NumParameters::value; ++i) {
+        parameterStorage.set(i, values[i]);
+      }
+    }
+    return kResultOk;
   }
 
-  return Component::setActive(state);
+  return AudioEffect::notify(message);
 }
 
 } // namespace Steinberg::Vst

@@ -40,7 +40,8 @@ public:
   /** Reports if the plugin supports 32/64 bit floating point audio */
   Steinberg::tresult PLUGIN_API canProcessSampleSize(Steinberg::int32 symbolicSampleSize) override;
 
-  tresult PLUGIN_API setActive(TBool state) override;
+
+  tresult PLUGIN_API notify(IMessage* message) override;
 
 protected:
   void UpdateParametersToLastPoint(ProcessData& data);
@@ -67,9 +68,6 @@ private:
 protected:
   using ParameterStorage = unplug::ParameterStorage<unplug::NumParameters::value>;
   ParameterStorage parameterStorage;
-
-private:
-  bool sentInitializationMessage{ false };
 };
 
 } // namespace Steinberg::Vst

@@ -13,9 +13,9 @@
 
 #pragma once
 
-namespace unplug::vst3 {
+namespace unplug::vst3::messaageIds {
 
-inline constexpr auto initializationMessage = "unplug initialization message";
-inline constexpr auto parameterStorageId = "parameter storage";
+inline constexpr auto programChange = "unplug initialization message";
+inline constexpr auto parameterValues = "unplug parameter values";
 
 } // namespace unplug::vst3

@@ -54,7 +54,6 @@ public:
 
   tresult PLUGIN_API setParamNormalized(ParamID tag, ParamValue value) override;
 
-  tresult PLUGIN_API notify(IMessage* message) override;
 
 private:
   void applyPreset(int presetIndex);
@@ -65,7 +64,6 @@ protected:
 private:
   unplug::ViewPersistentData persistentData;
   std::array<int, 2> lastViewSize{ { -1, -1 } };
-  unplug::ParameterStorage<unplug::NumParameters::value>* parameterStorage{ nullptr };
 
   DEFINE_INTERFACES
   DEF_INTERFACE(IMidiMapping);

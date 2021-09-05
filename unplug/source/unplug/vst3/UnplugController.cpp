@@ -272,37 +272,22 @@ void UnplugController::applyPreset(int presetIndex)
 {
   if (Presets::get().size() > presetIndex) {
     auto& preset = Presets::get()[presetIndex];
+    auto valuesForProcessor = std::vector<double>{};
+    valuesForProcessor.reserve(unplug::NumParameters::value);
     for (auto [parameterTag, value] : preset.parameterValues) {
       auto const valueNormalized = parameters.getParameter(parameterTag)->toNormalized(value);
       setParamNormalized(parameterTag, valueNormalized);
       bool const setOk = setParamNormalized(parameterTag, valueNormalized) == kResultTrue;
       assert(setOk);
-      assert(parameterStorage);
-      if (setOk && parameterStorage) {
-        parameterStorage->set(parameterTag, value);
-      }
+      valuesForProcessor.push_back(value);
     }
+    auto message = owned(allocateMessage());
+    message->setMessageID(unplug::vst3::messaageIds::programChange);
+    message->getAttributes()->setBinary(unplug::vst3::messaageIds::parameterValues,
+                                        valuesForProcessor.data(),
+                                        valuesForProcessor.size() * sizeof(double));
+    sendMessage(message);
   }
-}
-
-tresult UnplugController::notify(IMessage* message)
-{
-  if (!message)
-    return kInvalidArgument;
-
-  if (FIDStringsEqual(message->getMessageID(), unplug::vst3::initializationMessage)) {
-    void const* binary = nullptr;
-    uint32 size = 0;
-    message->getAttributes()->getBinary(unplug::vst3::parameterStorageId, binary, size);
-    assert(binary);
-    if (binary) {
-      auto address = *static_cast<uintptr_t const*>(binary);
-      parameterStorage = reinterpret_cast<unplug::ParameterStorage<unplug::NumParameters::value>*>(address);
-    }
-    return kResultOk;
-  }
-
-  return EditController::notify(message);
 }
 
 } // namespace Steinberg::Vst

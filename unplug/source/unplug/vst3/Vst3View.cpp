@@ -13,22 +13,15 @@
 
 #include "unplug/detail/Vst3View.hpp"
 #include "pugl/gl.hpp"
+#include "unplug/UnplugController.hpp"
 #include "unplug/UserInterface.hpp"
 
 namespace unplug::vst3::detail {
 
-detail::Vst3View::Vst3View(EditControllerEx1& controller,
-                           ViewPersistentData& persistentData,
-                           MidiMapping& midiMapping,
-                           std::array<int, 2>& lastViewSize,
-                           std::shared_ptr<MeterStorage>& meters,
-                           std::shared_ptr<CircularBufferStorage>& circularBuffers)
+detail::Vst3View::Vst3View(UnplugController& controller)
   : world{ pugl::WorldType::module }
-  , parameters{ controller, midiMapping }
-  , persistentData{ persistentData }
-  , lastViewSize{ lastViewSize }
-  , meters{ meters }
-  , circularBuffers{ circularBuffers }
+  , controller{ controller }
+  , parameters{ controller, controller.midiMapping }
 {
   world.setClassName(UserInterface::getWindowName());
 }
@@ -55,11 +48,12 @@ tresult Vst3View::attached(void* pParent, FIDString type)
 {
   CPluginView::attached(pParent, type);
   puglView = std::make_unique<pugl::View>(world);
-  eventHandler = std::make_unique<EventHandler>(*puglView, parameters, meters, circularBuffers);
+  eventHandler = std::make_unique<EventHandler>(*puglView, parameters, controller.meters, controller.circularBuffers);
   puglView->setEventHandler(*eventHandler);
   puglView->setParentWindow((pugl::NativeView)pParent);
   puglView->setWindowTitle(UserInterface::getWindowName());
-  auto const defaultSize = (lastViewSize[0] > -1 && lastViewSize[1] > -1) ? lastViewSize : getDefaultSize();
+  auto const defaultSize =
+    (controller.lastViewSize[0] > -1 && controller.lastViewSize[1] > -1) ? controller.lastViewSize : getDefaultSize();
   puglView->setDefaultSize(defaultSize[0], defaultSize[1]);
   puglView->setAspectRatio(0, 0, 0, 0);
   puglView->setBackend(pugl::glBackend());
@@ -92,6 +86,7 @@ tresult Vst3View::removed()
 {
   puglView.reset(nullptr);
   eventHandler.reset(nullptr);
+
   return CPluginView::removed();
 }
 
@@ -102,8 +97,8 @@ tresult Vst3View::onSize(ViewRect* r)
     puglView->postRedisplay();
   }
   if (puglView) {
-    lastViewSize[0] = r->getWidth();
-    lastViewSize[1] = r->getHeight();
+    controller.lastViewSize[0] = r->getWidth();
+    controller.lastViewSize[1] = r->getHeight();
   }
   return CPluginView::onSize(r);
 }
@@ -149,7 +144,7 @@ tresult Vst3View::checkSizeConstraint(ViewRect* rect)
 {
   int requestedWidth = rect->getWidth();
   int requestedHeight = rect->getHeight();
-  UserInterface::adjustSize(requestedWidth, requestedHeight, lastViewSize[0], lastViewSize[1]);
+  UserInterface::adjustSize(requestedWidth, requestedHeight, controller.lastViewSize[0], controller.lastViewSize[1]);
   if (UserInterface::keepDefaultRatio()) {
     adjustSizeToDefaultRatio(requestedWidth, requestedHeight);
   }
@@ -176,8 +171,8 @@ tresult Vst3View::onKeyUp(char16 key, int16 keyMsg, int16 modifiers)
 
 std::array<int, 2> Vst3View::getDefaultSize() const
 {
-  bool const hasLastViewSize = lastViewSize[0] > -1 && lastViewSize[1] > -1;
-  return hasLastViewSize ? lastViewSize : UserInterface::getDefaultSize();
+  bool const hasLastViewSize = controller.lastViewSize[0] > -1 && controller.lastViewSize[1] > -1;
+  return hasLastViewSize ? controller.lastViewSize : UserInterface::getDefaultSize();
 }
 
 Steinberg::tresult Vst3View::onKeyEvent(Steinberg::char16 key,

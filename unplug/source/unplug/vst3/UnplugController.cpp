@@ -221,7 +221,11 @@ tresult PLUGIN_API UnplugController::getState(IBStream* state)
 IPlugView* PLUGIN_API UnplugController::createView(FIDString name)
 {
   if (FIDStringsEqual(name, ViewType::kEditor)) {
-    auto ui = new View(*this, persistentData, midiMapping, lastViewSize, meters, circularBuffers);
+    auto ui = new View(*this);
+    auto message = owned(allocateMessage());
+    message->setMessageID(vst3::messaageIds::userInterfaceChangedId);
+    message->getAttributes()->setInt(vst3::messaageIds::userInterfaceStateId, 1);
+    sendMessage(message);
     return ui;
   }
   return nullptr;
@@ -295,6 +299,12 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
   }
 
   return EditControllerEx1::notify(message);
+}
+void UnplugController::onViewClosed() {
+  auto message = owned(allocateMessage());
+  message->setMessageID(vst3::messaageIds::userInterfaceChangedId);
+  message->getAttributes()->setInt(vst3::messaageIds::userInterfaceStateId, 0);
+  sendMessage(message);
 }
 
 } // namespace Steinberg::Vst

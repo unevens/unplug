@@ -22,4 +22,8 @@ inline constexpr auto meterSharingId = "unplug meters message";
 inline constexpr auto meterStorageId = "unplug meters storage";
 inline constexpr auto circularBuffersId = "unplug circular buffers storage";
 
+inline constexpr auto userInterfaceChangedId = "unplug user interface message";
+inline constexpr auto userInterfaceStateId = "unplug user interface state";
+
+
 } // namespace unplug::vst3

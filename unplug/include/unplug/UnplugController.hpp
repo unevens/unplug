@@ -59,18 +59,16 @@ public:
 
   tresult PLUGIN_API notify(IMessage* message) override;
 
-private:
-  void applyPreset(int presetIndex);
+  void onViewClosed();
 
-protected:
   unplug::MidiMapping midiMapping;
-
-private:
   unplug::ViewPersistentData persistentData;
   std::array<int, 2> lastViewSize{ { -1, -1 } };
-
   std::shared_ptr<unplug::MeterStorage> meters;
   std::shared_ptr<unplug::CircularBufferStorage> circularBuffers;
+
+private:
+  void applyPreset(int presetIndex);
 
   DEFINE_INTERFACES
   DEF_INTERFACE(IMidiMapping);

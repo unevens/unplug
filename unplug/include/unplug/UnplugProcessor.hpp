@@ -13,13 +13,14 @@
 
 #pragma once
 
+#include "CircularBuffers.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
-#include "CircularBuffers.hpp"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "unplug/GetParameterDescriptions.hpp"
 #include "unplug/MeterStorage.hpp"
 #include "unplug/ParameterStorage.hpp"
+#include <atomic>
 #include <memory>
 
 namespace Steinberg::Vst {
@@ -46,7 +47,7 @@ public:
 
   tresult PLUGIN_API notify(IMessage* message) override;
 
-  tresult PLUGIN_API setActive (TBool state) override;
+  tresult PLUGIN_API setActive(TBool state) override;
 
 protected:
   void updateParametersToLastPoint(ProcessData& data);
@@ -74,6 +75,7 @@ protected:
   unplug::ParameterStorage parameterStorage;
   std::shared_ptr<unplug::MeterStorage> meterStorage;
   std::shared_ptr<unplug::CircularBufferStorage> circularBufferStorage;
+  std::atomic<bool> isUserInterfaceOpen{ false };
 };
 
 } // namespace Steinberg::Vst

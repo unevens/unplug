@@ -12,10 +12,10 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "CircularBuffers.hpp"
 #include "pluginterfaces/vst/ivstplugview.h"
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/pugl.hpp"
-#include "CircularBuffers.hpp"
 #include "unplug/MeterStorage.hpp"
 #include "unplug/MidiMapping.hpp"
 #include "unplug/ViewPersistentData.hpp"
@@ -24,6 +24,10 @@
 #include "unplug/detail/Vst3ParameterAccess.hpp"
 #include <memory>
 #include <string>
+
+namespace Steinberg::Vst {
+class UnplugController;
+}
 
 namespace unplug::vst3::detail {
 
@@ -34,6 +38,7 @@ using int16 = Steinberg::int16;
 using int32 = Steinberg::int32;
 using ParamID = Steinberg::Vst::ParamID;
 using EventHandler = unplug::detail::EventHandler;
+using UnplugController = Steinberg::Vst::UnplugController;
 
 /**
  * The View class implements the Steinberg::IPluginView class that the plugin controller returns to the host
@@ -49,12 +54,7 @@ public:
 
   tresult queryInterface(const char* iid, void** obj) override;
 
-  Vst3View(EditControllerEx1& controller,
-           ViewPersistentData& persistentData,
-           MidiMapping& midiMapping,
-           std::array<int, 2>& lastViewSize,
-           std::shared_ptr<MeterStorage>& meters,
-           std::shared_ptr<CircularBufferStorage>& circularBuffers);
+  Vst3View(UnplugController& controller);
 
   ~Vst3View() override = default;
 
@@ -90,11 +90,8 @@ private:
   pugl::World world;
   std::unique_ptr<pugl::View> puglView;
   std::unique_ptr<EventHandler> eventHandler;
+  UnplugController& controller;
   ParameterAccess parameters;
-  ViewPersistentData& persistentData;
-  std::array<int, 2>& lastViewSize;
-  std::shared_ptr<MeterStorage>& meters;
-  std::shared_ptr<CircularBufferStorage>& circularBuffers;
 };
 
 } // namespace unplug::vst3::detail

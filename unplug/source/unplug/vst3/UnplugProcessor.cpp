@@ -135,14 +135,30 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
     int64 programIndex = 0;
     bool gotProgramIndexOk = message->getAttributes()->getInt(programIndexId, programIndex) == kResultOk;
     assert(gotProgramIndexOk);
-    auto& preset = Presets::get()[programIndex];
-    int i = 0;
-    for (auto [parameterTag, value] : preset.parameterValues) {
-      parameterStorage.set(i++, value);
+    if (gotProgramIndexOk) {
+      auto& preset = Presets::get()[programIndex];
+      int i = 0;
+      for (auto [parameterTag, value] : preset.parameterValues) {
+        parameterStorage.set(i++, value);
+      }
+      return kResultOk;
     }
-    return kResultOk;
+    else {
+      return kResultFalse;
+    }
   }
-
+  else if (FIDStringsEqual(message->getMessageID(), userInterfaceChangedId)) {
+    int64 userInterfaceState = 0;
+    bool gotStateOk = message->getAttributes()->getInt(userInterfaceStateId, userInterfaceState) == kResultOk;
+    assert(gotStateOk);
+    if (gotStateOk) {
+      isUserInterfaceOpen.store(userInterfaceState != 0, std::memory_order_release);
+      return kResultOk;
+    }
+    else {
+      return kResultFalse;
+    }
+  }
   return AudioEffect::notify(message);
 }
 

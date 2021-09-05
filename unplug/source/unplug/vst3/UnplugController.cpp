@@ -276,6 +276,5 @@ void UnplugController::applyPreset(int presetIndex)
 } // namespace Steinberg::Vst
 
 namespace unplug {
-
 using UnplugController = Steinberg::Vst::UnplugController;
 }

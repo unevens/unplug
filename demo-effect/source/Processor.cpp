@@ -25,7 +25,7 @@ UnplugDemoEffectProcessor::~UnplugDemoEffectProcessor() = default;
 
 tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data)
 {
-  UpdateParametersToLastPoint(data);
+  updateParametersToLastPoint(data);
 
   auto const gain = parameterStorage.get(ParamTag::gain);
   bool const bypass = parameterStorage.get(ParamTag::bypass) > 0.0;

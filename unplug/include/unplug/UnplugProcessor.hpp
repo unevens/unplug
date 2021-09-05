@@ -40,11 +40,10 @@ public:
   /** Reports if the plugin supports 32/64 bit floating point audio */
   Steinberg::tresult PLUGIN_API canProcessSampleSize(Steinberg::int32 symbolicSampleSize) override;
 
-
   tresult PLUGIN_API notify(IMessage* message) override;
 
 protected:
-  void UpdateParametersToLastPoint(ProcessData& data);
+  void updateParametersToLastPoint(ProcessData& data);
 
 private:
   /** Called from initialize, at first after constructor */
@@ -73,6 +72,5 @@ protected:
 } // namespace Steinberg::Vst
 
 namespace unplug {
-
 using UnplugProcessor = Steinberg::Vst::UnplugProcessor;
 }

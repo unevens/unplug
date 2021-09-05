@@ -54,7 +54,7 @@ tresult PLUGIN_API UnplugProcessor::terminate()
   return AudioEffect::terminate();
 }
 
-void UnplugProcessor::UpdateParametersToLastPoint(ProcessData& data)
+void UnplugProcessor::updateParametersToLastPoint(ProcessData& data)
 {
   if (data.inputParameterChanges) {
     int32 numParamsChanged = data.inputParameterChanges->getParameterCount();

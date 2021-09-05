@@ -19,7 +19,7 @@
 #include "unplug/Presets.hpp"
 #include "unplug/StringConversion.hpp"
 #include "unplug/UserInterface.hpp"
-#include "unplug/detail/GetSortedParameterDescriptiions.hpp"
+#include "unplug/detail/GetSortedParameterDescriptions.hpp"
 #include "unplug/detail/Vst3MessageIds.hpp"
 #include "unplug/detail/Vst3NonlinearParameter.hpp"
 #include <memory>

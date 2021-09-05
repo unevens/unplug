@@ -12,9 +12,9 @@
 //------------------------------------------------------------------------
 
 #include "unplug/UnplugProcessor.hpp"
-#include "unplug/detail/GetSortedParameterDescriptiions.hpp"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
+#include "unplug/detail/GetSortedParameterDescriptions.hpp"
 #include "unplug/detail/Vst3MessageIds.hpp"
 
 namespace Steinberg::Vst {

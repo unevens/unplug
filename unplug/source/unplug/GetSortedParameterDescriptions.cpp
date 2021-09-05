@@ -11,7 +11,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#include "unplug/detail/GetSortedParameterDescriptiions.hpp"
+#include "unplug/detail/GetSortedParameterDescriptions.hpp"
 
 namespace unplug ::detail {
 

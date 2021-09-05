@@ -15,7 +15,7 @@
 
 namespace unplug::vst3::messaageIds {
 
-inline constexpr auto programChange = "unplug initialization message";
-inline constexpr auto parameterValues = "unplug parameter values";
+inline constexpr auto programChangeId = "unplug initialization message";
+inline constexpr auto programIndexId = "unplug program index";
 
 } // namespace unplug::vst3

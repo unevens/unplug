@@ -26,19 +26,11 @@
 
 namespace Steinberg::Vst {
 
-enum
-{
-  kPresetParam = std::numeric_limits<uint32>::max()
-};
-
-using Presets = unplug::detail::Presets;
+using namespace unplug;
+using Presets = detail::Presets;
 
 tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
 {
-  using namespace unplug;
-  using namespace Steinberg;
-  using namespace Vst;
-
   tresult result = EditControllerEx1::initialize(context);
   if (result != kResultOk) {
     return result;
@@ -128,8 +120,7 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
     unitInfo.programListId = kNoProgramListId;
   }
   else {
-    unitInfo.programListId = kPresetParam;
-    auto const presetParameterTag = unplug::NumParameters::value;
+    auto const presetParameterTag = std::numeric_limits<uint32>::max();
     parameters.addParameter(new RangeParameter(STR16("Preset"),
                                                presetParameterTag,
                                                STR16(""),
@@ -139,7 +130,9 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
                                                presets.size() - 1,
                                                ParameterInfo::kIsProgramChange));
 
-    auto list = new ProgramListWithPitchNames(STR16("Factory Presets"), 0, kRootUnitId);
+    auto const listId = 0;
+    auto list = new ProgramListWithPitchNames(STR16("Factory Presets"), listId, kRootUnitId);
+    unitInfo.programListId = listId;
 
     int programIndex = 0;
     for (auto& preset : presets) {
@@ -162,12 +155,11 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
 
 tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
 {
-  using namespace Steinberg;
   // loads the dsp state
   if (!state)
     return kResultFalse;
   IBStreamer streamer(state, kLittleEndian);
-  for (int i = 0; i < unplug::NumParameters::value; ++i) {
+  for (int i = 0; i < NumParameters::value; ++i) {
     double value;
     if (!streamer.readDouble(value))
       return kResultFalse;
@@ -182,8 +174,6 @@ tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
 
 tresult PLUGIN_API UnplugController::setState(IBStream* state)
 {
-  using namespace Steinberg;
-
   // used to load ui-only data
   IBStreamer streamer(state, kLittleEndian);
   auto const loadInteger = [&](int64_t& x) { return streamer.readInt64((int64&)x); };
@@ -212,7 +202,6 @@ tresult PLUGIN_API UnplugController::setState(IBStream* state)
 
 tresult PLUGIN_API UnplugController::getState(IBStream* state)
 {
-  using namespace Steinberg;
   // used to save ui-only data
   IBStreamer streamer(state, kLittleEndian);
   auto const saveInteger = [&](int64_t const& x) { return streamer.writeInt64(x); };
@@ -231,7 +220,6 @@ tresult PLUGIN_API UnplugController::getState(IBStream* state)
 
 IPlugView* PLUGIN_API UnplugController::createView(FIDString name)
 {
-  using namespace Steinberg;
   if (FIDStringsEqual(name, ViewType::kEditor)) {
     auto ui = new View(*this, persistentData, midiMapping, lastViewSize);
     return ui;
@@ -272,20 +260,15 @@ void UnplugController::applyPreset(int presetIndex)
 {
   if (Presets::get().size() > presetIndex) {
     auto& preset = Presets::get()[presetIndex];
-    auto valuesForProcessor = std::vector<double>{};
-    valuesForProcessor.reserve(unplug::NumParameters::value);
     for (auto [parameterTag, value] : preset.parameterValues) {
       auto const valueNormalized = parameters.getParameter(parameterTag)->toNormalized(value);
       setParamNormalized(parameterTag, valueNormalized);
       bool const setOk = setParamNormalized(parameterTag, valueNormalized) == kResultTrue;
       assert(setOk);
-      valuesForProcessor.push_back(value);
     }
     auto message = owned(allocateMessage());
-    message->setMessageID(unplug::vst3::messaageIds::programChange);
-    message->getAttributes()->setBinary(unplug::vst3::messaageIds::parameterValues,
-                                        valuesForProcessor.data(),
-                                        valuesForProcessor.size() * sizeof(double));
+    message->setMessageID(vst3::messaageIds::programChangeId);
+    message->getAttributes()->setInt(vst3::messaageIds::programChangeId, presetIndex);
     sendMessage(message);
   }
 }

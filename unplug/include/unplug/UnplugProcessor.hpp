@@ -15,6 +15,7 @@
 
 #include "NumParameters.hpp"
 #include "public.sdk/source/vst/vstaudioeffect.h"
+#include "unplug/ParameterStorage.hpp"
 #include "unplug/Parameters.hpp"
 
 namespace Steinberg::Vst {
@@ -36,12 +37,10 @@ public:
   tresult PLUGIN_API setState(IBStream* state) override;
   tresult PLUGIN_API getState(IBStream* state) override;
 
-
   /** Reports if the plugin supports 32/64 bit floating point audio */
   Steinberg::tresult PLUGIN_API canProcessSampleSize(Steinberg::int32 symbolicSampleSize) override;
 
-  tresult PLUGIN_API setActive (TBool state) override;
-
+  tresult PLUGIN_API setActive(TBool state) override;
 
 protected:
   void UpdateParametersToLastPoint(ProcessData& data);
@@ -60,14 +59,17 @@ private:
    * */
   virtual void onSetupProcessing(ProcessSetup& newSetup) {}
 
-  virtual bool supportsDoublePrecision() { return true; }
-
+  virtual bool supportsDoublePrecision()
+  {
+    return true;
+  }
 
 protected:
   using ParameterStorage = unplug::ParameterStorage<unplug::NumParameters::value>;
   ParameterStorage parameterStorage;
+
 private:
-  bool sentInitializationMessage{false};
+  bool sentInitializationMessage{ false };
 };
 
 } // namespace Steinberg::Vst

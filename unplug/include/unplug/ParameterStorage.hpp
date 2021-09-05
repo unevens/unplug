@@ -12,90 +12,15 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/Math.hpp"
-#include "unplug/MidiMapping.hpp"
-#include <algorithm>
+#include "unplug/ParameterDescription.hpp"
 #include <array>
 #include <atomic>
-#include <cassert>
-#include <string>
-#include <vector>
 
 namespace unplug {
-
-using ParameterValueType = std::conditional<std::atomic<double>::is_always_lock_free, double, float>::type;
-
-static_assert(std::atomic<float>::is_always_lock_free, "At least atomic<float> should be lockfree");
-
-struct ParameterDescription
-{
-  enum class Type
-  {
-    numeric,
-    list
-  };
-  Type type;
-  int tag;
-  std::string name;
-  std::string shortName;
-  std::string measureUnit;
-  bool canBeAutomated = true;
-  ParameterValueType min;
-  ParameterValueType max;
-  ParameterValueType defaultValue;
-  int numSteps;
-  std::vector<std::string> labels;
-  bool isBypass = false;
-  std::function<double(double)> linearToNonlinear;
-  std::function<double(double)> nonlinearToLinear;
-  struct
-  {
-    int control = -1;
-    int channel = -1;
-    bool listensToAllChannels() const
-    {
-      return channel == -1;
-    }
-    bool isEnabled() const
-    {
-      return control > -1;
-    }
-  } defaultMidiMapping;
-
-  ParameterDescription(int tag, std::string name_, std::vector<std::string> labels_, int defaultValue = 0);
-
-  ParameterDescription(int tag,
-                       std::string name_,
-                       ParameterValueType min,
-                       ParameterValueType max,
-                       ParameterValueType defaultValue = 0,
-                       int numSteps = 0);
-
-  ParameterDescription Automatable(bool isAutomatable);
-
-  ParameterDescription ShortName(std::string shortName_);
-
-  ParameterDescription MeasureUnit(std::string measureUnit_);
-
-  ParameterDescription MidiMapping(int control);
-
-  ParameterDescription MidiMapping(int control, int channel);
-
-  ParameterDescription ControlledByDecibels(bool mapMinToLinearZero = true);
-
-  ParameterDescription Nonlinear(std::function<double(double)> linearToNonlinear_,
-                                 std::function<double(double)> nonlinearToLinear_);
-
-  static ParameterDescription makeBypassParameter(int tag);
-
-  bool isNonlinear() const;
-};
 
 template<int numParameters>
 class ParameterStorage final
 {
-  friend class ParameterInitializer;
-
   class ParameterNormalization final
   {
   public:
@@ -117,8 +42,9 @@ class ParameterStorage final
     ParameterValueType range;
   };
 
-  struct StoredParameter final{
-    std::atomic<ParameterValueType> value{0};
+  struct StoredParameter final
+  {
+    std::atomic<ParameterValueType> value{ 0 };
     ParameterNormalization convert;
   };
 
@@ -143,13 +69,13 @@ public:
     return parameters[index].convert.toNormalized(parameters[index].value.load());
   }
 
-private:
-  void initialize(std::vector<ParameterDescription> const& parameters)
+  void initialize(std::vector<ParameterDescription> const& parameterDescriptions)
   {
-    initializeConversions(parameters);
-    initializeDefaultValues(parameters);
+    initializeConversions(parameterDescriptions);
+    initializeDefaultValues(parameterDescriptions);
   }
 
+private:
   void initializeConversions(std::vector<ParameterDescription> const& parameterDescriptions)
   {
     int i = 0;
@@ -169,52 +95,6 @@ private:
   }
 
   std::array<StoredParameter, numParameters> parameters;
-};
-
-class ParameterInitializer final
-{
-  friend class ParameterCreator;
-
-public:
-  template<class InitializeParameter>
-  void initializeParameters(InitializeParameter initializeParameter)
-  {
-    for (auto& description : descriptions) {
-      initializeParameter(description);
-    }
-  }
-
-  template<int numParameters>
-  void initializeStorage(ParameterStorage<numParameters>& storage)
-  {
-    assert(numParameters == descriptions.size());
-    storage.initialize(descriptions);
-  }
-
-  std::vector<ParameterDescription> const& getDescriptions() const
-  {
-    return descriptions;
-  }
-
-private:
-  explicit ParameterInitializer(std::vector<ParameterDescription> descriptions);
-
-  std::vector<ParameterDescription> descriptions;
-};
-
-class ParameterCreator final
-{
-public:
-  void addParameter(ParameterDescription&& parameterDescription)
-  {
-    descriptions.emplace_back(parameterDescription);
-  }
-
-  ParameterInitializer done();
-
-private:
-  void sortParametersByTag();
-  std::vector<ParameterDescription> descriptions;
 };
 
 } // namespace unplug

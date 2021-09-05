@@ -11,17 +11,15 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#include "unplug/Parameters.hpp"
-#include "Parameters.hpp"
+#include "unplug/detail/GetSortedParameterDescriptiions.hpp"
 
-namespace unplug {
+namespace unplug ::detail {
 
-std::vector<ParameterDescription> getParameterDescriptions()
+std::vector<ParameterDescription> getSortedParameterDescriptions()
 {
-  auto parameters = std::vector<ParameterDescription>();
-  parameters.push_back(ParameterDescription::makeBypassParameter(ParamTag::bypass));
-  parameters.push_back(ParameterDescription(ParamTag::gain, "Gain", -90.0, 6.0, 0.0).ControlledByDecibels());
-  return parameters;
+  auto descriptions = getParameterDescriptions();
+  std::sort(descriptions.begin(), descriptions.end(), [](auto& lhs, auto& rhs) { return lhs.tag < rhs.tag; });
+  return descriptions;
 }
 
-} // namespace unplug
+} // namespace unplug::detail

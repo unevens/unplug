@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #include "unplug/UnplugProcessor.hpp"
+#include "unplug/detail/GetSortedParameterDescriptiions.hpp"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "unplug/detail/Vst3MessageIds.hpp"
@@ -36,7 +37,8 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
     return result;
   }
 
-  unplug::getParameterInitializer().initializeStorage(parameterStorage);
+  auto const parameterDescriptions = unplug::detail::getSortedParameterDescriptions();
+  parameterStorage.initialize(parameterDescriptions);
 
   onInitialization();
 

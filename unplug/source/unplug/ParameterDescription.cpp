@@ -11,7 +11,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#include "unplug/ParameterStorage.hpp"
+#include "unplug/ParameterDescription.hpp"
+#include "unplug/Math.hpp"
 
 namespace unplug {
 
@@ -113,20 +114,5 @@ bool ParameterDescription::isNonlinear() const
 {
   return linearToNonlinear != nullptr && nonlinearToLinear != nullptr;
 }
-
-ParameterInitializer ParameterCreator::done()
-{
-  sortParametersByTag();
-  return ParameterInitializer{ descriptions };
-}
-
-void ParameterCreator::sortParametersByTag()
-{
-  std::sort(descriptions.begin(), descriptions.end(), [](auto& lhs, auto& rhs) { return lhs.tag < rhs.tag; });
-}
-
-ParameterInitializer::ParameterInitializer(std::vector<ParameterDescription> descriptions)
-  : descriptions(std::move(descriptions))
-{}
 
 } // namespace unplug

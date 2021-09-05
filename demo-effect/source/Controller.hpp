@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "Parameters.hpp"
 #include "unplug/UnplugController.hpp"
 
 class UnplugDemoEffectController final : public unplug::UnplugController

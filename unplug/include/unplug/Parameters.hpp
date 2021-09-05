@@ -12,10 +12,10 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/ParameterStorage.hpp"
+#include "unplug/ParameterDescription.hpp"
 
 namespace unplug {
 
-ParameterInitializer getParameterInitializer();
+std::vector<ParameterDescription> getParameterDescriptions();
 
 } // namespace unplug

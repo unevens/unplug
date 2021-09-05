@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "Parameters.hpp"
 #include "unplug/UnplugProcessor.hpp"
 
 class UnplugDemoEffectProcessor final : public unplug::UnplugProcessor

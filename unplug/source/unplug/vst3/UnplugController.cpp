@@ -19,6 +19,7 @@
 #include "unplug/Presets.hpp"
 #include "unplug/StringConversion.hpp"
 #include "unplug/UserInterface.hpp"
+#include "unplug/detail/GetSortedParameterDescriptiions.hpp"
 #include "unplug/detail/Vst3MessageIds.hpp"
 #include "unplug/detail/Vst3NonlinearParameter.hpp"
 #include <memory>
@@ -51,7 +52,9 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
   UString setUnitName(unitInfo.name, 128);
   setUnitName.fromAscii("Root");
 
-  auto const initializeParameter = [this, unitId = kRootUnitId](unplug::ParameterDescription const& description) {
+  auto const parameterDescriptions = detail::getSortedParameterDescriptions();
+
+  for (auto const& description : parameterDescriptions) {
     TString title = ToVstTChar{}(description.name);
     TString shortTitle = ToVstTChar{}(description.shortName);
     TString units = ToVstTChar{}(description.measureUnit);
@@ -77,7 +80,7 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
                                                   description.max,
                                                   description.defaultValue,
                                                   flags,
-                                                  unitId,
+                                                  kRootUnitId,
                                                   pShortTitle);
           parameters.addParameter(parameter);
         }
@@ -90,7 +93,7 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
                                               description.defaultValue,
                                               description.numSteps,
                                               flags,
-                                              unitId,
+                                              kRootUnitId,
                                               pShortTitle);
           parameters.addParameter(parameter);
         }
@@ -98,7 +101,8 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
       case ParameterDescription::Type::list: {
         int32 const flags =
           ParameterInfo::kIsList | (description.canBeAutomated ? ParameterInfo::kCanAutomate : ParameterInfo::kNoFlags);
-        auto parameter = new StringListParameter(title.c_str(), description.tag, pUnits, flags, unitId, pShortTitle);
+        auto parameter =
+          new StringListParameter(title.c_str(), description.tag, pUnits, flags, kRootUnitId, pShortTitle);
         for (auto& entry : description.labels) {
           auto label = ToVstTChar{}(entry);
           parameter->appendString(label.c_str());
@@ -116,9 +120,7 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
         midiMapping.mapParameter(description.tag, description.defaultMidiMapping.control, mapping.channel);
       }
     }
-  };
-
-  unplug::getParameterInitializer().initializeParameters(initializeParameter);
+  }
 
   auto const& presets = Presets::get();
 

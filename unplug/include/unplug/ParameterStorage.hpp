@@ -66,13 +66,13 @@ using ParameterStorage = TParameterStorage<NumParameters::value>;
 template<int numParameters>
 void TParameterStorage<numParameters>::set(int index, ParameterValueType value)
 {
-  parameters[index].value.store(value, std::memory_order_relaxed);
+  parameters[index].value.store(value, std::memory_order_release);
 }
 
 template<int numParameters>
 ParameterValueType TParameterStorage<numParameters>::get(int index) const
 {
-  return parameters[index].value.load(std::memory_order_relaxed);
+  return parameters[index].value.load(std::memory_order_acquire);
 }
 
 template<int numParameters>

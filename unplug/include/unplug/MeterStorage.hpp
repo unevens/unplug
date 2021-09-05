@@ -45,13 +45,13 @@ void setMeters(MeterStorage*);
 template<int numValues>
 void TMeterStorage<numValues>::set(int index, float value)
 {
-  values[index].value.store(value, std::memory_order_relaxed);
+  values[index].value.store(value, std::memory_order_release);
 }
 
 template<int numValues>
 float TMeterStorage<numValues>::get(int index) const
 {
-  return values[index].value.load(std::memory_order_relaxed);
+  return values[index].value.load(std::memory_order_acquire);
 }
 
 template<int numValues>

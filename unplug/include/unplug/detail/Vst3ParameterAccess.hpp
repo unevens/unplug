@@ -125,10 +125,6 @@ public:
 
   void clearParameterRectangles();
 
-  static void setCurrent(ParameterAccess* parameterAccess);
-
-  static ParameterAccess* getCurrent();
-
 private:
   EditControllerEx1& controller;
   MidiMapping& midiMapping;
@@ -137,6 +133,10 @@ private:
   inline static thread_local ParameterAccess* current = nullptr;
 };
 
-ParameterAccess& Parameters();
+ParameterAccess& getParameters();
+
+namespace detail {
+void setParameters(ParameterAccess* parameterAccess);
+} // namespace detail
 
 } // namespace unplug::vst3

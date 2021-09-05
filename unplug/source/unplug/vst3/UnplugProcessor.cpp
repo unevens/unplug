@@ -140,6 +140,26 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
   return AudioEffect::notify(message);
 }
 
+tresult UnplugProcessor::setActive(TBool state)
+{
+  if constexpr (NumMeters::value > 0) {
+    if (state) {
+      if (!meterStorage) {
+        meterStorage = std::make_shared<MeterStorage>();
+      }
+    }
+    else {
+      meterStorage = nullptr;
+    }
+    auto message = owned(allocateMessage());
+    message->setMessageID(vst3::messaageIds::meterSharingId);
+    auto address = reinterpret_cast<uintptr_t>(meterStorage.get());
+    message->getAttributes()->setBinary(vst3::messaageIds::meterStorageId, &address, sizeof(address));
+    sendMessage(message);
+  }
+  return AudioEffect::setActive(state);
+}
+
 } // namespace Steinberg::Vst
 
 namespace unplug {

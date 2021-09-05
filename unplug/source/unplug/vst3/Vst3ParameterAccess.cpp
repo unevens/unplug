@@ -382,16 +382,6 @@ void ParameterAccess::setMidiMapping(int parameterTag, int midiControl, int chan
   midiMapping.mapParameter(parameterTag, midiControl, channel);
 }
 
-void ParameterAccess::setCurrent(ParameterAccess* parameterAccess)
-{
-  current = parameterAccess;
-}
-
-ParameterAccess* ParameterAccess::getCurrent()
-{
-  return current;
-}
-
 void ParameterAccess::setMidiMapping(int parameterTag, int midiControl)
 {
   midiMapping.mapParameter(parameterTag, midiControl);
@@ -405,13 +395,26 @@ void ParameterAccess::addParameterRectangle(int parameterTag, int left, int top,
 {
   parameterFinder.addParameterRectangle(parameterTag, left, top, right, bottom);
 }
-void ParameterAccess::clearParameterRectangles() {
+
+void ParameterAccess::clearParameterRectangles()
+{
   parameterFinder.clear();
 }
 
-ParameterAccess& Parameters()
-{
-  return *ParameterAccess::getCurrent();
+namespace {
+thread_local ParameterAccess* currentParameterAccess = nullptr;
 }
+
+ParameterAccess& getParameters()
+{
+  return *currentParameterAccess;
+}
+
+namespace detail {
+void setParameters(ParameterAccess* parameterAccess)
+{
+  currentParameterAccess = parameterAccess;
+}
+} // namespace detail
 
 } // namespace unplug::vst3

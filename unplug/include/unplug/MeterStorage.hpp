@@ -12,13 +12,54 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include <Meters.hpp>
+#include <array>
+#include <atomic>
 
-namespace unplug::vst3::messaageIds {
+namespace unplug {
 
-inline constexpr auto programChangeId = "unplug program change message";
-inline constexpr auto programIndexId = "unplug program index";
+template<int numValues>
+class TMeterStorage final
+{
+public:
+  TMeterStorage();
 
-inline constexpr auto meterSharingId = "unplug meters message";
-inline constexpr auto meterStorageId = "unplug meters storage";
+  void set(int index, float value);
 
-} // namespace unplug::vst3
+  float get(int index) const;
+
+private:
+  std::array<std::atomic<float>, numValues> values;
+};
+
+using MeterStorage = TMeterStorage<NumMeters::value>;
+
+MeterStorage* getMeters();
+
+namespace detail {
+void setMeters(MeterStorage*);
+} // namespace detail
+
+// implementation
+
+template<int numValues>
+void TMeterStorage<numValues>::set(int index, float value)
+{
+  values[index].value.store(value, std::memory_order_relaxed);
+}
+
+template<int numValues>
+float TMeterStorage<numValues>::get(int index) const
+{
+  return values[index].value.load(std::memory_order_relaxed);
+}
+
+template<int numValues>
+TMeterStorage<numValues>::TMeterStorage()
+{
+  for (auto& value : values) {
+    value = 0.0;
+  }
+}
+
+} // namespace unplug

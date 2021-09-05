@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "Parameters.hpp"
 #include "unplug/ParameterDescription.hpp"
 #include <array>
 #include <atomic>
@@ -19,7 +20,7 @@
 namespace unplug {
 
 template<int numParameters>
-class ParameterStorage final
+class TParameterStorage final
 {
   class ParameterNormalization final
   {
@@ -58,41 +59,43 @@ private:
   std::array<StoredParameter, numParameters> parameters;
 };
 
+using ParameterStorage = TParameterStorage<NumParameters::value>;
+
 // implementation
 
 template<int numParameters>
-void ParameterStorage<numParameters>::set(int index, ParameterValueType value)
+void TParameterStorage<numParameters>::set(int index, ParameterValueType value)
 {
   parameters[index].value.store(value, std::memory_order_relaxed);
 }
 
 template<int numParameters>
-ParameterValueType ParameterStorage<numParameters>::get(int index) const
+ParameterValueType TParameterStorage<numParameters>::get(int index) const
 {
   return parameters[index].value.load(std::memory_order_relaxed);
 }
 
 template<int numParameters>
-void ParameterStorage<numParameters>::setNormalized(int index, ParameterValueType value)
+void TParameterStorage<numParameters>::setNormalized(int index, ParameterValueType value)
 {
   set(index, parameters[index].convert.fromNormalized(value));
 }
 
 template<int numParameters>
-ParameterValueType ParameterStorage<numParameters>::getNormalized(int index) const
+ParameterValueType TParameterStorage<numParameters>::getNormalized(int index) const
 {
   return parameters[index].convert.toNormalized(get(index));
 }
 
 template<int numParameters>
-void ParameterStorage<numParameters>::initialize(const std::vector<ParameterDescription>& parameterDescriptions)
+void TParameterStorage<numParameters>::initialize(const std::vector<ParameterDescription>& parameterDescriptions)
 {
   initializeConversions(parameterDescriptions);
   initializeDefaultValues(parameterDescriptions);
 }
 
 template<int numParameters>
-void ParameterStorage<numParameters>::initializeConversions(
+void TParameterStorage<numParameters>::initializeConversions(
   const std::vector<ParameterDescription>& parameterDescriptions)
 {
   int i = 0;
@@ -105,7 +108,7 @@ void ParameterStorage<numParameters>::initializeConversions(
 }
 
 template<int numParameters>
-void ParameterStorage<numParameters>::initializeDefaultValues(
+void TParameterStorage<numParameters>::initializeDefaultValues(
   const std::vector<ParameterDescription>& parameterDescriptions)
 {
   for (int i = 0; i < parameterDescriptions.size(); ++i) {
@@ -114,20 +117,20 @@ void ParameterStorage<numParameters>::initializeDefaultValues(
 }
 
 template<int numParameters>
-ParameterStorage<numParameters>::ParameterNormalization::ParameterNormalization(ParameterValueType min,
-                                                                                ParameterValueType max)
+TParameterStorage<numParameters>::ParameterNormalization::ParameterNormalization(ParameterValueType min,
+                                                                                 ParameterValueType max)
   : range(max - min)
   , offset(min)
 {}
 
 template<int numParameters>
-ParameterValueType ParameterStorage<numParameters>::ParameterNormalization::toNormalized(ParameterValueType x) const
+ParameterValueType TParameterStorage<numParameters>::ParameterNormalization::toNormalized(ParameterValueType x) const
 {
   return (x - offset) * range;
 }
 
 template<int numParameters>
-ParameterValueType ParameterStorage<numParameters>::ParameterNormalization::fromNormalized(ParameterValueType x) const
+ParameterValueType TParameterStorage<numParameters>::ParameterNormalization::fromNormalized(ParameterValueType x) const
 {
   return x * range + offset;
 }

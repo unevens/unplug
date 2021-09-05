@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------------------
 // Copyright(c) 2021 Dario Mambro.
 //
@@ -11,14 +12,24 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#pragma once
+#include <unplug/MeterStorage.hpp>
 
-namespace unplug::vst3::messaageIds {
+namespace unplug {
 
-inline constexpr auto programChangeId = "unplug program change message";
-inline constexpr auto programIndexId = "unplug program index";
+namespace {
+thread_local MeterStorage* currentMeterStorage;
+}
 
-inline constexpr auto meterSharingId = "unplug meters message";
-inline constexpr auto meterStorageId = "unplug meters storage";
+MeterStorage* getMeters()
+{
+  return currentMeterStorage;
+}
 
-} // namespace unplug::vst3
+namespace detail {
+void setMeters(MeterStorage* meters)
+{
+  currentMeterStorage = meters;
+}
+} // namespace detail
+
+} // namespace unplug

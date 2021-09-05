@@ -37,7 +37,7 @@ bool Combo(int parameterTag, ShowLabel showLabel)
 {
   using namespace ImGui;
 
-  auto& parameters = Parameters();
+  auto& parameters = getParameters();
 
   auto const areaInfo = beginRegisterArea();
 
@@ -121,21 +121,21 @@ void TextCentered(std::string const& text, ImVec2 size)
 
 void NameLabel(int parameterTag)
 {
-  auto& parameters = Parameters();
+  auto& parameters = getParameters();
   auto const name = parameters.getName(parameterTag);
   return ImGui::TextUnformatted(name.c_str());
 }
 
 void NameLabelCentered(int parameterTag, ImVec2 size)
 {
-  auto& parameters = Parameters();
+  auto& parameters = getParameters();
   auto const name = parameters.getName(parameterTag);
   TextCentered(name + "##LABELCENTERED", size);
 }
 
 void ValueLabel(int parameterTag, ShowLabel showLabel)
 {
-  auto& parameters = Parameters();
+  auto& parameters = getParameters();
   auto const valueAsText = parameters.getValueAsText(parameterTag);
   auto const text = showLabel == ShowLabel::yes ? (parameters.getName(parameterTag) + ": " + valueAsText) : valueAsText;
   return ImGui::TextUnformatted(text.c_str());
@@ -143,7 +143,7 @@ void ValueLabel(int parameterTag, ShowLabel showLabel)
 
 void ValueLabelCentered(int parameterTag, ImVec2 size, ShowLabel showLabel)
 {
-  auto& parameters = Parameters();
+  auto& parameters = getParameters();
   auto const valueAsText = parameters.getValueAsText(parameterTag);
   auto const text =
     (showLabel == ShowLabel::yes ? (parameters.getName(parameterTag) + ": " + valueAsText) : valueAsText) +
@@ -169,7 +169,7 @@ EditingState::EditingState(const ParameterData& parameterData, bool isControlAct
 
 bool Control(int parameterTag, std::function<ControlOutput(ParameterData const& parameter)> const& control)
 {
-  auto& parameters = Parameters();
+  auto& parameters = getParameters();
   auto const parameter = ParameterData{ parameters, parameterTag };
   auto const areaInfo = beginRegisterArea();
   auto const output = control(parameter);
@@ -284,7 +284,7 @@ bool KnobWithLabels(int parameterTag,
                     float angleOffset,
                     std::function<void(KnobDrawData const&)> const& drawer)
 {
-  auto& parameters = Parameters();
+  auto& parameters = getParameters();
   auto const width = ImGui::CalcItemWidth();
   auto const size = ImVec2{ width, 2 * ImGui::GetTextLineHeight() };
   NameLabelCentered(parameterTag, size);

@@ -221,7 +221,7 @@ tresult PLUGIN_API UnplugController::getState(IBStream* state)
 IPlugView* PLUGIN_API UnplugController::createView(FIDString name)
 {
   if (FIDStringsEqual(name, ViewType::kEditor)) {
-    auto ui = new View(*this, persistentData, midiMapping, lastViewSize);
+    auto ui = new View(*this, persistentData, midiMapping, lastViewSize, meters);
     return ui;
   }
   return nullptr;
@@ -271,6 +271,26 @@ void UnplugController::applyPreset(int presetIndex)
     message->getAttributes()->setInt(vst3::messaageIds::programChangeId, presetIndex);
     sendMessage(message);
   }
+}
+
+tresult PLUGIN_API UnplugController::notify(IMessage* message)
+{
+  using namespace vst3::messaageIds;
+  if (!message)
+    return kInvalidArgument;
+
+  if (FIDStringsEqual(message->getMessageID(), meterSharingId)) {
+    const void* binary;
+    uint32 size;
+    bool gotProgramIndexOk = message->getAttributes()->getBinary(meterStorageId, binary, size) == kResultOk;
+    assert(gotProgramIndexOk);
+    assert(size == sizeof(binary));
+    auto address = *reinterpret_cast<const uintptr_t*>(binary);
+    meters.reset(reinterpret_cast<MeterStorage*>(address));
+    return kResultOk;
+  }
+
+  return EditControllerEx1::notify(message);
 }
 
 } // namespace Steinberg::Vst

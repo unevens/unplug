@@ -19,9 +19,10 @@
 
 namespace unplug::detail {
 
-EventHandler::EventHandler(pugl::View& view, ParameterAccess& parameters)
+EventHandler::EventHandler(pugl::View& view, ParameterAccess& parameters, std::shared_ptr<MeterStorage>& meters)
   : view(view)
   , parameters(parameters)
+  , meters(meters)
 {}
 
 void EventHandler::handleScroll(float dx, float dy)
@@ -258,7 +259,10 @@ void EventHandler::setCurrentContext()
   assert(imguiContext);
   ImGui::SetCurrentContext(imguiContext);
   ImPlot::SetCurrentContext(implotContext);
-  ParameterAccess::setCurrent(&parameters);
+  detail::setParameters(&parameters);
+  if constexpr (NumMeters::value > 0) {
+    detail::setMeters(meters.get());
+  }
 }
 
 int EventHandler::convertButtonCode(int code)

@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #include "unplug/UserInterface.hpp"
+#include "Meters.hpp"
 #include "Parameters.hpp"
 #include "unplug/Controls.hpp"
 

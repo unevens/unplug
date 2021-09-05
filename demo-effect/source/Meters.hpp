@@ -13,12 +13,14 @@
 
 #pragma once
 
-namespace unplug::vst3::messaageIds {
+namespace MeterTag {
+enum
+{
+  level,
+  numMeters
+};
+}
 
-inline constexpr auto programChangeId = "unplug program change message";
-inline constexpr auto programIndexId = "unplug program index";
-
-inline constexpr auto meterSharingId = "unplug meters message";
-inline constexpr auto meterStorageId = "unplug meters storage";
-
-} // namespace unplug::vst3
+namespace unplug::NumMeters {
+inline constexpr int value = MeterTag::numMeters;
+}

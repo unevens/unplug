@@ -12,9 +12,11 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "Meters.hpp"
 #include "pluginterfaces/vst/ivstplugview.h"
 #include "public.sdk/source/common/pluginview.h"
 #include "pugl/pugl.hpp"
+#include "unplug/MeterStorage.hpp"
 #include "unplug/MidiMapping.hpp"
 #include "unplug/ViewPersistentData.hpp"
 #include "unplug/detail/EventHandler.hpp"
@@ -36,17 +38,6 @@ using EventHandler = unplug::detail::EventHandler;
 /**
  * The View class implements the Steinberg::IPluginView class that the plugin controller returns to the host
  * as a result of a call to createView.
- * We want the UserInterface class of your plugin to be completely decoupled from the VST3 SDK. In order to achieve
- * this, we use the Pugl library as a crossplatform window system upon which to build user interfaces. Two template
- * classes are implemented: The View class, which takes care of interfacing VST3 SDK with the Pugl window sytstem, and
- * more specifically
- * - manages the lifecycle of the child window
- * - handles VST3 callbacks related to the window, such as "onSize" and "onKeydown"
- * - exposes VST3 API to set and get the plugin parameter to the user interface
- * And an EventHandler class, which takes care of interfacing the UserInterface class of your plugin with the Pugl
- * window system. In this way, you can write the UserInterface class of your plugin against the API of the EventHandler
- * class, without depending on the VST3 SDK. The UserInterface class is then supplied to the EventHandler class and then
- * to the View class through dependency injection.
  * */
 
 class Vst3View final
@@ -61,7 +52,8 @@ public:
   Vst3View(EditControllerEx1& controller,
            ViewPersistentData& persistentData,
            MidiMapping& midiMapping,
-           std::array<int, 2>& lastViewSize);
+           std::array<int, 2>& lastViewSize,
+           std::shared_ptr<MeterStorage>& meters);
 
   ~Vst3View() override = default;
 
@@ -100,6 +92,7 @@ private:
   ParameterAccess parameters;
   ViewPersistentData& persistentData;
   std::array<int, 2>& lastViewSize;
+  std::shared_ptr<MeterStorage>& meters;
 };
 
 } // namespace unplug::vst3::detail

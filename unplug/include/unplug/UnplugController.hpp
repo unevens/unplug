@@ -14,11 +14,13 @@
 #pragma once
 
 #include "GetParameterDescriptions.hpp"
+#include "Meters.hpp"
 #include "public.sdk/source/vst/vsteditcontroller.h"
+#include "unplug/MeterStorage.hpp"
 #include "unplug/MidiMapping.hpp"
-#include "unplug/ParameterStorage.hpp"
 #include "unplug/ViewPersistentData.hpp"
 #include "unplug/detail/Vst3View.hpp"
+#include <memory>
 
 namespace Steinberg::Vst {
 
@@ -54,6 +56,7 @@ public:
 
   tresult PLUGIN_API setParamNormalized(ParamID tag, ParamValue value) override;
 
+  tresult PLUGIN_API notify(IMessage* message) override;
 
 private:
   void applyPreset(int presetIndex);
@@ -64,6 +67,8 @@ protected:
 private:
   unplug::ViewPersistentData persistentData;
   std::array<int, 2> lastViewSize{ { -1, -1 } };
+
+  std::shared_ptr<unplug::MeterStorage> meters;
 
   DEFINE_INTERFACES
   DEF_INTERFACE(IMidiMapping);

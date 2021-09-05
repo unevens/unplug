@@ -13,10 +13,13 @@
 
 #pragma once
 
+#include "Meters.hpp"
 #include "Parameters.hpp"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "unplug/GetParameterDescriptions.hpp"
+#include "unplug/MeterStorage.hpp"
 #include "unplug/ParameterStorage.hpp"
+#include <memory>
 
 namespace Steinberg::Vst {
 
@@ -42,6 +45,8 @@ public:
 
   tresult PLUGIN_API notify(IMessage* message) override;
 
+  tresult PLUGIN_API setActive (TBool state) override;
+
 protected:
   void updateParametersToLastPoint(ProcessData& data);
 
@@ -65,8 +70,9 @@ private:
   }
 
 protected:
-  using ParameterStorage = unplug::ParameterStorage<unplug::NumParameters::value>;
-  ParameterStorage parameterStorage;
+
+  unplug::ParameterStorage parameterStorage;
+  std::shared_ptr<unplug::MeterStorage> meterStorage;
 };
 
 } // namespace Steinberg::Vst

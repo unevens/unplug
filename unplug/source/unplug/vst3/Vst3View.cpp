@@ -20,11 +20,13 @@ namespace unplug::vst3::detail {
 detail::Vst3View::Vst3View(EditControllerEx1& controller,
                            ViewPersistentData& persistentData,
                            MidiMapping& midiMapping,
-                           std::array<int, 2>& lastViewSize)
+                           std::array<int, 2>& lastViewSize,
+                           std::shared_ptr<MeterStorage>& meters)
   : world{ pugl::WorldType::module }
   , parameters{ controller, midiMapping }
   , persistentData{ persistentData }
   , lastViewSize{ lastViewSize }
+  , meters{ meters }
 {
   world.setClassName(UserInterface::getWindowName());
 }
@@ -51,7 +53,7 @@ tresult Vst3View::attached(void* pParent, FIDString type)
 {
   CPluginView::attached(pParent, type);
   puglView = std::make_unique<pugl::View>(world);
-  eventHandler = std::make_unique<EventHandler>(*puglView, parameters);
+  eventHandler = std::make_unique<EventHandler>(*puglView, parameters, meters);
   puglView->setEventHandler(*eventHandler);
   puglView->setParentWindow((pugl::NativeView)pParent);
   puglView->setWindowTitle(UserInterface::getWindowName());

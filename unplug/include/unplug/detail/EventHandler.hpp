@@ -12,12 +12,14 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "ModifierKeys.hpp"
+#include "Meters.hpp"
 #include "imgui.h"
 #include "implot.h"
 #include "pugl/pugl.hpp"
+#include "unplug/MeterStorage.hpp"
 #include "unplug/ParameterAccess.hpp"
 #include "unplug/ViewPersistentData.hpp"
+#include "unplug/detail/ModifierKeys.hpp"
 #include <array>
 #include <chrono>
 
@@ -36,7 +38,7 @@ class EventHandler final
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
 
 public:
-  EventHandler(pugl::View& view, ParameterAccess& parameters);
+  EventHandler(pugl::View& view, ParameterAccess& parameters, std::shared_ptr<MeterStorage>& meters);
 
   void handleScroll(float dx, float dy);
 
@@ -100,6 +102,7 @@ private:
 
 private:
   ParameterAccess& parameters;
+  std::shared_ptr<MeterStorage>& meters;
   pugl::View& view;
   ImGuiContext* imguiContext = nullptr;
   ImPlotContext* implotContext = nullptr;

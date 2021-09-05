@@ -11,7 +11,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#pragma once
 #include "unplug/detail/ParameterFromUserInterfaceCoordinates.hpp"
 
 namespace unplug::detail {
@@ -31,6 +30,7 @@ bool ParameterFromUserInterfaceCoordinates::findParameterFromUserInterfaceCoordi
     return false;
   }
 }
+
 void ParameterFromUserInterfaceCoordinates::addParameterRectangle(int parameterTag,
                                                                   int left,
                                                                   int top,

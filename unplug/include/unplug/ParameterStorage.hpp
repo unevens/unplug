@@ -117,25 +117,30 @@ class ParameterStorage final
     ParameterValueType range;
   };
 
+  struct StoredParameter final{
+    std::atomic<ParameterValueType> value{0};
+    ParameterNormalization convert;
+  };
+
 public:
   void set(int index, ParameterValueType value)
   {
-    values[index].store(value);
+    parameters[index].value.store(value);
   }
 
   ParameterValueType get(int index) const
   {
-    return values[index].load();
+    return parameters[index].value.load();
   }
 
   void setNormalized(int index, ParameterValueType value)
   {
-    values[index].store(convert[index].fromNormalized(value));
+    parameters[index].value.store(parameters[index].convert.fromNormalized(value));
   }
 
   ParameterValueType getNormalized(int index) const
   {
-    return convert[index].toNormalized(values[index].load());
+    return parameters[index].convert.toNormalized(parameters[index].value.load());
   }
 
 private:
@@ -145,26 +150,25 @@ private:
     initializeDefaultValues(parameters);
   }
 
-  void initializeConversions(std::vector<ParameterDescription> const& parameters)
+  void initializeConversions(std::vector<ParameterDescription> const& parameterDescriptions)
   {
     int i = 0;
-    for (auto& parameter : parameters) {
+    for (auto& parameter : parameterDescriptions) {
       auto const min = parameter.isNonlinear() ? parameter.nonlinearToLinear(parameter.min) : parameter.min;
       auto const max = parameter.isNonlinear() ? parameter.nonlinearToLinear(parameter.max) : parameter.max;
-      convert[i] = ParameterNormalization{ min, max };
+      parameters[i].convert = ParameterNormalization{ min, max };
       ++i;
     }
   }
 
-  void initializeDefaultValues(std::vector<ParameterDescription> const& parameters)
+  void initializeDefaultValues(std::vector<ParameterDescription> const& parameterDescriptions)
   {
-    for (int i = 0; i < parameters.size(); ++i) {
-      values[i].store(parameters[i].defaultValue);
+    for (int i = 0; i < parameterDescriptions.size(); ++i) {
+      parameters[i].value.store(parameterDescriptions[i].defaultValue);
     }
   }
 
-  std::array<std::atomic<ParameterValueType>, numParameters> values;
-  std::array<ParameterNormalization, numParameters> convert;
+  std::array<StoredParameter, numParameters> parameters;
 };
 
 class ParameterInitializer final

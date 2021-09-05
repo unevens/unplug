@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "NumParameters.hpp"
+#include "GetParameterDescriptions.hpp"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "unplug/MidiMapping.hpp"
 #include "unplug/ParameterStorage.hpp"

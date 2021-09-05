@@ -12,10 +12,10 @@
 //------------------------------------------------------------------------
 
 #include "unplug/UnplugController.hpp"
-#include "NumParameters.hpp"
+#include "Parameters.hpp"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/base/ustring.h"
-#include "unplug/Parameters.hpp"
+#include "unplug/GetParameterDescriptions.hpp"
 #include "unplug/Presets.hpp"
 #include "unplug/StringConversion.hpp"
 #include "unplug/UserInterface.hpp"

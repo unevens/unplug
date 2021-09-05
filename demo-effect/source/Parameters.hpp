@@ -21,3 +21,7 @@ enum
   numParams
 };
 }
+
+namespace unplug::NumParameters {
+inline constexpr int value = ParamTag::numParams;
+}

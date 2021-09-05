@@ -12,7 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/Parameters.hpp"
+#include "unplug/GetParameterDescriptions.hpp"
 
 namespace unplug ::detail {
 

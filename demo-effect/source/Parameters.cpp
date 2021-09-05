@@ -11,8 +11,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#include "unplug/Parameters.hpp"
 #include "Parameters.hpp"
+#include "unplug/GetParameterDescriptions.hpp"
 
 namespace unplug {
 

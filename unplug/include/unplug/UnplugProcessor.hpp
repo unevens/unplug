@@ -13,10 +13,10 @@
 
 #pragma once
 
-#include "NumParameters.hpp"
+#include "Parameters.hpp"
 #include "public.sdk/source/vst/vstaudioeffect.h"
+#include "unplug/GetParameterDescriptions.hpp"
 #include "unplug/ParameterStorage.hpp"
-#include "unplug/Parameters.hpp"
 
 namespace Steinberg::Vst {
 

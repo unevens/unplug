@@ -15,7 +15,7 @@
 #include "CircularBuffers.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
-#include "unplug/Controls.hpp"
+#include "unplug/Widgets.hpp"
 
 namespace unplug::UserInterface {
 

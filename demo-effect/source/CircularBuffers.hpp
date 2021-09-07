@@ -23,7 +23,7 @@ class WaveformCircularBuffer : public unplug::CircularBuffer<std::vector<double>
 
   float getDurationInSeconds() override
   {
-    return 60;
+    return 10;
   }
 };
 

@@ -72,11 +72,14 @@ tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data)
       }
     }
   }
+
   if (meterStorage && isUserInterfaceOpen) {
     meterStorage->set(MeterTag::level, level);
   }
+
   return kResultOk;
 }
+
 Steinberg::tresult UnplugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup& newSetup)
 {
   tresult result = UnplugProcessor::setupProcessing(newSetup);

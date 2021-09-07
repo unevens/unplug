@@ -108,7 +108,7 @@ pugl::Status EventHandler::onEvent(const pugl::CreateEvent& event)
   prevFrameTime = clock::now();
   lastCursor = -1;
 
-  view.startTimer(redrawTimerId, 1.0 / 60.0);
+  view.startTimer(redrawTimerId, UserInterface::getRefreshRate());
 
   return pugl::Status::success;
 }

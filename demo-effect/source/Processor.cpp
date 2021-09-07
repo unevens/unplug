@@ -13,6 +13,7 @@
 
 #include "Processor.hpp"
 #include "Id.hpp"
+#include <numeric>
 
 using namespace Steinberg;
 
@@ -59,12 +60,14 @@ tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data) {
           if (wantsLevelMetering && c == 0) {
             if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
               for (int s = 0; s < data.numSamples; ++s) {
-                level += levelSmooothingAlpha * static_cast<float>(std::abs(out.channelBuffers64[c][s]) - level);
+                levels[c] +=
+                  levelSmooothingAlpha * static_cast<float>(std::abs(out.channelBuffers64[c][s]) - levels[c]);
               }
             }
             else {
               for (int s = 0; s < data.numSamples; ++s) {
-                level += levelSmooothingAlpha * static_cast<float>(std::abs(out.channelBuffers32[c][s]) - level);
+                levels[c] +=
+                  levelSmooothingAlpha * static_cast<float>(std::abs(out.channelBuffers32[c][s]) - levels[c]);
               }
             }
           }
@@ -84,6 +87,7 @@ tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data) {
   }
 
   if (wantsLevelMetering) {
+    auto const level = std::reduce(levels.begin(), levels.end()) / static_cast<float>(levels.size());
     meterStorage->set(MeterTag::level, level);
   }
 
@@ -98,4 +102,18 @@ Steinberg::tresult UnplugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup&
   auto const levelSmoothingTime = 0.1;
   levelSmooothingAlpha = 1.f - std::exp(-2 * M_PI / (newSetup.sampleRate * levelSmoothingTime));
   return kResultOk;
+}
+
+tresult UnplugDemoEffectProcessor::setActive(TBool state) {
+  auto const input = getAudioInput(0);
+  assert(input);
+  if (input) {
+    Vst::BusInfo info{};
+    bool const gotInfoOk = input->getInfo(info);
+    assert(gotInfoOk);
+    if (gotInfoOk) {
+      levels.resize(info.channelCount, 0.f);
+    }
+  }
+  return UnplugProcessor::setActive(state);
 }

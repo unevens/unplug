@@ -29,7 +29,9 @@ public:
 
   Steinberg::tresult PLUGIN_API setupProcessing(Steinberg::Vst::ProcessSetup& newSetup) override;
 
+  Steinberg::tresult PLUGIN_API setActive(Steinberg::TBool state) override;
+
 private:
-  float level = 0.0;
+  std::vector<float> levels;
   float levelSmooothingAlpha = 0.0;
 };

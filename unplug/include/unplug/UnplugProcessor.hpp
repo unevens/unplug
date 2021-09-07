@@ -49,8 +49,20 @@ public:
 
   tresult PLUGIN_API setActive(TBool state) override;
 
+  tresult PLUGIN_API setBusArrangements(SpeakerArrangement* inputs,
+                                        int32 numIns,
+                                        SpeakerArrangement* outputs,
+                                        int32 numOuts) override;
+
 protected:
   void updateParametersToLastPoint(ProcessData& data);
+
+  tresult acceptBusArrangement(SpeakerArrangement* inputs,
+                               int32 numIns,
+                               SpeakerArrangement* outputs,
+                               int32 numOuts,
+                               bool acceptSidechain,
+                               const std::function<bool(int numInputs, int numOutputs, int numSidechain)>& acceptNumChannels);
 
 private:
   /** Called from initialize, at first after constructor */

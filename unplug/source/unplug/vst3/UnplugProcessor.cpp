@@ -175,6 +175,57 @@ tresult UnplugProcessor::setActive(TBool state) {
   }
   return AudioEffect::setActive(state);
 }
+tresult UnplugProcessor::setBusArrangements(SpeakerArrangement* inputs,
+                                            int32 numIns,
+                                            SpeakerArrangement* outputs,
+                                            int32 numOuts){
+  return acceptBusArrangement(inputs,
+                              numIns,
+                              outputs,
+                              numOuts,
+                              false,
+                              [](int numInputChannels, int numOutputChannels, int numSidechainChannnels) {
+                                return numInputChannels == numOutputChannels;
+                              });
+}
+
+tresult UnplugProcessor::acceptBusArrangement(
+  SpeakerArrangement* inputs,
+  int32 numIns,
+  SpeakerArrangement* outputs,
+  int32 numOuts,
+  bool acceptSidechain,
+  const std::function<bool(int numInputs, int numOutputs, int numSidechain)>& acceptNumChannels) {
+  if (numOuts != 1) {
+    return kResultFalse;
+  }
+  if (acceptSidechain) {
+    if (numIns != 1 && numIns != 2) {
+      return kResultFalse;
+    }
+  }
+  else {
+    if (numIns != 1) {
+      return kResultFalse;
+    }
+  }
+  bool const hasSidechain = numIns == 2;
+  auto const numInputChannels = SpeakerArr::getChannelCount(inputs[0]);
+  auto const numOutputChannels = SpeakerArr::getChannelCount(outputs[0]);
+  auto const numSidechainChannels = hasSidechain ? SpeakerArr::getChannelCount(inputs[1]) : 0;
+  if (!acceptNumChannels(numInputChannels, numOutputChannels, numSidechainChannels)) {
+    return kResultFalse;
+  }
+  getAudioInput(0)->setArrangement(inputs[0]);
+  getAudioInput(0)->setName(STR16("Input"));
+  getAudioOutput(0)->setArrangement(inputs[0]);
+  getAudioOutput(0)->setName(STR16("Output"));
+  if (hasSidechain) {
+    getAudioInput(0)->setArrangement(inputs[1]);
+    getAudioInput(0)->setName(STR16("Sidechain"));
+  }
+  return kResultTrue;
+}
 
 } // namespace Steinberg::Vst
 

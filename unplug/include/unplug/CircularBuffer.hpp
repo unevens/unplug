@@ -48,6 +48,11 @@ public:
     return readBlockSize;
   }
 
+  float getPointsPerSample() const
+  {
+    return pointsPerSample;
+  }
+
   void incrementWritePosition(int amount)
   {
     writePosition.fetch_add(amount, std::memory_order_release);
@@ -57,8 +62,8 @@ public:
   {
     auto const pointsPerSecond = getPointsPerSecond();
     auto const durationInSeconds = getDurationInSeconds();
-    auto const pointPerSample = pointsPerSecond / sampleRate;
-    auto const maxWriteIncrementPerAudioBlock = pointPerSample * static_cast<float>(maxAudioBlockSize);
+    pointsPerSample = pointsPerSecond / sampleRate;
+    auto const maxWriteIncrementPerAudioBlock = pointsPerSample * static_cast<float>(maxAudioBlockSize);
     readBlockSize = static_cast<int>(std::ceil(durationInSeconds * pointsPerSecond));
     auto const audioBlockDuration = static_cast<float>(maxAudioBlockSize) / sampleRate;
     auto const refreshTime = 1.f / refreshRate;
@@ -101,6 +106,7 @@ private:
 
   std::atomic<int> writePosition{ 0 };
   int readBlockSize = 0;
+  float pointsPerSample = 1.f;
   Buffer buffer;
 };
 

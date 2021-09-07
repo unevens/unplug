@@ -27,11 +27,13 @@ void paint()
   KnobWithLabels(ParamTag::gain);
   DragFloat(ParamTag::gain);
   SliderFloat(ParamTag::gain);
+  ImGui::PushItemWidth(main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x);
+  MeterValueLabelCentered(MeterTag::level, unplug::linearToDBAsText);
 }
 
 std::array<int, 2> getDefaultSize()
 {
-  return { { 200, 300 } };
+  return { { 300, 700 } };
 }
 
 bool isResizingAllowed()

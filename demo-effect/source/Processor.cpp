@@ -48,11 +48,13 @@ tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data)
             if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
               for (int s = 0; s < data.numSamples; ++s) {
                 out.channelBuffers64[c][s] = gain * in.channelBuffers64[c][s];
+                level += levelSmooothingAlpha * static_cast<float>(std::abs(out.channelBuffers64[c][s]) - level);
               }
             }
             else {
               for (int s = 0; s < data.numSamples; ++s) {
                 out.channelBuffers32[c][s] = gain * in.channelBuffers32[c][s];
+                level += levelSmooothingAlpha * static_cast<float>(std::abs(out.channelBuffers32[c][s]) - level);
               }
             }
           }
@@ -70,6 +72,17 @@ tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data)
       }
     }
   }
-
+  if (meterStorage && isUserInterfaceOpen) {
+    meterStorage->set(MeterTag::level, level);
+  }
   return kResultOk;
+}
+Steinberg::tresult UnplugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup& newSetup)
+{
+  tresult result = UnplugProcessor::setupProcessing(newSetup);
+  if (result == kResultFalse) {
+    return kResultFalse;
+  }
+  auto const levelSmoothingTime = 0.1;
+  levelSmooothingAlpha = 1.f - std::exp(-2 * M_PI / (newSetup.sampleRate * levelSmoothingTime));
 }

@@ -39,7 +39,7 @@ bool Checkbox(int parameterTag, ShowLabel showLabel = ShowLabel::yes);
 /**
  * Displays some text centered in the rectangle between the current position and size
  * */
-void TextCentered(std::string const& text, ImVec2 size);
+void TextCentered(std::string const& text, float width = -1, float height = -1);
 
 /**
  * Displays the name of a parameter
@@ -49,7 +49,7 @@ void NameLabel(int parameterTag);
 /**
  * Displays the name of a parameter, centered in the rectangle between the current position and size
  * */
-void NameLabelCentered(int parameterTag, ImVec2 size);
+void NameLabelCentered(int parameterTag, float width = -1, float height = -1);
 
 /**
  * Displays the value of a parameter as text. Not editable
@@ -59,7 +59,21 @@ void ValueLabel(int parameterTag, ShowLabel showLabel = ShowLabel::yes);
 /**
  * Displays the value of a parameter as text, centered in the rectangle between the current position and size
  * */
-void ValueLabelCentered(int parameterTag, ImVec2 size, ShowLabel showLabel = ShowLabel::yes);
+void ValueLabelCentered(int parameterTag, ShowLabel showLabel = ShowLabel::yes, float width = -1, float height = -1);
+
+/**
+ * Displays the value of a meter as text. Not editable
+ * */
+void MeterValueLabel(int meterTag, std::function<std::string(float)> const& toString, float fallbackValue = 0.f);
+
+/**
+ * Displays the value of a meter as text, centered in the rectangle between the current position and size. Not editable
+ * */
+void MeterValueLabelCentered(int meterTag,
+                             std::function<std::string(float)> const& toString,
+                             float fallbackValue = 0.f,
+                             float width = -1,
+                             float height = -1);
 
 /**
  * Displays the value of a parameter as text, allowing user input upon click or double click, centered in the rectangle

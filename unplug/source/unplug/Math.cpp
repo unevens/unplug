@@ -11,55 +11,20 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#pragma once
-#include <Meters.hpp>
-#include <array>
-#include <atomic>
+#include "unplug/Math.hpp"
+#include <iomanip>
+#include <sstream>
 
 namespace unplug {
 
-template<int numValues>
-class TMeterStorage final
+std::string linearToDBAsText(float linear)
 {
-public:
-  TMeterStorage();
-
-  void set(int index, float value);
-
-  float get(int index) const;
-
-private:
-  std::array<std::atomic<float>, numValues> values;
-};
-
-using MeterStorage = TMeterStorage<NumMeters::value>;
-
-MeterStorage* getMeters();
-
-namespace detail {
-void setMeters(MeterStorage*);
-} // namespace detail
-
-// implementation
-
-template<int numValues>
-void TMeterStorage<numValues>::set(int index, float value)
-{
-  values[index].store(value, std::memory_order_release);
-}
-
-template<int numValues>
-float TMeterStorage<numValues>::get(int index) const
-{
-  return values[index].load(std::memory_order_acquire);
-}
-
-template<int numValues>
-TMeterStorage<numValues>::TMeterStorage()
-{
-  for (auto& value : values) {
-    value = 0.0;
-  }
+  if (linear <= std::numeric_limits<float>::epsilon())
+    return { "-inf dB" };
+  auto const db = unplug::linearToDB(linear);
+  std::stringstream s;
+  s << std::fixed << std::setprecision(3) << db << " dB";
+  return s.str();
 }
 
 } // namespace unplug

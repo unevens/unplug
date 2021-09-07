@@ -18,6 +18,7 @@
 
 #include "unplug/Controls.hpp"
 #include "imgui_internal.h"
+#include "unplug/MeterStorage.hpp"
 
 namespace unplug {
 
@@ -109,13 +110,19 @@ bool Checkbox(int parameterTag, ShowLabel showLabel)
   });
 }
 
-void TextCentered(std::string const& text, ImVec2 size)
+void TextCentered(std::string const& text, float width, float height)
 {
   auto const bkgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
   ImGui::PushStyleColor(ImGuiCol_Button, bkgColor);
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, bkgColor);
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, bkgColor);
-  ImGui::Button(text.c_str(), size);
+  if (width <= 0) {
+    width = ImGui::CalcItemWidth();
+  }
+  if (height <= 0) {
+    height = ImGui::GetTextLineHeightWithSpacing();
+  }
+  ImGui::Button(text.c_str(), { width, height });
   ImGui::PopStyleColor(3);
 }
 
@@ -126,11 +133,11 @@ void NameLabel(int parameterTag)
   return ImGui::TextUnformatted(name.c_str());
 }
 
-void NameLabelCentered(int parameterTag, ImVec2 size)
+void NameLabelCentered(int parameterTag, float width, float height)
 {
   auto& parameters = getParameters();
   auto const name = parameters.getName(parameterTag);
-  TextCentered(name + "##LABELCENTERED", size);
+  TextCentered(name + "##LABELCENTERED", width, height);
 }
 
 void ValueLabel(int parameterTag, ShowLabel showLabel)
@@ -141,14 +148,34 @@ void ValueLabel(int parameterTag, ShowLabel showLabel)
   return ImGui::TextUnformatted(text.c_str());
 }
 
-void ValueLabelCentered(int parameterTag, ImVec2 size, ShowLabel showLabel)
+void ValueLabelCentered(int parameterTag, ShowLabel showLabel, float width, float height)
 {
   auto& parameters = getParameters();
   auto const valueAsText = parameters.getValueAsText(parameterTag);
   auto const text =
     (showLabel == ShowLabel::yes ? (parameters.getName(parameterTag) + ": " + valueAsText) : valueAsText) +
     "##VALUUEASTEXTCENTERED";
-  TextCentered(text, size);
+  TextCentered(text, width, height);
+}
+
+void MeterValueLabel(int meterTag, std::function<std::string(float)> const& toString, float fallbackValue)
+{
+  auto meters = getMeters();
+  auto const value = meters ? meters->get(meterTag) : fallbackValue;
+  auto const valueAsText = toString(value);
+  return ImGui::TextUnformatted(valueAsText.c_str());
+}
+
+void MeterValueLabelCentered(int meterTag,
+                             std::function<std::string(float)> const& toString,
+                             float fallbackValue,
+                             float width,
+                             float height)
+{
+  auto meters = getMeters();
+  auto const value = meters ? meters->get(meterTag) : fallbackValue;
+  auto const valueAsText = toString(value);
+  TextCentered(valueAsText, width, height);
 }
 
 ParameterData::ParameterData(ParameterAccess& parameters, int parameterTag)
@@ -286,8 +313,7 @@ bool KnobWithLabels(int parameterTag,
 {
   auto& parameters = getParameters();
   auto const width = ImGui::CalcItemWidth();
-  auto const size = ImVec2{ width, 2 * ImGui::GetTextLineHeight() };
-  NameLabelCentered(parameterTag, size);
+  NameLabelCentered(parameterTag);
   auto const isActive = Knob(parameterTag, power, angleOffset, drawer);
   auto const bkgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
   ImGui::PushStyleColor(ImGuiCol_FrameBg, bkgColor);

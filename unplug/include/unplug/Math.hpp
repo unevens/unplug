@@ -13,6 +13,7 @@
 
 #pragma once
 #include <cmath>
+#include <string>
 
 namespace unplug {
 
@@ -27,5 +28,7 @@ inline double dBToLinear(double dB)
 {
   return std::pow(10.0, dB / 20.0);
 }
+
+std::string linearToDBAsText(float linear);
 
 } // namespace unplug

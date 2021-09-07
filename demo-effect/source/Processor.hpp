@@ -27,4 +27,10 @@ public:
   }
 
   Steinberg::tresult PLUGIN_API process(Steinberg::Vst::ProcessData& data) override;
+
+  Steinberg::tresult PLUGIN_API setupProcessing(Steinberg::Vst::ProcessSetup& newSetup) override;
+
+private:
+  float level = 0.0;
+  float levelSmooothingAlpha = 0.0;
 };

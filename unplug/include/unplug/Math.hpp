@@ -31,4 +31,6 @@ inline double dBToLinear(double dB)
 
 std::string linearToDBAsText(float linear);
 
+std::string linearToDBAsTextWithDecimalDigits(float linear, int numDecimalDigits);
+
 } // namespace unplug

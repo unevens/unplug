@@ -80,7 +80,7 @@ void MeterValueLabelCentered(int meterTag,
  * */
 bool ValueAsText(int parameterTag,
                  ShowLabel showLabel = ShowLabel::yes,
-                 const char* format = "%.3f",
+                 const char* format = "%.1f",
                  bool noHighlight = true);
 
 /**
@@ -90,7 +90,7 @@ bool ValueAsText(int parameterTag,
 bool DragFloat(int parameterTag,
                ShowLabel showLabel = ShowLabel::no,
                float speed = 0.01f,
-               const char* format = "%.3f",
+               const char* format = "%.1f",
                ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
 
 /**
@@ -98,7 +98,7 @@ bool DragFloat(int parameterTag,
  * */
 bool SliderFloat(int parameterTag,
                  ShowLabel showLabel = ShowLabel::no,
-                 const char* format = "%.3f",
+                 const char* format = "%.1f",
                  ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
 
 /**
@@ -107,7 +107,7 @@ bool SliderFloat(int parameterTag,
 bool VSliderFloat(int parameterTag,
                   ImVec2 size,
                   ShowLabel showLabel = ShowLabel::no,
-                  const char* format = "%.3f",
+                  const char* format = "%.1f",
                   ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
 
 /**
@@ -240,7 +240,7 @@ bool EditableFloat(const char* label,
                    float* value,
                    float min,
                    float max,
-                   const char* format = "%.3f",
+                   const char* format = "%.1f",
                    bool noHighlight = true);
 
 /**

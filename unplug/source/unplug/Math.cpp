@@ -19,11 +19,16 @@ namespace unplug {
 
 std::string linearToDBAsText(float linear)
 {
+  return linearToDBAsTextWithDecimalDigits(linear, 1);
+}
+
+std::string linearToDBAsTextWithDecimalDigits(float linear, int numDecimalDigits)
+{
   if (linear <= std::numeric_limits<float>::epsilon())
     return { "-inf dB" };
   auto const db = unplug::linearToDB(linear);
   std::stringstream s;
-  s << std::fixed << std::setprecision(3) << db << " dB";
+  s << std::fixed << std::setprecision(numDecimalDigits) << db << " dB";
   return s.str();
 }
 

@@ -30,6 +30,8 @@ tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data)
   auto const gain = parameterStorage.get(ParamTag::gain);
   bool const bypass = parameterStorage.get(ParamTag::bypass) > 0.0;
 
+  bool const wantsLevelMetering = meterStorage && isUserInterfaceOpen;
+
   for (int o = 0; o < data.numOutputs; ++o) {
     auto out = data.outputs[o];
     if (o < data.numInputs) {
@@ -48,12 +50,22 @@ tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data)
             if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
               for (int s = 0; s < data.numSamples; ++s) {
                 out.channelBuffers64[c][s] = gain * in.channelBuffers64[c][s];
-                level += levelSmooothingAlpha * static_cast<float>(std::abs(out.channelBuffers64[c][s]) - level);
               }
             }
             else {
               for (int s = 0; s < data.numSamples; ++s) {
                 out.channelBuffers32[c][s] = gain * in.channelBuffers32[c][s];
+              }
+            }
+          }
+          if (wantsLevelMetering && c == 0) {
+            if (data.symbolicSampleSize == Steinberg::Vst::kSample64) {
+              for (int s = 0; s < data.numSamples; ++s) {
+                level += levelSmooothingAlpha * static_cast<float>(std::abs(out.channelBuffers64[c][s]) - level);
+              }
+            }
+            else {
+              for (int s = 0; s < data.numSamples; ++s) {
                 level += levelSmooothingAlpha * static_cast<float>(std::abs(out.channelBuffers32[c][s]) - level);
               }
             }
@@ -73,7 +85,7 @@ tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data)
     }
   }
 
-  if (meterStorage && isUserInterfaceOpen) {
+  if (wantsLevelMetering) {
     meterStorage->set(MeterTag::level, level);
   }
 
@@ -88,4 +100,5 @@ Steinberg::tresult UnplugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup&
   }
   auto const levelSmoothingTime = 0.1;
   levelSmooothingAlpha = 1.f - std::exp(-2 * M_PI / (newSetup.sampleRate * levelSmoothingTime));
+  return kResultOk;
 }

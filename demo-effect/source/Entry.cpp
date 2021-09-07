@@ -26,15 +26,13 @@
 
 //------------------------------------------------------------------------
 // called after library was loaded
-bool InitModule()
-{
+bool InitModule() {
   return true;
 }
 
 //------------------------------------------------------------------------
 // called after library is unloaded
-bool DeinitModule()
-{
+bool DeinitModule() {
   return true;
 }
 

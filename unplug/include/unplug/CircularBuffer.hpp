@@ -27,39 +27,22 @@ public:
 
   virtual float getDurationInSeconds() = 0;
 
-  int getCircularIndex(int index) const
-  {
+  int getCircularIndex(int index) const {
     auto const bufferSize = static_cast<int>(buffer.size());
     return (((index) % bufferSize) + bufferSize) % bufferSize;
   }
 
-  int getWritePosition() const
-  {
-    return writePosition.load(std::memory_order_acquire);
-  }
+  int getWritePosition() const { return writePosition.load(std::memory_order_acquire); }
 
-  int getReadPosition() const
-  {
-    return getCircularIndex(getWritePosition() - readBlockSize);
-  }
+  int getReadPosition() const { return getCircularIndex(getWritePosition() - readBlockSize); }
 
-  int getReadBlockSize() const
-  {
-    return readBlockSize;
-  }
+  int getReadBlockSize() const { return readBlockSize; }
 
-  float getPointsPerSample() const
-  {
-    return pointsPerSample;
-  }
+  float getPointsPerSample() const { return pointsPerSample; }
 
-  void incrementWritePosition(int amount)
-  {
-    writePosition.fetch_add(amount, std::memory_order_release);
-  }
+  void incrementWritePosition(int amount) { writePosition.fetch_add(amount, std::memory_order_release); }
 
-  void resize(float sampleRate, float refreshRate, int maxAudioBlockSize)
-  {
+  void resize(float sampleRate, float refreshRate, int maxAudioBlockSize) {
     auto const pointsPerSecond = getPointsPerSecond();
     auto const durationInSeconds = getDurationInSeconds();
     pointsPerSample = pointsPerSecond / sampleRate;
@@ -71,28 +54,22 @@ public:
     resize(static_cast<int>(std::ceil(maxWriteIncrementPerAudioBlock)), audioBlocksPerUserInterfaceRefreshTime);
   }
 
-  Buffer& getBuffer()
-  {
-    return buffer;
-  }
+  Buffer& getBuffer() { return buffer; }
 
   template<class T>
-  void reset(T valueToResetTo)
-  {
+  void reset(T valueToResetTo) {
     std::fill(std::begin(buffer), std::end(buffer), valueToResetTo);
   }
 
 private:
-  void resize(int maxWriteIncrementPerAudioBlock, float audioBlocksPerUserInterfaceRefreshTime)
-  {
+  void resize(int maxWriteIncrementPerAudioBlock, float audioBlocksPerUserInterfaceRefreshTime) {
     auto const bufferForProduction =
       static_cast<int>(std::ceil(maxWriteIncrementPerAudioBlock * audioBlocksPerUserInterfaceRefreshTime));
     auto const newSize = readBlockSize + bufferForProduction;
     resize(newSize);
   }
 
-  void resize(int newSize)
-  {
+  void resize(int newSize) {
     auto const currentWritePosition = writePosition.load(std::memory_order_acquire);
     if (newSize <= currentWritePosition) {
       writePosition.store(0, std::memory_order_release);
@@ -114,20 +91,11 @@ template<class CircularBuffersClass>
 class TCircularBufferStorage
 {
 public:
-  void setCurrent()
-  {
-    currentInstance = &circularBuffers;
-  }
+  void setCurrent() { currentInstance = &circularBuffers; }
 
-  static CircularBuffersClass* getCurrent()
-  {
-    return currentInstance;
-  }
+  static CircularBuffersClass* getCurrent() { return currentInstance; }
 
-  CircularBuffersClass& get()
-  {
-    return circularBuffers;
-  }
+  CircularBuffersClass& get() { return circularBuffers; }
 
 private:
   CircularBuffersClass circularBuffers;

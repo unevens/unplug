@@ -19,8 +19,7 @@
 
 namespace unplug::UserInterface {
 
-void paint()
-{
+void paint() {
   auto const main_viewport = ImGui::GetMainViewport();
   auto const width = main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x;
   ImGui::PushItemWidth(width);
@@ -31,33 +30,27 @@ void paint()
   MeterValueLabelCentered(MeterTag::level, unplug::linearToDBAsText);
 }
 
-std::array<int, 2> getDefaultSize()
-{
+std::array<int, 2> getDefaultSize() {
   return { { 300, 700 } };
 }
 
-bool isResizingAllowed()
-{
+bool isResizingAllowed() {
   return true;
 }
 
-float getMinZoom()
-{
+float getMinZoom() {
   return 1.f;
 }
 
-bool keepDefaultRatio()
-{
+bool keepDefaultRatio() {
   return true;
 }
 
-const char* getWindowName()
-{
+const char* getWindowName() {
   return "Unplug Demo Gain";
 }
 
-std::array<float, 3> getBackgroundColor()
-{
+std::array<float, 3> getBackgroundColor() {
   return { { 0, 0, 0 } };
 }
 
@@ -67,8 +60,7 @@ void adjustSize(int& width, int& height, int prevWidth, int prevHeight) {}
 
 void initializePersistentData(unplug::ViewPersistentData& persistentData) {}
 
-float getRefreshRate()
-{
+float getRefreshRate() {
   return 1.f / 30.f;
 }
 

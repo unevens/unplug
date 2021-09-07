@@ -22,23 +22,17 @@ class ParameterEditRegister
   std::unordered_map<int, std::string> paramsBeingEditedByControls;
 
 public:
-  void registerEdit(int parameterTag, std::string control)
-  {
+  void registerEdit(int parameterTag, std::string control) {
     paramsBeingEditedByControls.emplace(parameterTag, std::move(control));
   }
 
-  void unregisterEdit(int parameterTag)
-  {
-    paramsBeingEditedByControls.erase(parameterTag);
-  }
+  void unregisterEdit(int parameterTag) { paramsBeingEditedByControls.erase(parameterTag); }
 
-  bool isParameterBeingEdited(int parameterTag) const
-  {
+  bool isParameterBeingEdited(int parameterTag) const {
     return paramsBeingEditedByControls.find(parameterTag) != paramsBeingEditedByControls.end();
   }
 
-  std::string getControllerEditingParameter(int parameterTag) const
-  {
+  std::string getControllerEditingParameter(int parameterTag) const {
     auto it = paramsBeingEditedByControls.find(parameterTag);
     if (it != paramsBeingEditedByControls.end())
       return it->second;

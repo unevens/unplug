@@ -31,35 +31,29 @@ NonlinearParameter::NonlinearParameter(const TChar* title,
   , nonlinearToLinear(std::move(nonlinearToLinear_))
   , linearToNonlinear(std::move(linearToNonlinear_))
   , minLinear(nonlinearToLinear(minInNonlinearScale))
-  , maxLinear(nonlinearToLinear(maxInNonlinearScale))
-{}
+  , maxLinear(nonlinearToLinear(maxInNonlinearScale)) {}
 
-double NonlinearParameter::normalizedToLinear(double normalized) const
-{
+double NonlinearParameter::normalizedToLinear(double normalized) const {
   return minLinear + normalized * (maxLinear - minLinear);
 }
 
-double NonlinearParameter::linearToNormalized(double linear) const
-{
+double NonlinearParameter::linearToNormalized(double linear) const {
   return (linear - minLinear) / (maxLinear - minLinear);
 }
 
-ParamValue NonlinearParameter::toPlain(ParamValue valueNormalized_) const
-{
+ParamValue NonlinearParameter::toPlain(ParamValue valueNormalized_) const {
   auto const valueInLinearScale = normalizedToLinear(valueNormalized_);
   auto const valueInNonlinearScale = linearToNonlinear(valueInLinearScale);
   return valueInNonlinearScale;
 }
 
-ParamValue NonlinearParameter::toNormalized(ParamValue plainValueInNonlinearScale) const
-{
+ParamValue NonlinearParameter::toNormalized(ParamValue plainValueInNonlinearScale) const {
   auto const valueInLinearScale = nonlinearToLinear(plainValueInNonlinearScale);
   auto const valueNormalized = linearToNormalized(valueInLinearScale);
   return valueNormalized;
 }
 
-bool NonlinearParameter::fromString(const TChar* string, ParamValue& valueNormalized_) const
-{
+bool NonlinearParameter::fromString(const TChar* string, ParamValue& valueNormalized_) const {
   UString wrapper(const_cast<TChar*>(string), tstrlen(string));
   double valueInNonlinearScale;
   if (wrapper.scanFloat(valueInNonlinearScale)) {
@@ -71,8 +65,7 @@ bool NonlinearParameter::fromString(const TChar* string, ParamValue& valueNormal
   return false;
 }
 
-void NonlinearParameter::toString(ParamValue valueNormalized_, String128 string) const
-{
+void NonlinearParameter::toString(ParamValue valueNormalized_, String128 string) const {
   Parameter::toString(toPlain(valueNormalized_), string);
 }
 

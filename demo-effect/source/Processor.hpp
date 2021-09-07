@@ -21,8 +21,7 @@ public:
   UnplugDemoEffectProcessor();
   ~UnplugDemoEffectProcessor() override;
 
-  static Steinberg::FUnknown* createInstance(void* /*context*/)
-  {
+  static Steinberg::FUnknown* createInstance(void* /*context*/) {
     return (Steinberg::Vst::IAudioProcessor*)new UnplugDemoEffectProcessor;
   }
 

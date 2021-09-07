@@ -66,10 +66,7 @@ private:
    * */
   virtual void onSetupProcessing(ProcessSetup& newSetup) {}
 
-  virtual bool supportsDoublePrecision()
-  {
-    return true;
-  }
+  virtual bool supportsDoublePrecision() { return true; }
 
 protected:
   unplug::ParameterStorage parameterStorage;

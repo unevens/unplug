@@ -50,6 +50,4 @@ private:
   ParamValue maxLinear;
 };
 
-
-
 } // namespace Steinberg::Vst

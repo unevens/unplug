@@ -17,40 +17,34 @@
 namespace unplug {
 namespace detail {
 
-MidiMappingSingleChannel::MidiMappingSingleChannel()
-{
+MidiMappingSingleChannel::MidiMappingSingleChannel() {
   std::fill(midiMapping.begin(), midiMapping.end(), unmapped);
 }
 
-void MidiMappingSingleChannel::mapParameter(int parameterTag, int controller)
-{
+void MidiMappingSingleChannel::mapParameter(int parameterTag, int controller) {
   midiMapping[static_cast<int>(controller)] = parameterTag;
 }
 
-int MidiMappingSingleChannel::getParameter(int controller) const
-{
+int MidiMappingSingleChannel::getParameter(int controller) const {
   return midiMapping[static_cast<int>(controller)];
 }
 
 } // namespace detail
 
-void MidiMapping::mapParameter(int parameterTag, int controller, int channel)
-{
+void MidiMapping::mapParameter(int parameterTag, int controller, int channel) {
   assert(channel < midiMappingByChannel.size());
   if (channel < midiMappingByChannel.size()) {
     midiMappingByChannel[channel].mapParameter(parameterTag, controller);
   }
 }
 
-void MidiMapping::mapParameter(int parameterTag, int controller)
-{
+void MidiMapping::mapParameter(int parameterTag, int controller) {
   for (auto& channelMidiMapping : midiMappingByChannel) {
     channelMidiMapping.mapParameter(parameterTag, controller);
   }
 }
 
-int MidiMapping::getParameter(int controller, int channel) const
-{
+int MidiMapping::getParameter(int controller, int channel) const {
   assert(channel < midiMappingByChannel.size());
   if (channel < midiMappingByChannel.size()) {
     return midiMappingByChannel[channel].getParameter(controller);

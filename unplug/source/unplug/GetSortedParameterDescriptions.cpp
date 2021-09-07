@@ -15,8 +15,7 @@
 
 namespace unplug ::detail {
 
-std::vector<ParameterDescription> getSortedParameterDescriptions()
-{
+std::vector<ParameterDescription> getSortedParameterDescriptions() {
   auto descriptions = getParameterDescriptions();
   std::sort(descriptions.begin(), descriptions.end(), [](auto& lhs, auto& rhs) { return lhs.tag < rhs.tag; });
   return descriptions;

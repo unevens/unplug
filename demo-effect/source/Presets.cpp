@@ -15,10 +15,8 @@
 
 namespace unplug {
 
-std::vector<Preset> getPresets()
-{
+std::vector<Preset> getPresets() {
   return {};
 }
-
 
 } // namespace unplug

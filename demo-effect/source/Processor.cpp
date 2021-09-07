@@ -16,15 +16,13 @@
 
 using namespace Steinberg;
 
-UnplugDemoEffectProcessor::UnplugDemoEffectProcessor()
-{
+UnplugDemoEffectProcessor::UnplugDemoEffectProcessor() {
   setControllerClass(kUnplugDemoEffectControllerUID);
 }
 
 UnplugDemoEffectProcessor::~UnplugDemoEffectProcessor() = default;
 
-tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data)
-{
+tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data) {
   updateParametersToLastPoint(data);
 
   auto const gain = parameterStorage.get(ParamTag::gain);
@@ -92,8 +90,7 @@ tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data)
   return kResultOk;
 }
 
-Steinberg::tresult UnplugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup& newSetup)
-{
+Steinberg::tresult UnplugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup& newSetup) {
   tresult result = UnplugProcessor::setupProcessing(newSetup);
   if (result == kResultFalse) {
     return kResultFalse;

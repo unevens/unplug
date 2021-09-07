@@ -49,14 +49,8 @@ struct ParameterDescription
   {
     int control = -1;
     int channel = -1;
-    bool listensToAllChannels() const
-    {
-      return channel == -1;
-    }
-    bool isEnabled() const
-    {
-      return control > -1;
-    }
+    bool listensToAllChannels() const { return channel == -1; }
+    bool isEnabled() const { return control > -1; }
   } defaultMidiMapping;
 
   ParameterDescription(int tag, std::string name_, std::vector<std::string> labels_, int defaultValue = 0);

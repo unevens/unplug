@@ -17,8 +17,7 @@
 
 namespace unplug::vst3 {
 
-double ParameterAccess::getValue(int tag)
-{
+double ParameterAccess::getValue(int tag) {
   auto const valueNormalized = getValueNormalized(tag);
   auto const valuePlain = controller.normalizedParamToPlain(tag, valueNormalized);
   return valuePlain;
@@ -26,28 +25,23 @@ double ParameterAccess::getValue(int tag)
 
 ParameterAccess::ParameterAccess(EditControllerEx1& controller, MidiMapping& midiMapping)
   : controller(controller)
-  , midiMapping(midiMapping)
-{
+  , midiMapping(midiMapping) {
   controller.addRef();
 }
 
-ParameterAccess::~ParameterAccess()
-{
+ParameterAccess::~ParameterAccess() {
   controller.release();
 }
 
-double ParameterAccess::normalizeValue(int tag, double value)
-{
+double ParameterAccess::normalizeValue(int tag, double value) {
   return controller.plainParamToNormalized(tag, value);
 }
 
-double ParameterAccess::getValueNormalized(int tag)
-{
+double ParameterAccess::getValueNormalized(int tag) {
   return controller.getParamNormalized(tag);
 }
 
-bool ParameterAccess::getDefaultValue(int tag, double& result)
-{
+bool ParameterAccess::getDefaultValue(int tag, double& result) {
   ParameterInfo info;
   if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
     result = controller.normalizedParamToPlain(tag, info.defaultNormalizedValue);
@@ -58,21 +52,18 @@ bool ParameterAccess::getDefaultValue(int tag, double& result)
   }
 }
 
-double ParameterAccess::getDefaultValue(int tag)
-{
+double ParameterAccess::getDefaultValue(int tag) {
   double value = 0;
   bool const ok = getDefaultValue(tag, value);
   assert(ok);
   return value;
 }
 
-double ParameterAccess::valueFromNormalized(int tag, double value)
-{
+double ParameterAccess::valueFromNormalized(int tag, double value) {
   return controller.normalizedParamToPlain(tag, value);
 }
 
-bool ParameterAccess::getDefaultValueNormalized(int tag, double& result)
-{
+bool ParameterAccess::getDefaultValueNormalized(int tag, double& result) {
   ParameterInfo info;
   if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
     result = info.defaultNormalizedValue;
@@ -83,16 +74,14 @@ bool ParameterAccess::getDefaultValueNormalized(int tag, double& result)
   }
 }
 
-double ParameterAccess::getDefaultValueNormalized(int tag)
-{
+double ParameterAccess::getDefaultValueNormalized(int tag) {
   double value = 0;
   bool const ok = getDefaultValueNormalized(tag, value);
   assert(ok);
   return value;
 }
 
-bool ParameterAccess::getMinValue(int tag, double& result)
-{
+bool ParameterAccess::getMinValue(int tag, double& result) {
   ParameterInfo info;
   if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
     result = controller.normalizedParamToPlain(tag, 0);
@@ -103,16 +92,14 @@ bool ParameterAccess::getMinValue(int tag, double& result)
   }
 }
 
-double ParameterAccess::getMinValue(int tag)
-{
+double ParameterAccess::getMinValue(int tag) {
   double value = 0;
   bool const ok = getMinValue(tag, value);
   assert(ok);
   return value;
 }
 
-bool ParameterAccess::getMaxValue(int tag, double& result)
-{
+bool ParameterAccess::getMaxValue(int tag, double& result) {
   ParameterInfo info;
   if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
     result = controller.normalizedParamToPlain(tag, 1);
@@ -123,22 +110,19 @@ bool ParameterAccess::getMaxValue(int tag, double& result)
   }
 }
 
-double ParameterAccess::getMaxValue(int tag)
-{
+double ParameterAccess::getMaxValue(int tag) {
   double value = 1;
   bool const ok = getMaxValue(tag, value);
   assert(ok);
   return value;
 }
 
-bool ParameterAccess::setValue(int tag, double value)
-{
+bool ParameterAccess::setValue(int tag, double value) {
   value = normalizeValue(tag, value);
   return setValueNormalized(tag, value);
 }
 
-bool ParameterAccess::setValueNormalized(int tag, double value)
-{
+bool ParameterAccess::setValueNormalized(int tag, double value) {
   bool const isBeingEdited = editRegister.isParameterBeingEdited(tag);
   if (!isBeingEdited) {
     assert(false);
@@ -153,8 +137,7 @@ bool ParameterAccess::setValueNormalized(int tag, double value)
   }
 }
 
-bool ParameterAccess::beginEdit(int tag, std::string control)
-{
+bool ParameterAccess::beginEdit(int tag, std::string control) {
   bool const isBeingEdited = editRegister.isParameterBeingEdited(tag);
   if (isBeingEdited) {
     assert(false);
@@ -170,8 +153,7 @@ bool ParameterAccess::beginEdit(int tag, std::string control)
   }
 }
 
-bool ParameterAccess::endEdit(int tag)
-{
+bool ParameterAccess::endEdit(int tag) {
   bool const isBeingEdited = editRegister.isParameterBeingEdited(tag);
   if (!isBeingEdited) {
     assert(false);
@@ -181,8 +163,7 @@ bool ParameterAccess::endEdit(int tag)
   return controller.endEdit(tag) == kResultTrue;
 }
 
-bool ParameterAccess::convertToText(int tag, double valueNormalized, std::string& result)
-{
+bool ParameterAccess::convertToText(int tag, double valueNormalized, std::string& result) {
   String128 text;
   if (controller.getParamStringByValue(tag, valueNormalized, text) == kResultTrue) {
     result = ToUtf8{}(text);
@@ -193,42 +174,36 @@ bool ParameterAccess::convertToText(int tag, double valueNormalized, std::string
   }
 }
 
-std::string ParameterAccess::convertToText(int tag, double valueNormalized)
-{
+std::string ParameterAccess::convertToText(int tag, double valueNormalized) {
   std::string text;
   bool const ok = convertToText(tag, valueNormalized, text);
   assert(ok);
   return text;
 }
 
-std::string ParameterAccess::getValueAsText(int tag)
-{
+std::string ParameterAccess::getValueAsText(int tag) {
   auto const valueNormalized = getValueNormalized(tag);
   return convertToText(tag, valueNormalized);
 }
 
-bool ParameterAccess::convertFromText(int tag, double& value, const std::string& text)
-{
+bool ParameterAccess::convertFromText(int tag, double& value, const std::string& text) {
   auto text16 = ToVstTChar{}(text);
   return controller.getParamValueByString(tag, const_cast<TChar*>(text16.c_str()), value) == kResultTrue;
 }
 
-double ParameterAccess::convertFromText(int tag, const std::string& text)
-{
+double ParameterAccess::convertFromText(int tag, const std::string& text) {
   double value = 0;
   bool const ok = convertFromText(tag, value, text);
   assert(ok);
   return value;
 }
 
-void ParameterAccess::setFromText(int tag, const std::string& text)
-{
+void ParameterAccess::setFromText(int tag, const std::string& text) {
   auto const valueNormalized = convertFromText(tag, text);
   setValueNormalized(tag, valueNormalized);
 }
 
-bool ParameterAccess::getName(int tag, std::string& result)
-{
+bool ParameterAccess::getName(int tag, std::string& result) {
   ParameterInfo info;
   if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
     result = ToUtf8{}(info.title);
@@ -239,16 +214,14 @@ bool ParameterAccess::getName(int tag, std::string& result)
   }
 }
 
-std::string ParameterAccess::getName(int tag)
-{
+std::string ParameterAccess::getName(int tag) {
   std::string text;
   bool const ok = getName(tag, text);
   assert(ok);
   return text;
 }
 
-bool ParameterAccess::getMeasureUnit(int tag, std::string& result)
-{
+bool ParameterAccess::getMeasureUnit(int tag, std::string& result) {
   ParameterInfo info;
   if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
     result = ToUtf8{}(info.units);
@@ -259,16 +232,14 @@ bool ParameterAccess::getMeasureUnit(int tag, std::string& result)
   }
 }
 
-std::string ParameterAccess::getMeasureUnit(int tag)
-{
+std::string ParameterAccess::getMeasureUnit(int tag) {
   std::string text;
   bool const ok = getMeasureUnit(tag, text);
   assert(ok);
   return text;
 }
 
-bool ParameterAccess::getNumSteps(int tag, int& result)
-{
+bool ParameterAccess::getNumSteps(int tag, int& result) {
   ParameterInfo info;
   if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
     result = info.stepCount;
@@ -279,16 +250,14 @@ bool ParameterAccess::getNumSteps(int tag, int& result)
   }
 }
 
-int ParameterAccess::getNumSteps(int tag)
-{
+int ParameterAccess::getNumSteps(int tag) {
   int value = 0;
   bool const ok = getNumSteps(tag, value);
   assert(ok);
   return value;
 }
 
-bool ParameterAccess::canBeAutomated(int tag, bool& result)
-{
+bool ParameterAccess::canBeAutomated(int tag, bool& result) {
   ParameterInfo info;
   if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
     result = info.flags & ParameterInfo::kCanAutomate;
@@ -299,16 +268,14 @@ bool ParameterAccess::canBeAutomated(int tag, bool& result)
   }
 }
 
-int ParameterAccess::canBeAutomated(int tag)
-{
+int ParameterAccess::canBeAutomated(int tag) {
   bool value = false;
   bool const ok = canBeAutomated(tag, value);
   assert(ok);
   return value;
 }
 
-bool ParameterAccess::isList(int tag, bool& result)
-{
+bool ParameterAccess::isList(int tag, bool& result) {
   ParameterInfo info;
   if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
     result = info.flags & ParameterInfo::kIsList;
@@ -319,16 +286,14 @@ bool ParameterAccess::isList(int tag, bool& result)
   }
 }
 
-int ParameterAccess::isList(int tag)
-{
+int ParameterAccess::isList(int tag) {
   bool value = false;
   bool const ok = isList(tag, value);
   assert(ok);
   return value;
 }
 
-bool ParameterAccess::isProgramChange(int tag, bool& result)
-{
+bool ParameterAccess::isProgramChange(int tag, bool& result) {
   ParameterInfo info;
   if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
     result = info.flags & ParameterInfo::kIsProgramChange;
@@ -339,16 +304,14 @@ bool ParameterAccess::isProgramChange(int tag, bool& result)
   }
 }
 
-int ParameterAccess::isProgramChange(int tag)
-{
+int ParameterAccess::isProgramChange(int tag) {
   bool value = false;
   bool const ok = isProgramChange(tag, value);
   assert(ok);
   return value;
 }
 
-bool ParameterAccess::isBypass(int tag, bool& result)
-{
+bool ParameterAccess::isBypass(int tag, bool& result) {
   ParameterInfo info;
   if (controller.getParameterInfoByTag(tag, info) == kResultTrue) {
     result = info.flags & ParameterInfo::kIsBypass;
@@ -359,45 +322,37 @@ bool ParameterAccess::isBypass(int tag, bool& result)
   }
 }
 
-int ParameterAccess::isBypass(int tag)
-{
+int ParameterAccess::isBypass(int tag) {
   bool value = false;
   bool const ok = isBypass(tag, value);
   assert(ok);
   return value;
 }
 
-bool ParameterAccess::isBeingEdited(int tag) const
-{
+bool ParameterAccess::isBeingEdited(int tag) const {
   return editRegister.isParameterBeingEdited(tag);
 }
 
-std::string ParameterAccess::getEditingControl(int tag) const
-{
+std::string ParameterAccess::getEditingControl(int tag) const {
   return editRegister.getControllerEditingParameter(tag);
 }
 
-void ParameterAccess::setMidiMapping(int parameterTag, int midiControl, int channel)
-{
+void ParameterAccess::setMidiMapping(int parameterTag, int midiControl, int channel) {
   midiMapping.mapParameter(parameterTag, midiControl, channel);
 }
 
-void ParameterAccess::setMidiMapping(int parameterTag, int midiControl)
-{
+void ParameterAccess::setMidiMapping(int parameterTag, int midiControl) {
   midiMapping.mapParameter(parameterTag, midiControl);
 }
-bool ParameterAccess::findParameterFromUserInterfaceCoordinates(int xPos, int yPos, int& parameterTag)
-{
+bool ParameterAccess::findParameterFromUserInterfaceCoordinates(int xPos, int yPos, int& parameterTag) {
   return parameterFinder.findParameterFromUserInterfaceCoordinates(xPos, yPos, parameterTag);
 }
 
-void ParameterAccess::addParameterRectangle(int parameterTag, int left, int top, int right, int bottom)
-{
+void ParameterAccess::addParameterRectangle(int parameterTag, int left, int top, int right, int bottom) {
   parameterFinder.addParameterRectangle(parameterTag, left, top, right, bottom);
 }
 
-void ParameterAccess::clearParameterRectangles()
-{
+void ParameterAccess::clearParameterRectangles() {
   parameterFinder.clear();
 }
 
@@ -405,14 +360,12 @@ namespace {
 thread_local ParameterAccess* currentParameterAccess = nullptr;
 }
 
-ParameterAccess& getParameters()
-{
+ParameterAccess& getParameters() {
   return *currentParameterAccess;
 }
 
 namespace detail {
-void setParameters(ParameterAccess* parameterAccess)
-{
+void setParameters(ParameterAccess* parameterAccess) {
   currentParameterAccess = parameterAccess;
 }
 } // namespace detail

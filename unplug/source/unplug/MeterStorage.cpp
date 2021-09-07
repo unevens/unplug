@@ -20,14 +20,12 @@ namespace {
 thread_local MeterStorage* currentMeterStorage;
 }
 
-MeterStorage* getMeters()
-{
+MeterStorage* getMeters() {
   return currentMeterStorage;
 }
 
 namespace detail {
-void setMeters(MeterStorage* meters)
-{
+void setMeters(MeterStorage* meters) {
   currentMeterStorage = meters;
 }
 } // namespace detail

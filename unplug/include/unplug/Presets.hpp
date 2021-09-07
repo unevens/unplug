@@ -12,9 +12,9 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include <map>
 #include <string>
 #include <unordered_map>
-#include <map>
 #include <vector>
 
 namespace unplug {
@@ -33,16 +33,14 @@ namespace detail {
 class Presets
 {
 public:
-  static std::vector<Preset> const& get()
-  {
+  static std::vector<Preset> const& get() {
     static Presets instance;
     return instance.presets;
   }
 
 private:
   Presets()
-    : presets(getPresets())
-  {}
+    : presets(getPresets()) {}
 
   ~Presets() = default;
   Presets(const Presets&) = delete;

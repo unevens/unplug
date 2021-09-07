@@ -17,8 +17,7 @@ namespace unplug::detail {
 
 bool ParameterFromUserInterfaceCoordinates::findParameterFromUserInterfaceCoordinates(int xPos,
                                                                                       int yPos,
-                                                                                      int& parameterTag) const
-{
+                                                                                      int& parameterTag) const {
   auto const it = std::find_if(rectangles.cbegin(), rectangles.cend(), [=](Rectangle const& r) {
     return xPos >= r.left && xPos < r.right && yPos >= r.top && yPos < r.bottom;
   });
@@ -35,13 +34,11 @@ void ParameterFromUserInterfaceCoordinates::addParameterRectangle(int parameterT
                                                                   int left,
                                                                   int top,
                                                                   int right,
-                                                                  int bottom)
-{
+                                                                  int bottom) {
   rectangles.push_back({ parameterTag, left, top, right, bottom });
 }
 
-void ParameterFromUserInterfaceCoordinates::clear()
-{
+void ParameterFromUserInterfaceCoordinates::clear() {
   rectangles.clear();
 }
 

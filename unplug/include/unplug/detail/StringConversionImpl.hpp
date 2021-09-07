@@ -80,8 +80,7 @@ template<typename return_type>
 struct meta_converter final
 {
   template<typename T>
-  return_type operator()(T arg)
-  {
+  return_type operator()(T arg) {
     if constexpr (dbj::is_range_v<T>) {
       static_assert(
         // arg must have this typedef

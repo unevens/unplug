@@ -24,8 +24,7 @@ unplug::ParameterDescription::ParameterDescription(int tag,
   , tag{ tag }
   , labels{ std::move(labels_) }
   , name{ std::move(name_) }
-  , defaultValue{ static_cast<ParameterValueType>(defaultValue) }
-{
+  , defaultValue{ static_cast<ParameterValueType>(defaultValue) } {
   numSteps = static_cast<int>(labels.size()) - 1;
   max = static_cast<ParameterValueType>(numSteps);
 }
@@ -42,35 +41,29 @@ ParameterDescription::ParameterDescription(int tag,
   , max{ max }
   , defaultValue{ defaultValue }
   , numSteps{ numSteps }
-  , name{ std::move(name_) }
-{}
+  , name{ std::move(name_) } {}
 
-ParameterDescription ParameterDescription::Automatable(bool isAutomatable)
-{
+ParameterDescription ParameterDescription::Automatable(bool isAutomatable) {
   canBeAutomated = isAutomatable;
   return *this;
 }
 
-ParameterDescription ParameterDescription::ShortName(std::string shortName_)
-{
+ParameterDescription ParameterDescription::ShortName(std::string shortName_) {
   shortName = std::move(shortName_);
   return *this;
 }
 
-ParameterDescription ParameterDescription::MeasureUnit(std::string measureUnit_)
-{
+ParameterDescription ParameterDescription::MeasureUnit(std::string measureUnit_) {
   measureUnit = std::move(measureUnit_);
   return *this;
 }
 
-ParameterDescription ParameterDescription::MidiMapping(int control)
-{
+ParameterDescription ParameterDescription::MidiMapping(int control) {
   assert(control > -1 && control < 130);
   return MidiMapping(control, -1);
 }
 
-ParameterDescription ParameterDescription::MidiMapping(int control, int channel)
-{
+ParameterDescription ParameterDescription::MidiMapping(int control, int channel) {
   assert(control > -1 && control < 130);
   assert(channel > -1 && channel < 17);
   defaultMidiMapping.control = control;
@@ -78,8 +71,7 @@ ParameterDescription ParameterDescription::MidiMapping(int control, int channel)
   return *this;
 }
 
-ParameterDescription ParameterDescription::ControlledByDecibels(bool mapMinToLinearZero)
-{
+ParameterDescription ParameterDescription::ControlledByDecibels(bool mapMinToLinearZero) {
   auto dBToLinear = [minInDB = min, mapMinToLinearZero](double db) {
     if (mapMinToLinearZero && db <= minInDB)
       return 0.0;
@@ -95,23 +87,20 @@ ParameterDescription ParameterDescription::ControlledByDecibels(bool mapMinToLin
   return Nonlinear(linearToDB, dBToLinear);
 }
 
-ParameterDescription ParameterDescription::makeBypassParameter(int tag)
-{
+ParameterDescription ParameterDescription::makeBypassParameter(int tag) {
   auto parameter = ParameterDescription(tag, "Bypass", 0, 1, 0, 1);
   parameter.isBypass = true;
   return parameter;
 }
 
 ParameterDescription ParameterDescription::Nonlinear(std::function<double(double)> linearToNonlinear_,
-                                                     std::function<double(double)> nonlinearToLinear_)
-{
+                                                     std::function<double(double)> nonlinearToLinear_) {
   linearToNonlinear = std::move(linearToNonlinear_);
   nonlinearToLinear = std::move(nonlinearToLinear_);
   return *this;
 }
 
-bool ParameterDescription::isNonlinear() const
-{
+bool ParameterDescription::isNonlinear() const {
   return linearToNonlinear != nullptr && nonlinearToLinear != nullptr;
 }
 

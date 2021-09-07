@@ -19,13 +19,11 @@ namespace unplug {
 
 inline static constexpr auto pi = static_cast<float>(M_PI);
 
-inline double linearToDB(double linear)
-{
+inline double linearToDB(double linear) {
   return 20.0 * std::log10(std::abs(linear) + std::numeric_limits<double>::epsilon());
 }
 
-inline double dBToLinear(double dB)
-{
+inline double dBToLinear(double dB) {
   return std::pow(10.0, dB / 20.0);
 }
 

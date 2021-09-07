@@ -21,8 +21,5 @@ public:
   UnplugDemoEffectController() = default;
   ~UnplugDemoEffectController() override = default;
 
-  static FUnknown* createInstance(void* /*context*/)
-  {
-    return (IEditController*)new UnplugDemoEffectController;
-  }
+  static FUnknown* createInstance(void* /*context*/) { return (IEditController*)new UnplugDemoEffectController; }
 };

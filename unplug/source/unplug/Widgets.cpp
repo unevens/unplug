@@ -24,18 +24,15 @@ namespace unplug {
 
 using namespace detail;
 
-static std::string makeLabel(ShowLabel showLabel, std::string const& parameterName, const char* controlSuffix)
-{
+static std::string makeLabel(ShowLabel showLabel, std::string const& parameterName, const char* controlSuffix) {
   return showLabel == ShowLabel::yes ? parameterName + "##" + controlSuffix : "##" + parameterName + controlSuffix;
 }
 
-static std::string makeFormat(ParameterData const& parameter, const char* format)
-{
+static std::string makeFormat(ParameterData const& parameter, const char* format) {
   return !parameter.measureUnit.empty() ? format + parameter.measureUnit : format;
 }
 
-bool Combo(int parameterTag, ShowLabel showLabel)
-{
+bool Combo(int parameterTag, ShowLabel showLabel) {
   using namespace ImGui;
 
   auto& parameters = getParameters();
@@ -100,8 +97,7 @@ bool Combo(int parameterTag, ShowLabel showLabel)
   return hasValueChanged;
 }
 
-bool Checkbox(int parameterTag, ShowLabel showLabel)
-{
+bool Checkbox(int parameterTag, ShowLabel showLabel) {
   return Control(parameterTag, [=](ParameterData const& parameter) {
     auto isChecked = parameter.value != 0.0;
     auto const controlName = makeLabel(showLabel, parameter.name, "CHECKBOX");
@@ -110,8 +106,7 @@ bool Checkbox(int parameterTag, ShowLabel showLabel)
   });
 }
 
-void TextCentered(std::string const& text, float height)
-{
+void TextCentered(std::string const& text, float height) {
   auto const bkgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
   ImGui::PushStyleColor(ImGuiCol_Button, bkgColor);
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, bkgColor);
@@ -120,30 +115,26 @@ void TextCentered(std::string const& text, float height)
   ImGui::PopStyleColor(3);
 }
 
-void NameLabel(int parameterTag)
-{
+void NameLabel(int parameterTag) {
   auto& parameters = getParameters();
   auto const name = parameters.getName(parameterTag);
   return ImGui::TextUnformatted(name.c_str());
 }
 
-void NameLabelCentered(int parameterTag, float height)
-{
+void NameLabelCentered(int parameterTag, float height) {
   auto& parameters = getParameters();
   auto const name = parameters.getName(parameterTag);
   TextCentered(name + "##LABELCENTERED", height);
 }
 
-void ValueLabel(int parameterTag, ShowLabel showLabel)
-{
+void ValueLabel(int parameterTag, ShowLabel showLabel) {
   auto& parameters = getParameters();
   auto const valueAsText = parameters.getValueAsText(parameterTag);
   auto const text = showLabel == ShowLabel::yes ? (parameters.getName(parameterTag) + ": " + valueAsText) : valueAsText;
   return ImGui::TextUnformatted(text.c_str());
 }
 
-void ValueLabelCentered(int parameterTag, ShowLabel showLabel, float height)
-{
+void ValueLabelCentered(int parameterTag, ShowLabel showLabel, float height) {
   auto& parameters = getParameters();
   auto const valueAsText = parameters.getValueAsText(parameterTag);
   auto const text =
@@ -152,8 +143,7 @@ void ValueLabelCentered(int parameterTag, ShowLabel showLabel, float height)
   TextCentered(text, height);
 }
 
-void MeterValueLabel(int meterTag, std::function<std::string(float)> const& toString, float fallbackValue)
-{
+void MeterValueLabel(int meterTag, std::function<std::string(float)> const& toString, float fallbackValue) {
   auto meters = getMeters();
   auto const value = meters ? meters->get(meterTag) : fallbackValue;
   auto const valueAsText = toString(value);
@@ -163,8 +153,7 @@ void MeterValueLabel(int meterTag, std::function<std::string(float)> const& toSt
 void MeterValueLabelCentered(int meterTag,
                              std::function<std::string(float)> const& toString,
                              float fallbackValue,
-                             float height)
-{
+                             float height) {
   auto meters = getMeters();
   auto const value = meters ? meters->get(meterTag) : fallbackValue;
   auto const valueAsText = toString(value);
@@ -178,17 +167,14 @@ ParameterData::ParameterData(ParameterAccess& parameters, int parameterTag)
   , minValue(static_cast<float>(parameters.getMinValue(parameterTag)))
   , maxValue(static_cast<float>(parameters.getMaxValue(parameterTag)))
   , measureUnit(parameters.getMeasureUnit(parameterTag))
-  , isBeingEdited(parameters.isBeingEdited(parameterTag))
-{}
+  , isBeingEdited(parameters.isBeingEdited(parameterTag)) {}
 
 EditingState::EditingState(const ParameterData& parameterData, bool isControlActive, std::string controlName)
   : isParameterBeingEdited(parameterData.isBeingEdited)
   , isControlActive(isControlActive)
-  , controlName(std::move(controlName))
-{}
+  , controlName(std::move(controlName)) {}
 
-bool Control(int parameterTag, std::function<ControlOutput(ParameterData const& parameter)> const& control)
-{
+bool Control(int parameterTag, std::function<ControlOutput(ParameterData const& parameter)> const& control) {
   auto& parameters = getParameters();
   auto const parameter = ParameterData{ parameters, parameterTag };
   auto const areaInfo = beginRegisterArea();
@@ -199,8 +185,7 @@ bool Control(int parameterTag, std::function<ControlOutput(ParameterData const& 
   return output.isActive;
 }
 
-bool ValueAsText(int parameterTag, ShowLabel showLabel, const char* format, bool noHighlight)
-{
+bool ValueAsText(int parameterTag, ShowLabel showLabel, const char* format, bool noHighlight) {
   return Control(parameterTag, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "FLOATASTEXT");
@@ -211,8 +196,7 @@ bool ValueAsText(int parameterTag, ShowLabel showLabel, const char* format, bool
   });
 }
 
-bool SliderFloat(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
-{
+bool SliderFloat(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags) {
   return Control(parameterTag, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "SLIDERFLOAT");
@@ -223,8 +207,7 @@ bool SliderFloat(int parameterTag, ShowLabel showLabel, const char* format, ImGu
   });
 }
 
-bool VSliderFloat(int parameterTag, ImVec2 size, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
-{
+bool VSliderFloat(int parameterTag, ImVec2 size, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags) {
   return Control(parameterTag, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "VSLIDERFLOAT");
@@ -235,8 +218,7 @@ bool VSliderFloat(int parameterTag, ImVec2 size, ShowLabel showLabel, const char
   });
 }
 
-bool SliderInt(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
-{
+bool SliderInt(int parameterTag, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags) {
   return Control(parameterTag, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<int>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "VSLIDERINT");
@@ -247,8 +229,7 @@ bool SliderInt(int parameterTag, ShowLabel showLabel, const char* format, ImGuiS
   });
 }
 
-bool VSliderInt(int parameterTag, ImVec2 size, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
-{
+bool VSliderInt(int parameterTag, ImVec2 size, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags) {
   return Control(parameterTag, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<int>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "VSLIDERINT");
@@ -259,8 +240,7 @@ bool VSliderInt(int parameterTag, ImVec2 size, ShowLabel showLabel, const char* 
   });
 }
 
-bool DragFloat(int parameterTag, ShowLabel showLabel, float speed, const char* format, ImGuiSliderFlags flags)
-{
+bool DragFloat(int parameterTag, ShowLabel showLabel, float speed, const char* format, ImGuiSliderFlags flags) {
   return Control(parameterTag, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "DRAGFLOAT");
@@ -271,8 +251,7 @@ bool DragFloat(int parameterTag, ShowLabel showLabel, float speed, const char* f
   });
 }
 
-void DrawSimpleKnob(KnobDrawData const& knob)
-{
+void DrawSimpleKnob(KnobDrawData const& knob) {
   auto const radius = 0.5f * ImGui::CalcItemWidth();
   // originally based on https://github.com/ocornut/imgui/issues/942
   ImU32 col32 = ImGui::GetColorU32(knob.isActive    ? ImGuiCol_FrameBgActive
@@ -285,8 +264,7 @@ void DrawSimpleKnob(KnobDrawData const& knob)
   draw_list->AddLine(knob.center, knob.pointerPosition, col32line, 1);
 }
 
-bool Knob(int parameterTag, float power, float angleOffset, std::function<void(KnobDrawData const&)> const& drawer)
-{
+bool Knob(int parameterTag, float power, float angleOffset, std::function<void(KnobDrawData const&)> const& drawer) {
   return Control(parameterTag, [&](ParameterData const& parameter) {
     auto controlName = parameter.name + "##KNOB";
     auto const scaledInput =
@@ -302,8 +280,7 @@ bool Knob(int parameterTag, float power, float angleOffset, std::function<void(K
 bool KnobWithLabels(int parameterTag,
                     float power,
                     float angleOffset,
-                    std::function<void(KnobDrawData const&)> const& drawer)
-{
+                    std::function<void(KnobDrawData const&)> const& drawer) {
   auto& parameters = getParameters();
   NameLabelCentered(parameterTag);
   auto const isActive = Knob(parameterTag, power, angleOffset, drawer);
@@ -316,8 +293,7 @@ bool KnobWithLabels(int parameterTag,
 
 namespace detail {
 
-void applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingState editingState, float value)
-{
+void applyRangedParameters(ParameterAccess& parameters, int parameterTag, EditingState editingState, float value) {
 
   if (editingState.isParameterBeingEdited) {
     auto const controlDoingTheEditing = parameters.getEditingControl(parameterTag);
@@ -343,8 +319,7 @@ void applyRangedParameters(ParameterAccess& parameters, int parameterTag, Editin
   }
 }
 
-KnobOutput Knob(const char* name, float const inputValue, float angleOffset)
-{
+KnobOutput Knob(const char* name, float const inputValue, float angleOffset) {
   // originally based on https://github.com/ocornut/imgui/issues/942
   auto const radius = 0.5f * ImGui::CalcItemWidth();
   ImGuiStyle& style = ImGui::GetStyle();
@@ -392,8 +367,7 @@ bool EditableScalar(const char* label,
                     void* p_min,
                     void* p_max,
                     const char* format,
-                    bool noHighlight)
-{
+                    bool noHighlight) {
   // based on ImGui::DragScalar
   using namespace ImGui;
   ImGuiWindow* window = GetCurrentWindow();
@@ -468,25 +442,21 @@ bool EditableScalar(const char* label,
   return false;
 }
 
-bool EditableFloat(const char* label, float* value, float min, float max, const char* format, bool noHighlight)
-{
+bool EditableFloat(const char* label, float* value, float min, float max, const char* format, bool noHighlight) {
   return EditableScalar(label, ImGuiDataType_Float, value, &min, &max, format, noHighlight);
 }
 
-bool EditableInt(const char* label, int* value, int min, int max, const char* format, bool noHighlight)
-{
+bool EditableInt(const char* label, int* value, int min, int max, const char* format, bool noHighlight) {
   return EditableScalar(label, ImGuiDataType_S32, value, &min, &max, format, noHighlight);
 }
 
-BeginRegisteAreaInfo beginRegisterArea()
-{
+BeginRegisteAreaInfo beginRegisterArea() {
   auto const width = 0.5f * ImGui::CalcItemWidth();
   auto const leftTop = ImGui::GetCursorScreenPos();
   return { static_cast<int>(leftTop.x), static_cast<int>(leftTop.y), static_cast<int>(leftTop.x + width) };
 }
 
-void endRegisterArea(ParameterAccess& parameters, int parameterTag, BeginRegisteAreaInfo const& area)
-{
+void endRegisterArea(ParameterAccess& parameters, int parameterTag, BeginRegisteAreaInfo const& area) {
   auto const bottom = static_cast<int>(ImGui::GetCursorScreenPos().y);
   parameters.addParameterRectangle(parameterTag, area[0], area[1], area[2], bottom);
 }

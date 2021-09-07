@@ -22,12 +22,12 @@ namespace unplug::UserInterface {
 void paint()
 {
   auto const main_viewport = ImGui::GetMainViewport();
-  ImGui::PushItemWidth(main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x);
+  auto const width = main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x;
+  ImGui::PushItemWidth(width);
 
   KnobWithLabels(ParamTag::gain);
   DragFloat(ParamTag::gain);
   SliderFloat(ParamTag::gain);
-  ImGui::PushItemWidth(main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x);
   MeterValueLabelCentered(MeterTag::level, unplug::linearToDBAsText);
 }
 

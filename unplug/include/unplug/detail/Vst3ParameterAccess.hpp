@@ -34,6 +34,7 @@ static constexpr auto kResultFalse = Steinberg::kResultFalse;
  * */
 class ParameterAccess final
 {
+
 public:
   ParameterAccess(EditControllerEx1& controller, MidiMapping& midiMapping);
 
@@ -47,19 +48,11 @@ public:
 
   double getValueNormalized(ParamIndex index);
 
-  bool getDefaultValue(ParamIndex index, double& result);
-
   double getDefaultValue(ParamIndex index);
-
-  bool getDefaultValueNormalized(ParamIndex index, double& result);
 
   double getDefaultValueNormalized(ParamIndex index);
 
-  bool getMinValue(ParamIndex index, double& result);
-
   double getMinValue(ParamIndex index);
-
-  bool getMaxValue(ParamIndex index, double& result);
 
   double getMaxValue(ParamIndex index);
 
@@ -75,39 +68,19 @@ public:
 
   std::string getEditingControl(ParamIndex index) const;
 
-  bool convertToText(ParamIndex index, double valueNormalized, std::string& result);
-
   std::string convertToText(ParamIndex index, double valueNormalized);
 
   std::string getValueAsText(ParamIndex index);
 
-  bool convertFromText(ParamIndex index, double& value, std::string const& text);
-
-  double convertFromText(ParamIndex index, std::string const& text);
-
-  void setFromText(ParamIndex index, std::string const& text);
-
-  bool getName(ParamIndex index, std::string& result);
-
   std::string getName(ParamIndex index);
-
-  bool getMeasureUnit(ParamIndex index, std::string& result);
 
   std::string getMeasureUnit(ParamIndex index);
 
-  bool getNumSteps(ParamIndex index, int& result);
-
   int getNumSteps(ParamIndex index);
-
-  bool canBeAutomated(ParamIndex index, bool& result);
 
   int canBeAutomated(ParamIndex index);
 
-  bool isList(ParamIndex index, bool& result);
-
   int isList(ParamIndex index);
-
-  bool isProgramChange(ParamIndex index, bool& result);
 
   int isProgramChange(ParamIndex index);
 
@@ -119,11 +92,31 @@ public:
 
   void setMidiMapping(ParamIndex index, int midiControl);
 
-  bool findParameterFromUserInterfaceCoordinates(int xPos, int yPos, ParamIndex& parameterTag);
-
   void addParameterRectangle(ParamIndex index, int left, int top, int right, int bottom);
 
   void clearParameterRectangles();
+
+  bool isProgramChange(ParamIndex index, bool& result);
+
+  bool findParameterFromUserInterfaceCoordinates(int xPos, int yPos, ParamIndex& parameterTag);
+
+#ifndef UNPLUG_EXPOSE_VST3STYLE_PARAMETER_API
+private:
+#endif
+
+  bool getDefaultValue(ParamIndex index, double& result);
+  bool getDefaultValueNormalized(ParamIndex index, double& result);
+  bool getMinValue(ParamIndex index, double& result);
+  bool getMaxValue(ParamIndex index, double& result);
+  bool convertToText(ParamIndex index, double valueNormalized, std::string& result);
+  bool convertFromText(ParamIndex index, double& value, std::string const& text);
+  bool getMeasureUnit(ParamIndex index, std::string& result);
+  bool canBeAutomated(ParamIndex index, bool& result);
+  bool isList(ParamIndex index, bool& result);
+  double convertFromText(ParamIndex index, std::string const& text);
+  void setFromText(ParamIndex index, std::string const& text);
+  bool getName(ParamIndex index, std::string& result);
+  bool getNumSteps(ParamIndex index, int& result);
 
 private:
   EditControllerEx1& controller;

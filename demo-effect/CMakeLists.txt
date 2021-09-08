@@ -16,6 +16,9 @@ set(unplug_cpp_standard 20)
 # sets the version of openGL to use: supported values are 2 and 3
 set(unplug_opengl_version 3)
 
+# set this to TRUE to make public some function to query the parameters that return false on failure. See Vst3ParameterAccess.hpp
+set(unplug_expose_vst3style_parameter_api FALSE)
+
 # C++ global config
 if (WIN32)
     add_compile_options("/EHsc")
@@ -143,3 +146,8 @@ include_directories("${unplug_SOURCE_DIR}/unplug/include")
 add_library(unplug-opaque-gl STATIC)
 target_sources(unplug-opaque-gl PRIVATE "${unplug_SOURCE_DIR}/unplug/source/gl/OpaqueGl.cpp")
 target_link_libraries(${PROJECT_NAME} PRIVATE unplug-opaque-gl)
+
+if (${unplug_expose_vst3style_parameter_api} STREQUAL TRUE)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC UNPLUG_EXPOSE_VST3STYLE_PARAMETER_API=1)
+endif ()
+

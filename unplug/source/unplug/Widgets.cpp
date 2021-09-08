@@ -39,22 +39,15 @@ bool Combo(ParamIndex paramIndex, ShowLabel showLabel) {
 
   auto const areaInfo = beginRegisterArea();
 
-  bool isList = false;
-  parameters.isList(paramIndex, isList);
+  bool const isList = parameters.isList(paramIndex);
   assert(isList);
 
   double const value = parameters.getValue(paramIndex);
-  std::string parameterName;
-  bool const gotNameOk = parameters.getName(paramIndex, parameterName);
-  assert(gotNameOk);
+  auto const parameterName = parameters.getName(paramIndex);
 
-  std::string valueAsText;
-  bool const convertedOk = parameters.convertToText(paramIndex, value, valueAsText);
-  assert(convertedOk);
+  auto const valueAsText = parameters.convertToText(paramIndex, value);
 
-  int numSteps = 0;
-  bool const gotNumStepsOk = parameters.getNumSteps(paramIndex, numSteps);
-  assert(gotNumStepsOk);
+  auto const numSteps = parameters.getNumSteps(paramIndex);
 
   auto const controlName = makeLabel(showLabel, parameterName, "COMBO");
 
@@ -70,8 +63,7 @@ bool Combo(ParamIndex paramIndex, ShowLabel showLabel) {
   for (int i = 0; i < numItems; i++) {
     PushID((void*)(intptr_t)i);
     const bool selectedItem = (i == newValue);
-    std::string itemText;
-    parameters.convertToText(paramIndex, (double)i, itemText);
+    auto const itemText = parameters.convertToText(paramIndex, (double)i);
     if (Selectable(itemText.c_str(), selectedItem)) {
       hasValueChanged = true;
       newValue = i;

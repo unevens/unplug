@@ -9,5 +9,5 @@
 	url = https://github.com/ocornut/imgui
 [submodule "libs/implot"]
 	path = libs/implot
-	url = https://github.com/unevens/implot
+	url = https://github.com/epezent/implot
 	branch = main

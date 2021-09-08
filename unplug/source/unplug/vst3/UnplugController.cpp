@@ -64,7 +64,7 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context) {
         }();
         if (description.isNonlinear()) {
           auto parameter = new NonlinearParameter(title.c_str(),
-                                                  description.tag,
+                                                  description.index,
                                                   description.nonlinearToLinear,
                                                   description.linearToNonlinear,
                                                   description.min,
@@ -77,7 +77,7 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context) {
         }
         else {
           auto parameter = new RangeParameter(title.c_str(),
-                                              description.tag,
+                                              description.index,
                                               pUnits,
                                               description.min,
                                               description.max,
@@ -93,7 +93,7 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context) {
         int32 const flags =
           ParameterInfo::kIsList | (description.canBeAutomated ? ParameterInfo::kCanAutomate : ParameterInfo::kNoFlags);
         auto parameter =
-          new StringListParameter(title.c_str(), description.tag, pUnits, flags, kRootUnitId, pShortTitle);
+          new StringListParameter(title.c_str(), description.index, pUnits, flags, kRootUnitId, pShortTitle);
         for (auto& entry : description.labels) {
           auto label = ToVstTChar{}(entry);
           parameter->appendString(label.c_str());
@@ -105,10 +105,10 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context) {
     if (description.defaultMidiMapping.isEnabled()) {
       auto const& mapping = description.defaultMidiMapping;
       if (description.defaultMidiMapping.listensToAllChannels()) {
-        midiMapping.mapParameter(description.tag, mapping.control);
+        midiMapping.mapParameter(description.index, mapping.control);
       }
       else {
-        midiMapping.mapParameter(description.tag, description.defaultMidiMapping.control, mapping.channel);
+        midiMapping.mapParameter(description.index, description.defaultMidiMapping.control, mapping.channel);
       }
     }
   }
@@ -229,19 +229,19 @@ IPlugView* PLUGIN_API UnplugController::createView(FIDString name) {
 tresult UnplugController::getMidiControllerAssignment(int32 busIndex,
                                                       int16 channel,
                                                       CtrlNumber midiControllerNumber,
-                                                      ParamID& tag) {
+                                                      ParamID& index) {
   if (busIndex == 0) {
     auto const mappedParameter = midiMapping.getParameter(static_cast<int>(midiControllerNumber), channel);
     if (mappedParameter != MidiMapping::unmapped) {
-      tag = mappedParameter;
+      index = mappedParameter;
       return kResultTrue;
     }
   }
   return kResultFalse;
 }
 
-tresult UnplugController::setParamNormalized(ParamID tag, ParamValue value) {
-  if (Parameter* parameter = getParameterObject(tag)) {
+tresult UnplugController::setParamNormalized(ParamID index, ParamValue value) {
+  if (Parameter* parameter = getParameterObject(index)) {
     parameter->setNormalized(value);
     bool const isProgramChange = (parameter->getInfo().flags & ParameterInfo::kIsProgramChange) != 0;
     if (isProgramChange) {

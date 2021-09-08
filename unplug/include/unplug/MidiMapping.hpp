@@ -13,6 +13,7 @@
 
 #pragma once
 #include <array>
+#include "unplug/Index.hpp"
 
 namespace unplug {
 
@@ -95,16 +96,16 @@ namespace detail {
 class MidiMappingSingleChannel final
 {
 public:
-  static constexpr auto unmapped = -1;
+  static constexpr auto unmapped = ParamIndex{-1};
 
   MidiMappingSingleChannel();
 
-  void mapParameter(int parameterTag, int controller);
+  void mapParameter(ParamIndex paramIndex, int controller);
 
-  int getParameter(int controller) const;
+  ParamIndex getParameter(int controller) const;
 
 private:
-  std::array<int, 130> midiMapping;
+  std::array<ParamIndex, 130> midiMapping;
 };
 } // namespace detail
 
@@ -113,9 +114,9 @@ class MidiMapping final
 public:
   static constexpr auto unmapped = detail::MidiMappingSingleChannel::unmapped;
 
-  void mapParameter(int parameterTag, int controller, int channel);
+  void mapParameter(ParamIndex paramIndex, int controller, int channel);
 
-  void mapParameter(int parameterTag, int controller);
+  void mapParameter(ParamIndex paramIndex, int controller);
 
   int getParameter(int controller, int channel) const;
 

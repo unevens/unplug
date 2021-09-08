@@ -13,7 +13,7 @@
 
 #pragma once
 
-namespace ParamTag {
+namespace Param {
 enum
 {
   bypass,
@@ -23,5 +23,5 @@ enum
 }
 
 namespace unplug::NumParameters {
-inline constexpr int value = ParamTag::numParams;
+inline constexpr auto value = Param::numParams;
 }

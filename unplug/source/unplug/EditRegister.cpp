@@ -11,26 +11,27 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#pragma once
-#include "unplug/Index.hpp"
-#include <string>
-#include <unordered_map>
+#include "unplug/detail/EditRegister.hpp"
 
 namespace unplug::detail {
 
-class ParameterEditRegister
-{
-public:
-  void registerEdit(ParamIndex paramIndex, std::string control);
+std::string ParameterEditRegister::getControllerEditingParameter(ParamIndex paramIndex) const {
+  auto it = paramsBeingEditedByControls.find(paramIndex);
+  if (it != paramsBeingEditedByControls.end())
+    return it->second;
+  else
+    return {};
+}
 
-  void unregisterEdit(ParamIndex paramIndex);
+bool ParameterEditRegister::isParameterBeingEdited(ParamIndex paramIndex) const {
+  return paramsBeingEditedByControls.find(paramIndex) != paramsBeingEditedByControls.end();
+}
 
-  bool isParameterBeingEdited(ParamIndex paramIndex) const;
+void ParameterEditRegister::unregisterEdit(ParamIndex paramIndex) {
+  paramsBeingEditedByControls.erase(paramIndex);
+}
 
-  std::string getControllerEditingParameter(ParamIndex paramIndex) const;
-
-private:
-  std::unordered_map<Index, std::string> paramsBeingEditedByControls;
-};
-
+void ParameterEditRegister::registerEdit(ParamIndex paramIndex, std::string control) {
+  paramsBeingEditedByControls.emplace(paramIndex, std::move(control));
+}
 } // namespace unplug::detail

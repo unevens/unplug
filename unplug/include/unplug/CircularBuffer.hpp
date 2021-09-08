@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/Index.hpp"
 #include <algorithm>
 #include <atomic>
 #include <cmath>
@@ -27,22 +28,22 @@ public:
 
   virtual float getDurationInSeconds() = 0;
 
-  int getCircularIndex(int index) const {
+  Index getCircularIndex(Index index) const {
     auto const bufferSize = static_cast<int>(buffer.size());
     return (((index) % bufferSize) + bufferSize) % bufferSize;
   }
 
-  int getWritePosition() const { return writePosition.load(std::memory_order_acquire); }
+  Index getWritePosition() const { return writePosition.load(std::memory_order_acquire); }
 
-  int getReadPosition() const { return getCircularIndex(getWritePosition() - readBlockSize); }
+  Index getReadPosition() const { return getCircularIndex(getWritePosition() - readBlockSize); }
 
-  int getReadBlockSize() const { return readBlockSize; }
+  Index getReadBlockSize() const { return readBlockSize; }
 
   float getPointsPerSample() const { return pointsPerSample; }
 
   void incrementWritePosition(int amount) { writePosition.fetch_add(amount, std::memory_order_release); }
 
-  void resize(float sampleRate, float refreshRate, int maxAudioBlockSize) {
+  void resize(float sampleRate, float refreshRate, Index maxAudioBlockSize) {
     auto const pointsPerSecond = getPointsPerSecond();
     auto const durationInSeconds = getDurationInSeconds();
     pointsPerSample = pointsPerSecond / sampleRate;
@@ -62,14 +63,15 @@ public:
   }
 
 private:
-  void resize(int maxWriteIncrementPerAudioBlock, float audioBlocksPerUserInterfaceRefreshTime) {
+  void resize(Index maxWriteIncrementPerAudioBlock, float audioBlocksPerUserInterfaceRefreshTime) {
     auto const bufferForProduction =
       static_cast<int>(std::ceil(maxWriteIncrementPerAudioBlock * audioBlocksPerUserInterfaceRefreshTime));
     auto const newSize = readBlockSize + bufferForProduction;
     resize(newSize);
   }
 
-  void resize(int newSize) {
+  void resize(Index newSize) {
+    assert(newSize <= std::numeric_limits<unsigned int>::max());
     auto const currentWritePosition = writePosition.load(std::memory_order_acquire);
     if (newSize <= currentWritePosition) {
       writePosition.store(0, std::memory_order_release);
@@ -81,7 +83,7 @@ private:
     buffer.resize(newSize);
   }
 
-  std::atomic<int> writePosition{ 0 };
+  std::atomic<unsigned int> writePosition{ 0 };
   int readBlockSize = 0;
   float pointsPerSample = 1.f;
   Buffer buffer;

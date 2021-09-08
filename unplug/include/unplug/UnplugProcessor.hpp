@@ -28,6 +28,9 @@ namespace Steinberg::Vst {
 class UnplugProcessor : public AudioEffect
 {
 public:
+  using ParamId = unplug::ParamIndex;
+  using MeterId = unplug::MeterIndex;
+
   //--- ---------------------------------------------------------------------
   // AudioEffect overrides:
   //--- ---------------------------------------------------------------------
@@ -57,12 +60,13 @@ public:
 protected:
   void updateParametersToLastPoint(ProcessData& data);
 
-  tresult acceptBusArrangement(SpeakerArrangement* inputs,
-                               int32 numIns,
-                               SpeakerArrangement* outputs,
-                               int32 numOuts,
-                               bool acceptSidechain,
-                               const std::function<bool(int numInputs, int numOutputs, int numSidechain)>& acceptNumChannels);
+  tresult acceptBusArrangement(
+    SpeakerArrangement* inputs,
+    int32 numIns,
+    SpeakerArrangement* outputs,
+    int32 numOuts,
+    bool acceptSidechain,
+    const std::function<bool(int numInputs, int numOutputs, int numSidechain)>& acceptNumChannels);
 
 private:
   /** Called from initialize, at first after constructor */

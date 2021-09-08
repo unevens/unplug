@@ -12,7 +12,8 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include <Meters.hpp>
+#include "Meters.hpp"
+#include "unplug/Index.hpp"
 #include <array>
 #include <atomic>
 
@@ -24,9 +25,9 @@ class TMeterStorage final
 public:
   TMeterStorage();
 
-  void set(int index, float value);
+  void set(MeterIndex index, float value);
 
-  float get(int index) const;
+  float get(MeterIndex index) const;
 
 private:
   std::array<std::atomic<float>, numValues> values;
@@ -43,12 +44,12 @@ void setMeters(MeterStorage*);
 // implementation
 
 template<int numValues>
-void TMeterStorage<numValues>::set(int index, float value) {
+void TMeterStorage<numValues>::set(MeterIndex index, float value) {
   values[index].store(value, std::memory_order_release);
 }
 
 template<int numValues>
-float TMeterStorage<numValues>::get(int index) const {
+float TMeterStorage<numValues>::get(MeterIndex index) const {
   return values[index].load(std::memory_order_acquire);
 }
 

@@ -24,10 +24,10 @@ void paint() {
   auto const width = main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x;
   ImGui::PushItemWidth(width);
 
-  KnobWithLabels(ParamTag::gain);
-  DragFloat(ParamTag::gain);
-  SliderFloat(ParamTag::gain);
-  MeterValueLabelCentered(MeterTag::level, unplug::linearToDBAsText);
+  KnobWithLabels(Param::gain);
+  DragFloat(Param::gain);
+  SliderFloat(Param::gain);
+  MeterValueLabelCentered(Meter::level);
 }
 
 std::array<int, 2> getDefaultSize() {

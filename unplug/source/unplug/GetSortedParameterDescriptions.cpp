@@ -13,11 +13,11 @@
 
 #include "unplug/detail/GetSortedParameterDescriptions.hpp"
 
-namespace unplug ::detail {
+namespace unplug::detail {
 
 std::vector<ParameterDescription> getSortedParameterDescriptions() {
   auto descriptions = getParameterDescriptions();
-  std::sort(descriptions.begin(), descriptions.end(), [](auto& lhs, auto& rhs) { return lhs.tag < rhs.tag; });
+  std::sort(descriptions.begin(), descriptions.end(), [](auto& lhs, auto& rhs) { return lhs.index < rhs.index; });
   return descriptions;
 }
 

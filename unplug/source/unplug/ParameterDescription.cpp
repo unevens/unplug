@@ -16,12 +16,12 @@
 
 namespace unplug {
 
-unplug::ParameterDescription::ParameterDescription(int tag,
+unplug::ParameterDescription::ParameterDescription(ParamIndex index,
                                                    std::string name_,
                                                    std::vector<std::string> labels_,
                                                    int defaultValue)
   : type{ Type::list }
-  , tag{ tag }
+  , index{ index }
   , labels{ std::move(labels_) }
   , name{ std::move(name_) }
   , defaultValue{ static_cast<ParameterValueType>(defaultValue) } {
@@ -29,14 +29,14 @@ unplug::ParameterDescription::ParameterDescription(int tag,
   max = static_cast<ParameterValueType>(numSteps);
 }
 
-ParameterDescription::ParameterDescription(int tag,
+ParameterDescription::ParameterDescription(ParamIndex index,
                                            std::string name_,
                                            ParameterValueType min,
                                            ParameterValueType max,
                                            ParameterValueType defaultValue,
                                            int numSteps)
   : type{ Type::numeric }
-  , tag{ tag }
+  , index{ index }
   , min{ min }
   , max{ max }
   , defaultValue{ defaultValue }
@@ -87,8 +87,8 @@ ParameterDescription ParameterDescription::ControlledByDecibels(bool mapMinToLin
   return Nonlinear(linearToDB, dBToLinear);
 }
 
-ParameterDescription ParameterDescription::makeBypassParameter(int tag) {
-  auto parameter = ParameterDescription(tag, "Bypass", 0, 1, 0, 1);
+ParameterDescription ParameterDescription::makeBypassParameter(ParamIndex index) {
+  auto parameter = ParameterDescription(index, "Bypass", 0, 1, 0, 1);
   parameter.isBypass = true;
   return parameter;
 }

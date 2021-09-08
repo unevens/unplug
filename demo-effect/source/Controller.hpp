@@ -15,11 +15,11 @@
 
 #include "unplug/UnplugController.hpp"
 
-class UnplugDemoEffectController final : public unplug::UnplugController
+class GainController final : public unplug::UnplugController
 {
 public:
-  UnplugDemoEffectController() = default;
-  ~UnplugDemoEffectController() override = default;
+  GainController() = default;
+  ~GainController() override = default;
 
-  static FUnknown* createInstance(void* /*context*/) { return (IEditController*)new UnplugDemoEffectController; }
+  static FUnknown* createInstance(void* /*context*/) { return (IEditController*)new GainController; }
 };

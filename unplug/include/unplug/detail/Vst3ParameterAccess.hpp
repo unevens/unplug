@@ -39,89 +39,89 @@ public:
 
   ~ParameterAccess();
 
-  double getValue(int tag);
+  double getValue(ParamIndex index);
 
-  double normalizeValue(int tag, double value);
+  double normalizeValue(ParamIndex index, double value);
 
-  double valueFromNormalized(int tag, double value);
+  double valueFromNormalized(ParamIndex index, double value);
 
-  double getValueNormalized(int tag);
+  double getValueNormalized(ParamIndex index);
 
-  bool getDefaultValue(int tag, double& result);
+  bool getDefaultValue(ParamIndex index, double& result);
 
-  double getDefaultValue(int tag);
+  double getDefaultValue(ParamIndex index);
 
-  bool getDefaultValueNormalized(int tag, double& result);
+  bool getDefaultValueNormalized(ParamIndex index, double& result);
 
-  double getDefaultValueNormalized(int tag);
+  double getDefaultValueNormalized(ParamIndex index);
 
-  bool getMinValue(int tag, double& result);
+  bool getMinValue(ParamIndex index, double& result);
 
-  double getMinValue(int tag);
+  double getMinValue(ParamIndex index);
 
-  bool getMaxValue(int tag, double& result);
+  bool getMaxValue(ParamIndex index, double& result);
 
-  double getMaxValue(int tag);
+  double getMaxValue(ParamIndex index);
 
-  bool setValue(int tag, double value);
+  bool setValue(ParamIndex index, double value);
 
-  bool setValueNormalized(int tag, double value);
+  bool setValueNormalized(ParamIndex index, double value);
 
-  bool beginEdit(int tag, std::string control);
+  bool beginEdit(ParamIndex index, std::string control);
 
-  bool endEdit(int tag);
+  bool endEdit(ParamIndex index);
 
-  bool isBeingEdited(int tag) const;
+  bool isBeingEdited(ParamIndex index) const;
 
-  std::string getEditingControl(int tag) const;
+  std::string getEditingControl(ParamIndex index) const;
 
-  bool convertToText(int tag, double valueNormalized, std::string& result);
+  bool convertToText(ParamIndex index, double valueNormalized, std::string& result);
 
-  std::string convertToText(int tag, double valueNormalized);
+  std::string convertToText(ParamIndex index, double valueNormalized);
 
-  std::string getValueAsText(int tag);
+  std::string getValueAsText(ParamIndex index);
 
-  bool convertFromText(int tag, double& value, std::string const& text);
+  bool convertFromText(ParamIndex index, double& value, std::string const& text);
 
-  double convertFromText(int tag, std::string const& text);
+  double convertFromText(ParamIndex index, std::string const& text);
 
-  void setFromText(int tag, std::string const& text);
+  void setFromText(ParamIndex index, std::string const& text);
 
-  bool getName(int tag, std::string& result);
+  bool getName(ParamIndex index, std::string& result);
 
-  std::string getName(int tag);
+  std::string getName(ParamIndex index);
 
-  bool getMeasureUnit(int tag, std::string& result);
+  bool getMeasureUnit(ParamIndex index, std::string& result);
 
-  std::string getMeasureUnit(int tag);
+  std::string getMeasureUnit(ParamIndex index);
 
-  bool getNumSteps(int tag, int& result);
+  bool getNumSteps(ParamIndex index, int& result);
 
-  int getNumSteps(int tag);
+  int getNumSteps(ParamIndex index);
 
-  bool canBeAutomated(int tag, bool& result);
+  bool canBeAutomated(ParamIndex index, bool& result);
 
-  int canBeAutomated(int tag);
+  int canBeAutomated(ParamIndex index);
 
-  bool isList(int tag, bool& result);
+  bool isList(ParamIndex index, bool& result);
 
-  int isList(int tag);
+  int isList(ParamIndex index);
 
-  bool isProgramChange(int tag, bool& result);
+  bool isProgramChange(ParamIndex index, bool& result);
 
-  int isProgramChange(int tag);
+  int isProgramChange(ParamIndex index);
 
-  bool isBypass(int tag, bool& result);
+  bool isBypass(ParamIndex index, bool& result);
 
-  int isBypass(int tag);
+  int isBypass(ParamIndex index);
 
-  void setMidiMapping(int parameterTag, int midiControl, int channel);
+  void setMidiMapping(ParamIndex index, int midiControl, int channel);
 
-  void setMidiMapping(int parameterTag, int midiControl);
+  void setMidiMapping(ParamIndex index, int midiControl);
 
-  bool findParameterFromUserInterfaceCoordinates(int xPos, int yPos, int& parameterTag);
+  bool findParameterFromUserInterfaceCoordinates(int xPos, int yPos, ParamIndex& parameterTag);
 
-  void addParameterRectangle(int parameterTag, int left, int top, int right, int bottom);
+  void addParameterRectangle(ParamIndex index, int left, int top, int right, int bottom);
 
   void clearParameterRectangles();
 

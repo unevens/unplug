@@ -17,17 +17,21 @@
 
 using namespace Steinberg;
 
-UnplugDemoEffectProcessor::UnplugDemoEffectProcessor() {
+GainProcessor::GainProcessor() {
   setControllerClass(kUnplugDemoEffectControllerUID);
 }
 
-UnplugDemoEffectProcessor::~UnplugDemoEffectProcessor() = default;
+GainProcessor::~GainProcessor() = default;
 
-tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data) {
+template<class Sample, class Inputs, class Outputs>
+void process(Inputs const& inputs, Outputs& outputs, int numInputs, int numOutputs, int numSamples) {}
+
+tresult PLUGIN_API GainProcessor::process(Vst::ProcessData& data) {
+
   updateParametersToLastPoint(data);
 
-  auto const gain = parameterStorage.get(ParamTag::gain);
-  bool const bypass = parameterStorage.get(ParamTag::bypass) > 0.0;
+  auto const gain = parameterStorage.get(Param::gain);
+  bool const bypass = parameterStorage.get(Param::bypass) > 0.0;
 
   bool const wantsLevelMetering = meterStorage && isUserInterfaceOpen;
 
@@ -88,13 +92,13 @@ tresult PLUGIN_API UnplugDemoEffectProcessor::process(Vst::ProcessData& data) {
 
   if (wantsLevelMetering) {
     auto const level = std::reduce(levels.begin(), levels.end()) / static_cast<float>(levels.size());
-    meterStorage->set(MeterTag::level, level);
+    meterStorage->set(Meter::level, level);
   }
 
   return kResultOk;
 }
 
-Steinberg::tresult UnplugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup& newSetup) {
+Steinberg::tresult GainProcessor::setupProcessing(Vst::ProcessSetup& newSetup) {
   tresult result = UnplugProcessor::setupProcessing(newSetup);
   if (result == kResultFalse) {
     return kResultFalse;
@@ -104,7 +108,7 @@ Steinberg::tresult UnplugDemoEffectProcessor::setupProcessing(Vst::ProcessSetup&
   return kResultOk;
 }
 
-tresult UnplugDemoEffectProcessor::setActive(TBool state) {
+tresult GainProcessor::setActive(TBool state) {
   auto const input = getAudioInput(0);
   assert(input);
   if (input) {

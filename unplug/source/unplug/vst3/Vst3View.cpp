@@ -31,9 +31,9 @@ tresult Vst3View::queryInterface(const char* iid, void** obj) {
 }
 
 tresult Vst3View::findParameter(int32 xPos, int32 yPos, ParamID& resultTag) {
-  int tag = 0;
-  if (parameters.findParameterFromUserInterfaceCoordinates(xPos, yPos, tag)) {
-    resultTag = static_cast<ParamID>(tag);
+  ParamIndex index = 0;
+  if (parameters.findParameterFromUserInterfaceCoordinates(xPos, yPos, index)) {
+    resultTag = static_cast<ParamID>(index);
     return kResultTrue;
   }
   else {
@@ -111,7 +111,7 @@ tresult Vst3View::isPlatformTypeSupported(FIDString type) {
     return kResultTrue;
 
   if (strcmp(type, kPlatformTypeHIView) == 0)
-    return kResultTrue;
+    return kResultFalse;
 
   if (strcmp(type, kPlatformTypeNSView) == 0)
     return kResultTrue;

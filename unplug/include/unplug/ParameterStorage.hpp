@@ -13,6 +13,7 @@
 
 #pragma once
 #include "Parameters.hpp"
+#include "unplug/Index.hpp"
 #include "unplug/ParameterDescription.hpp"
 #include <array>
 #include <atomic>
@@ -41,13 +42,13 @@ class TParameterStorage final
   };
 
 public:
-  void set(int index, ParameterValueType value);
+  void set(ParamIndex paramIndex, ParameterValueType value);
 
-  ParameterValueType get(int index) const;
+  ParameterValueType get(ParamIndex paramIndex) const;
 
-  void setNormalized(int index, ParameterValueType value);
+  void setNormalized(ParamIndex paramIndex, ParameterValueType value);
 
-  ParameterValueType getNormalized(int index) const;
+  ParameterValueType getNormalized(ParamIndex paramIndex) const;
 
   void initialize(std::vector<ParameterDescription> const& parameterDescriptions);
 
@@ -64,23 +65,23 @@ using ParameterStorage = TParameterStorage<NumParameters::value>;
 // implementation
 
 template<int numParameters>
-void TParameterStorage<numParameters>::set(int index, ParameterValueType value) {
-  parameters[index].value.store(value, std::memory_order_release);
+void TParameterStorage<numParameters>::set(ParamIndex paramIndex, ParameterValueType value) {
+  parameters[paramIndex].value.store(value, std::memory_order_release);
 }
 
 template<int numParameters>
-ParameterValueType TParameterStorage<numParameters>::get(int index) const {
-  return parameters[index].value.load(std::memory_order_acquire);
+ParameterValueType TParameterStorage<numParameters>::get(ParamIndex paramIndex) const {
+  return parameters[paramIndex].value.load(std::memory_order_acquire);
 }
 
 template<int numParameters>
-void TParameterStorage<numParameters>::setNormalized(int index, ParameterValueType value) {
-  set(index, parameters[index].convert.fromNormalized(value));
+void TParameterStorage<numParameters>::setNormalized(ParamIndex paramIndex, ParameterValueType value) {
+  set(paramIndex, parameters[paramIndex].convert.fromNormalized(value));
 }
 
 template<int numParameters>
-ParameterValueType TParameterStorage<numParameters>::getNormalized(int index) const {
-  return parameters[index].convert.toNormalized(get(index));
+ParameterValueType TParameterStorage<numParameters>::getNormalized(ParamIndex paramIndex) const {
+  return parameters[paramIndex].convert.toNormalized(get(paramIndex));
 }
 
 template<int numParameters>

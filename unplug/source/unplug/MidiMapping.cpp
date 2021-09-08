@@ -21,26 +21,26 @@ MidiMappingSingleChannel::MidiMappingSingleChannel() {
   std::fill(midiMapping.begin(), midiMapping.end(), unmapped);
 }
 
-void MidiMappingSingleChannel::mapParameter(int parameterTag, int controller) {
-  midiMapping[static_cast<int>(controller)] = parameterTag;
+void MidiMappingSingleChannel::mapParameter(ParamIndex paramIndex, int controller) {
+  midiMapping[static_cast<std::size_t>(controller)] = paramIndex;
 }
 
-int MidiMappingSingleChannel::getParameter(int controller) const {
-  return midiMapping[static_cast<int>(controller)];
+ParamIndex MidiMappingSingleChannel::getParameter(int controller) const {
+  return midiMapping[static_cast<std::size_t>(controller)];
 }
 
 } // namespace detail
 
-void MidiMapping::mapParameter(int parameterTag, int controller, int channel) {
+void MidiMapping::mapParameter(ParamIndex paramIndex, int controller, int channel) {
   assert(channel < midiMappingByChannel.size());
   if (channel < midiMappingByChannel.size()) {
-    midiMappingByChannel[channel].mapParameter(parameterTag, controller);
+    midiMappingByChannel[channel].mapParameter(paramIndex, controller);
   }
 }
 
-void MidiMapping::mapParameter(int parameterTag, int controller) {
+void MidiMapping::mapParameter(ParamIndex paramIndex, int controller) {
   for (auto& channelMidiMapping : midiMappingByChannel) {
-    channelMidiMapping.mapParameter(parameterTag, controller);
+    channelMidiMapping.mapParameter(paramIndex, controller);
   }
 }
 

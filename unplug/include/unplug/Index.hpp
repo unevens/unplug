@@ -12,25 +12,12 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/Index.hpp"
-#include <string>
-#include <unordered_map>
+#include <cstddef>
 
-namespace unplug::detail {
+namespace unplug {
 
-class ParameterEditRegister
-{
-public:
-  void registerEdit(ParamIndex paramIndex, std::string control);
+using Index = std::ptrdiff_t;
+using ParamIndex = Index;
+using MeterIndex = Index;
 
-  void unregisterEdit(ParamIndex paramIndex);
-
-  bool isParameterBeingEdited(ParamIndex paramIndex) const;
-
-  std::string getControllerEditingParameter(ParamIndex paramIndex) const;
-
-private:
-  std::unordered_map<Index, std::string> paramsBeingEditedByControls;
-};
-
-} // namespace unplug::detail
+} // namespace unplug

@@ -18,8 +18,8 @@ namespace unplug {
 
 std::vector<ParameterDescription> getParameterDescriptions() {
   auto parameters = std::vector<ParameterDescription>();
-  parameters.push_back(ParameterDescription::makeBypassParameter(ParamTag::bypass));
-  parameters.push_back(ParameterDescription(ParamTag::gain, "Gain", -90.0, 6.0, 0.0).ControlledByDecibels());
+  parameters.push_back(ParameterDescription::makeBypassParameter(Param::bypass));
+  parameters.push_back(ParameterDescription(Param::gain, "Gain", -90.0, 6.0, 0.0).ControlledByDecibels());
   return parameters;
 }
 

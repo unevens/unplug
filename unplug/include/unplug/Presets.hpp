@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/Index.hpp"
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -23,7 +24,7 @@ struct Preset
 {
   std::string name;
   std::unordered_map<int, std::string> pitchNames;
-  std::map<int, double> parameterValues;
+  std::map<ParamIndex, double> parameterValues;
 };
 
 std::vector<Preset> getPresets();

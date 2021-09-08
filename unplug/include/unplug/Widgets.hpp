@@ -13,6 +13,7 @@
 
 #pragma once
 #include "imgui.h"
+#include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
 #include "unplug/ParameterAccess.hpp"
 #include <functional>
@@ -29,12 +30,12 @@ enum class ShowLabel
 /**
  * Combo ImGui control associated with a plugin parameter
  * */
-bool Combo(int parameterTag, ShowLabel showLabel = ShowLabel::yes);
+bool Combo(ParamIndex paramIndex, ShowLabel showLabel = ShowLabel::yes);
 
 /**
  * Checkbox ImGui control associated with a plugin parameter
  * */
-bool Checkbox(int parameterTag, ShowLabel showLabel = ShowLabel::yes);
+bool Checkbox(ParamIndex paramIndex, ShowLabel showLabel = ShowLabel::yes);
 
 /**
  * Displays some text centered in the rectangle between the current position and size
@@ -44,33 +45,35 @@ void TextCentered(std::string const& text, float height = 0.f);
 /**
  * Displays the name of a parameter
  * */
-void NameLabel(int parameterTag);
+void NameLabel(ParamIndex paramIndex);
 
 /**
  * Displays the name of a parameter, centered in the rectangle between the current position and size
  * */
-void NameLabelCentered(int parameterTag, float height = 0.f);
+void NameLabelCentered(ParamIndex paramIndex, float height = 0.f);
 
 /**
  * Displays the value of a parameter as text. Not editable
  * */
-void ValueLabel(int parameterTag, ShowLabel showLabel = ShowLabel::yes);
+void ValueLabel(ParamIndex paramIndex, ShowLabel showLabel = ShowLabel::yes);
 
 /**
  * Displays the value of a parameter as text, centered in the rectangle between the current position and size
  * */
-void ValueLabelCentered(int parameterTag, ShowLabel showLabel = ShowLabel::yes, float height = 0);
+void ValueLabelCentered(ParamIndex paramIndex, ShowLabel showLabel = ShowLabel::yes, float height = 0);
 
 /**
  * Displays the value of a meter as text. Not editable
  * */
-void MeterValueLabel(int meterTag, std::function<std::string(float)> const& toString, float fallbackValue = 0.f);
+void MeterValueLabel(MeterIndex meterIndex,
+                     std::function<std::string(float)> const& toString,
+                     float fallbackValue = 0.f);
 
 /**
  * Displays the value of a meter as text, centered in the rectangle between the current position and size. Not editable
  * */
-void MeterValueLabelCentered(int meterTag,
-                             std::function<std::string(float)> const& toString,
+void MeterValueLabelCentered(MeterIndex meterIndex,
+                             std::function<std::string(float)> const& toString = unplug::linearToDBAsText,
                              float fallbackValue = 0.f,
                              float height = 0.f);
 
@@ -111,7 +114,7 @@ struct LevelMeterSettings
 /**
  * Level meter. Best suited for meter that have values that don't change sign.
  * */
-void LevelMeter(int meterTag,
+void LevelMeter(MeterIndex meterIndex,
                 std::string const& name,
                 ImVec2 size,
                 LevelMeterSettings const& settings,
@@ -121,7 +124,7 @@ void LevelMeter(int meterTag,
 /**
  * Bidirectional level meter. Best suited for values that can have both positive and negative values.
  * */
-void BidirectionalLevelMeter(int meterTag,
+void BidirectionalLevelMeter(MeterIndex meterIndex,
                              std::string const& name,
                              ImVec2 size,
                              LevelMeterSettings settings,
@@ -131,7 +134,7 @@ void BidirectionalLevelMeter(int meterTag,
  * Displays the value of a parameter as text, allowing user input upon click or double click, centered in the rectangle
  * between the current position and size
  * */
-bool ValueAsText(int parameterTag,
+bool ValueAsText(ParamIndex paramIndex,
                  ShowLabel showLabel = ShowLabel::yes,
                  const char* format = "%.1f",
                  bool noHighlight = true);
@@ -140,7 +143,7 @@ bool ValueAsText(int parameterTag,
  * Data to characterize the state of a parameter
  * */
 
-bool DragFloat(int parameterTag,
+bool DragFloat(ParamIndex paramIndex,
                ShowLabel showLabel = ShowLabel::no,
                float speed = 0.01f,
                const char* format = "%.1f",
@@ -149,7 +152,7 @@ bool DragFloat(int parameterTag,
 /**
  * SliderFloat ImGui control associated with a plugin parameter
  * */
-bool SliderFloat(int parameterTag,
+bool SliderFloat(ParamIndex paramIndex,
                  ShowLabel showLabel = ShowLabel::no,
                  const char* format = "%.1f",
                  ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
@@ -157,7 +160,7 @@ bool SliderFloat(int parameterTag,
 /**
  * Vertical SliderFloat ImGui control associated with a plugin parameter
  * */
-bool VSliderFloat(int parameterTag,
+bool VSliderFloat(ParamIndex paramIndex,
                   ImVec2 size,
                   ShowLabel showLabel = ShowLabel::no,
                   const char* format = "%.1f",
@@ -166,7 +169,7 @@ bool VSliderFloat(int parameterTag,
 /**
  * SliderInt ImGui control associated with a plugin parameter
  * */
-bool SliderInt(int parameterTag,
+bool SliderInt(ParamIndex paramIndex,
                ShowLabel showLabel = ShowLabel::no,
                const char* format = "%d",
                ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
@@ -174,7 +177,7 @@ bool SliderInt(int parameterTag,
 /**
  * Vertical SliderInt ImGui control associated with a plugin parameter
  * */
-bool VSliderInt(int parameterTag,
+bool VSliderInt(ParamIndex paramIndex,
                 ImVec2 size,
                 ShowLabel showLabel = ShowLabel::no,
                 const char* format = "%d",
@@ -204,7 +207,7 @@ void DrawSimpleKnob(KnobDrawData const& knob);
 /**
  * Knob control associated with a plugin parameter
  * */
-bool Knob(int parameterTag,
+bool Knob(ParamIndex paramIndex,
           float power = 1.f,
           float angleOffset = pi / 4,
           std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
@@ -212,7 +215,7 @@ bool Knob(int parameterTag,
 /**
  * Knob control associated with a plugin parameter, which also display the name and value of the parameter
  * */
-bool KnobWithLabels(int parameterTag,
+bool KnobWithLabels(ParamIndex paramIndex,
                     float power = 1.f,
                     float angleOffset = pi / 4,
                     std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
@@ -227,7 +230,7 @@ struct ParameterData
   std::string measureUnit;
   bool isBeingEdited;
 
-  ParameterData(ParameterAccess& parameters, int parameterTag);
+  ParameterData(ParameterAccess& parameters, ParamIndex paramIndex);
 };
 
 /**
@@ -243,7 +246,7 @@ struct ControlOutput
 /**
  * Controls a parameter with a custom control, used internally by most control that allows to edit a parameter
  * */
-bool Control(int parameterTag, std::function<ControlOutput(ParameterData const& parameter)> const& control);
+bool Control(ParamIndex paramIndex, std::function<ControlOutput(ParameterData const& parameter)> const& control);
 
 /**
  * implementation details that can be useful to implement custom controls
@@ -259,7 +262,7 @@ struct EditingState
 };
 
 void applyRangedParameters(ParameterAccess& parameters,
-                           int parameterTag,
+                           ParamIndex paramIndex,
                            EditingState editingState,
                            float valueNormalized);
 
@@ -308,7 +311,7 @@ using BeginRegisteAreaInfo = std::array<int, 3>;
 
 BeginRegisteAreaInfo beginRegisterArea();
 
-void endRegisterArea(ParameterAccess& parameters, int parameterTag, BeginRegisteAreaInfo const& area);
+void endRegisterArea(ParameterAccess& parameters, ParamIndex paramIndex, BeginRegisteAreaInfo const& area);
 
 } // namespace detail
 

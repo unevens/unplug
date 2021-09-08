@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/Index.hpp"
 #include <string>
 #include <vector>
 
@@ -21,7 +22,7 @@ class ParameterFromUserInterfaceCoordinates
 {
   struct Rectangle
   {
-    int parameterTag;
+    ParamIndex paramIndex;
     int left;
     int top;
     int right;
@@ -31,8 +32,8 @@ class ParameterFromUserInterfaceCoordinates
   std::vector<Rectangle> rectangles;
 
 public:
-  bool findParameterFromUserInterfaceCoordinates(int xPos, int yPos, int& parameterTag) const;
-  void addParameterRectangle(int parameterTag, int left, int top, int right, int bottom);
+  bool findParameterFromUserInterfaceCoordinates(int xPos, int yPos, ParamIndex& paramIndex) const;
+  void addParameterRectangle(ParamIndex paramIndex, int left, int top, int right, int bottom);
   void clear();
 };
 

@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/Index.hpp"
 #include "unplug/MidiMapping.hpp"
 #include <atomic>
 #include <cassert>
@@ -32,7 +33,7 @@ struct ParameterDescription
     list
   };
   Type type;
-  int tag;
+  ParamIndex index;
   std::string name;
   std::string shortName;
   std::string measureUnit;
@@ -53,9 +54,9 @@ struct ParameterDescription
     bool isEnabled() const { return control > -1; }
   } defaultMidiMapping;
 
-  ParameterDescription(int tag, std::string name_, std::vector<std::string> labels_, int defaultValue = 0);
+  ParameterDescription(ParamIndex index, std::string name_, std::vector<std::string> labels_, int defaultValue = 0);
 
-  ParameterDescription(int tag,
+  ParameterDescription(ParamIndex index,
                        std::string name_,
                        ParameterValueType min,
                        ParameterValueType max,
@@ -77,7 +78,7 @@ struct ParameterDescription
   ParameterDescription Nonlinear(std::function<double(double)> linearToNonlinear_,
                                  std::function<double(double)> nonlinearToLinear_);
 
-  static ParameterDescription makeBypassParameter(int tag);
+  static ParameterDescription makeBypassParameter(ParamIndex index);
 
   bool isNonlinear() const;
 };

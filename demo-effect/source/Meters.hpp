@@ -13,7 +13,7 @@
 
 #pragma once
 
-namespace MeterTag {
+namespace Meter {
 enum
 {
   level,
@@ -22,5 +22,5 @@ enum
 }
 
 namespace unplug::NumMeters {
-inline constexpr int value = MeterTag::numMeters;
+inline constexpr auto value = Meter::numMeters;
 }

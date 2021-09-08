@@ -15,14 +15,14 @@
 
 #include "unplug/UnplugProcessor.hpp"
 
-class UnplugDemoEffectProcessor final : public unplug::UnplugProcessor
+class GainProcessor final : public unplug::UnplugProcessor
 {
 public:
-  UnplugDemoEffectProcessor();
-  ~UnplugDemoEffectProcessor() override;
+  GainProcessor();
+  ~GainProcessor() override;
 
   static Steinberg::FUnknown* createInstance(void* /*context*/) {
-    return (Steinberg::Vst::IAudioProcessor*)new UnplugDemoEffectProcessor;
+    return (Steinberg::Vst::IAudioProcessor*)new GainProcessor;
   }
 
   Steinberg::tresult PLUGIN_API process(Steinberg::Vst::ProcessData& data) override;

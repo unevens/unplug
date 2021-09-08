@@ -12,10 +12,16 @@
 //------------------------------------------------------------------------
 
 #include "unplug/detail/EventHandler.hpp"
-#include "imgui_impl_opengl2.h"
 #include "pugl/gl.hpp"
 #include "unplug/UserInterface.hpp"
 #include "unplug/detail/OpaqueGl.hpp"
+
+#if (UNPLUG_OPENGL_VERSION == 3)
+#include "imgui_impl_opengl3.h"
+#endif
+#if (UNPLUG_OPENGL_VERSION == 2)
+#include "imgui_impl_opengl2.h"
+#endif
 
 namespace unplug::detail {
 
@@ -92,11 +98,16 @@ pugl::Status EventHandler::onEvent(const pugl::CreateEvent& event) {
 #if defined(_WIN32)
   io.ImeWindowHandle = (void*)view.nativeWindow();
   io.ClipboardUserData = io.ImeWindowHandle;
+#else
+  // todo maybe put a wrapper around puglSetClipboard in io.SetClipboardTextFn. (and same thing for the getter)
 #endif
 
-  // todo maybe put a wrapper around puglSetClipboard in io.SetClipboardTextFn. (and same thing for the getter)
-
+#if (UNPLUG_OPENGL_VERSION == 3)
+  ImGui_ImplOpenGL3_Init();
+#endif
+#if (UNPLUG_OPENGL_VERSION == 2)
   ImGui_ImplOpenGL2_Init();
+#endif
 
   prevFrameTime = clock::now();
   lastCursor = -1;
@@ -108,7 +119,12 @@ pugl::Status EventHandler::onEvent(const pugl::CreateEvent& event) {
 
 pugl::Status EventHandler::onEvent(const pugl::DestroyEvent& event) {
   setCurrentContext();
+#if (UNPLUG_OPENGL_VERSION == 3)
+  ImGui_ImplOpenGL3_Shutdown();
+#endif
+#if (UNPLUG_OPENGL_VERSION == 2)
   ImGui_ImplOpenGL2_Shutdown();
+#endif
   ImGui::DestroyContext();
   view.stopTimer(redrawTimerId);
   return pugl::Status::success;
@@ -138,7 +154,13 @@ pugl::Status EventHandler::onEvent(const pugl::ExposeEvent& event) {
 
   setCursor(io);
 
+#if (UNPLUG_OPENGL_VERSION == 3)
+  ImGui_ImplOpenGL3_NewFrame();
+#endif
+#if (UNPLUG_OPENGL_VERSION == 2)
   ImGui_ImplOpenGL2_NewFrame();
+#endif
+
   UserInterface::setupStyle();
   ImGui::NewFrame();
   parameters.clearParameterRectangles();
@@ -154,7 +176,13 @@ pugl::Status EventHandler::onEvent(const pugl::ExposeEvent& event) {
   ImGui::Render();
 
   resizeAndClearViewport(io.DisplaySize.x, io.DisplaySize.y, UserInterface::getBackgroundColor());
+
+#if (UNPLUG_OPENGL_VERSION == 3)
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#endif
+#if (UNPLUG_OPENGL_VERSION == 2)
   ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+#endif
 
   resetKeys();
 

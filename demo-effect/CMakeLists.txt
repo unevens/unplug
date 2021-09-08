@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.14.0)
 
+# unplug_SOURCE_DIR must be set to the path of your unplug local repo
+set(unplug_SOURCE_DIR "${CMAKE_SOURCE_DIR}/..")
+
 # set the name and version of the plugin here
 set(unplug_plugin_name "UnPlugDemoEffect")
 set(unplug_plugin_version 1.0.0)
@@ -7,37 +10,40 @@ set(unplug_plugin_version 1.0.0)
 #set the cpp standard you want to use for the plugin (must be at least c++17)
 set(unplug_cpp_standard 20)
 
-# unplug_SOURCE_DIR must be set to the path of your unplug local repo
-set(unplug_SOURCE_DIR "${CMAKE_SOURCE_DIR}/..")
+#set the cpp standard you want to use for the plugin (must be at least c++17)
+set(unplug_cpp_standard 20)
+
+# sets the version of openGL to use: supported values are 2 and 3
+set(unplug_opengl_version 3)
 
 # C++ global config
-if(WIN32)
-	add_compile_options("/EHsc")
-	ADD_DEFINITIONS(-DUNICODE)
-	ADD_DEFINITIONS(-D_UNICODE)
-endif(WIN32)
+if (WIN32)
+    add_compile_options("/EHsc")
+    ADD_DEFINITIONS(-DUNICODE)
+    ADD_DEFINITIONS(-D_UNICODE)
+endif (WIN32)
 
 #universal binary if building on arm64
-if(APPLE)
-execute_process(
-		COMMAND uname -m
-		RESULT_VARIABLE result
-		OUTPUT_VARIABLE MACHINE_ARCHITECTURE
-		OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-if(MACHINE_ARCHITECTURE STREQUAL "arm64")
-	set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
-	message(STATUS "Supported architectures: x86_64, arm64")
-else()
-	message(STATUS "Supported architectures: ${MACHINE_ARCHITECTURE}")
-endif()
-endif(APPLE)
+if (APPLE)
+    execute_process(
+            COMMAND uname -m
+            RESULT_VARIABLE result
+            OUTPUT_VARIABLE MACHINE_ARCHITECTURE
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if (MACHINE_ARCHITECTURE STREQUAL "arm64")
+        set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
+        message(STATUS "Supported architectures: x86_64, arm64")
+    else ()
+        message(STATUS "Supported architectures: ${MACHINE_ARCHITECTURE}")
+    endif ()
+endif (APPLE)
 
 # VST3 SDK and plugin
 set(vst3sdk_SOURCE_DIR ${unplug_SOURCE_DIR}/libs/vst3sdk)
-if(NOT vst3sdk_SOURCE_DIR)
+if (NOT vst3sdk_SOURCE_DIR)
     message(FATAL_ERROR "VST3 SDK is missing. Please run: git submodule update --init --recursive in your unplug local repository")
-endif()
+endif ()
 project(${unplug_plugin_name} VERSION ${unplug_plugin_version})
 set(SMTG_VSTGUI_ROOT "${vst3sdk_SOURCE_DIR}")
 cmake_policy(SET CMP0077 NEW)
@@ -57,35 +63,35 @@ file(GLOB_RECURSE plug-src "${plug-src-path}/*")
 file(GLOB_RECURSE unplug-src "${unplug_SOURCE_DIR}/unplug/source/unplug/*")
 set(src ${plug-src} ${unplug-src})
 smtg_add_vst3plugin(${PROJECT_NAME} ${src})
-if(SMTG_ADD_VSTGUI)
+if (SMTG_ADD_VSTGUI)
     target_link_libraries(${PROJECT_NAME} PRIVATE vstgui_support)
-endif()
+endif ()
 smtg_add_vst3_snapshot(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/resource/DB759B1D41C65B09ADAD652A8D6F776A_snapshot.png")
 smtg_add_vst3_snapshot(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/resource/DB759B1D41C65B09ADAD652A8D6F776A_snapshot_2.0x.png")
 target_link_libraries(${PROJECT_NAME} PRIVATE sdk)
-if(SMTG_MAC)
-    smtg_set_bundle(${PROJECT_NAME} INFOPLIST 
-        "${CMAKE_CURRENT_LIST_DIR}/resource/Info.plist" 
-        PREPROCESS
-    )
-elseif(SMTG_WIN)
-	target_sources(${PROJECT_NAME} PRIVATE
-        resource/win32resource.rc
-    )
+if (SMTG_MAC)
+    smtg_set_bundle(${PROJECT_NAME} INFOPLIST
+            "${CMAKE_CURRENT_LIST_DIR}/resource/Info.plist"
+            PREPROCESS
+            )
+elseif (SMTG_WIN)
+    target_sources(${PROJECT_NAME} PRIVATE
+            resource/win32resource.rc
+            )
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
-	
-	set_target_properties(${PROJECT_NAME} PROPERTIES
-		VS_DEBUGGER_COMMAND
-			"$(ProgramW6432)/Steinberg/VST3PluginTestHost/VST3PluginTestHost.exe"
-		VS_DEBUGGER_COMMAND_ARGUMENTS
-			" --pluginfolder \"$(OutDir)\" "
-	)
-endif()
+
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            VS_DEBUGGER_COMMAND
+            "$(ProgramW6432)/Steinberg/VST3PluginTestHost/VST3PluginTestHost.exe"
+            VS_DEBUGGER_COMMAND_ARGUMENTS
+            " --pluginfolder \"$(OutDir)\" "
+            )
+endif ()
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC UNPLUG_VST3=1)
-if(SMTG_WIN)
-	target_compile_definitions(${PROJECT_NAME} PUBLIC _USE_MATH_DEFINES=1)
-endif()
+if (SMTG_WIN)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC _USE_MATH_DEFINES=1)
+endif ()
 
 # OpenGL
 find_package(OpenGL REQUIRED)
@@ -96,19 +102,19 @@ target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
 add_library(pugl STATIC)
 include_directories("${unplug_SOURCE_DIR}/libs/pugl/include" "${unplug_SOURCE_DIR}/libs/pugl/src" "${unplug_SOURCE_DIR}/libs/pugl/bindings/cpp/include")
 target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/implementation.c")
-target_compile_definitions(pugl PUBLIC PUGL_STATIC PUGL_NO_INCLUDE_GL_H PUGL_NO_INCLUDE_GLU_H )
-if(SMTG_WIN)
-	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/win.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_gl.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_stub.c")
-elseif(SMTG_MAC)
-	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/mac.m" "${unplug_SOURCE_DIR}/libs/pugl/src/mac_gl.m" "${unplug_SOURCE_DIR}/libs/pugl/src/mac_stub.m")
-	find_library(COCOA_LIBRARY Cocoa)
-	target_link_libraries(${PROJECT_NAME} PRIVATE  ${COCOA_LIBRARY})
-	find_library(COREVIDEO_LIBRARY CoreVideo)
-	target_link_libraries(${PROJECT_NAME} PRIVATE  ${COREVIDEO_LIBRARY})
-else()
-	target_compile_definitions(pugl PUBLIC HAVE_XSYNC HAVE_XRANDR HAVE_XCURSOR)
-	target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/x11.c" "${unplug_SOURCE_DIR}/libs/pugl/src/x11_gl.c" "${unplug_SOURCE_DIR}/libs/pugl/src/x11_stub.c")
-endif()
+target_compile_definitions(pugl PUBLIC PUGL_STATIC PUGL_NO_INCLUDE_GL_H PUGL_NO_INCLUDE_GLU_H)
+if (SMTG_WIN)
+    target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/win.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_gl.c" "${unplug_SOURCE_DIR}/libs/pugl/src/win_stub.c")
+elseif (SMTG_MAC)
+    target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/mac.m" "${unplug_SOURCE_DIR}/libs/pugl/src/mac_gl.m" "${unplug_SOURCE_DIR}/libs/pugl/src/mac_stub.m")
+    find_library(COCOA_LIBRARY Cocoa)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${COCOA_LIBRARY})
+    find_library(COREVIDEO_LIBRARY CoreVideo)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${COREVIDEO_LIBRARY})
+else ()
+    target_compile_definitions(pugl PUBLIC HAVE_XSYNC HAVE_XRANDR HAVE_XCURSOR)
+    target_sources(pugl PRIVATE "${unplug_SOURCE_DIR}/libs/pugl/src/x11.c" "${unplug_SOURCE_DIR}/libs/pugl/src/x11_gl.c" "${unplug_SOURCE_DIR}/libs/pugl/src/x11_stub.c")
+endif ()
 target_link_libraries(${PROJECT_NAME} PRIVATE pugl)
 
 # Dear ImGui & ImPlot
@@ -117,6 +123,15 @@ target_compile_definitions(imgui PUBLIC IMGUI_USER_CONFIG="imgui_user_config.h" 
 include_directories("${unplug_SOURCE_DIR}/libs/imgui" "${unplug_SOURCE_DIR}/libs/imgui/backends" "${unplug_SOURCE_DIR}/unplug/imgui")
 file(GLOB imgui_src "${unplug_SOURCE_DIR}/libs/imgui/*.cpp")
 target_sources(imgui PRIVATE ${imgui_src} "${unplug_SOURCE_DIR}/unplug/imgui/imgui_tls_context.cpp" "${unplug_SOURCE_DIR}/libs/imgui/backends/imgui_impl_opengl2.cpp")
+if (${unplug_opengl_version} STREQUAL 3)
+    target_sources(imgui PRIVATE "${unplug_SOURCE_DIR}/libs/imgui/backends/imgui_impl_opengl3.cpp")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC UNPLUG_OPENGL_VERSION=3)
+elseif (${unplug_opengl_version} STREQUAL 2)
+    target_sources(imgui PRIVATE "${unplug_SOURCE_DIR}/libs/imgui/backends/imgui_impl_opengl2.cpp")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC UNPLUG_OPENGL_VERSION=2)
+else ()
+    message(FATAL_ERROR "Error: unplug_opengl_version should be 2 or 3. current value is ${unplug_opengl_version}")
+endif ()
 # and ImPlot
 include_directories("${unplug_SOURCE_DIR}/libs/implot")
 file(GLOB_RECURSE implot_src "${unplug_SOURCE_DIR}/libs/implot/*.cpp" "${unplug_SOURCE_DIR}/libs/implot/*.h")

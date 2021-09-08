@@ -62,9 +62,16 @@ tresult Vst3View::attached(void* pParent, FIDString type) {
 #else
   puglView->setHint(pugl::ViewHint::useDebugContext, true);
 #endif
+#if (UNPLUG_OPENGL_VERSION == 3)
+  puglView->setHint(pugl::ViewHint::contextVersionMajor, 3);
+  puglView->setHint(pugl::ViewHint::contextVersionMinor, 0);
+  puglView->setHint(pugl::ViewHint::useCompatProfile, false);
+#endif
+#if (UNPLUG_OPENGL_VERSION == 2)
   puglView->setHint(pugl::ViewHint::contextVersionMajor, 2);
   puglView->setHint(pugl::ViewHint::contextVersionMinor, 0);
   puglView->setHint(pugl::ViewHint::useCompatProfile, true);
+#endif
   pugl::Status status = puglView->realize();
   if (status != pugl::Status::success) {
     assert(false);

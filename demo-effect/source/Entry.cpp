@@ -56,7 +56,7 @@ DEF_CLASS2(INLINE_UID_FROM_FUID(kUnplugDemoEffectProcessorUID),
            FULL_VERSION_STR,                          // Plug-in version (to be changed)
            kVstVersionString,                         // the VST 3 SDK version (do not changed this, use always
                                                       // this define)
-           UnplugDemoEffectProcessor::createInstance) // function pointer called when
+           GainProcessor::createInstance) // function pointer called when
                                                       // this component should be
                                                       // instantiated
 
@@ -70,7 +70,7 @@ DEF_CLASS2(INLINE_UID_FROM_FUID(kUnplugDemoEffectControllerUID),
            FULL_VERSION_STR,                           // Plug-in version (to be changed)
            kVstVersionString,                          // the VST 3 SDK version (do not changed this, use always
                                                        // this define)
-           UnplugDemoEffectController::createInstance) // function pointer called when
+           GainController::createInstance) // function pointer called when
                                                        // this component should be
                                                        // instantiated
 

@@ -258,10 +258,10 @@ void DrawSimpleKnob(KnobDrawData const& knob) {
                                    : knob.isHovered ? ImGuiCol_FrameBgHovered
                                                     : ImGuiCol_FrameBg);
   ImU32 col32line = ImGui::GetColorU32(ImGuiCol_SliderGrabActive);
-  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
   auto const numSegments = static_cast<int>(1.5f * radius);
-  draw_list->AddCircleFilled(knob.center, radius, col32, numSegments);
-  draw_list->AddLine(knob.center, knob.pointerPosition, col32line, 1);
+  drawList->AddCircleFilled(knob.center, radius, col32, numSegments);
+  drawList->AddLine(knob.center, knob.pointerPosition, col32line, 1);
 }
 
 bool Knob(int parameterTag, float power, float angleOffset, std::function<void(KnobDrawData const&)> const& drawer) {
@@ -289,6 +289,111 @@ bool KnobWithLabels(int parameterTag,
   ValueAsText(parameterTag, ShowLabel::no);
   ImGui::PopStyleColor();
   return isActive;
+}
+
+static void DrawLevelMeter(float scaledValue,
+                           ImVec2 cursorPosition,
+                           ImVec2 size,
+                           LevelMeterSettings const& settings,
+                           LevelMeterAlignment alignment,
+                           std::function<float(float)> const& scaling) {
+  auto const normalizedValue = (scaledValue - settings.minValue) / (settings.maxValue - settings.minValue);
+
+  bool const isHorizontal = size.x > size.y;
+  auto const topLeftColor = isHorizontal ? settings.lowLevelColor : settings.highLevelColor;
+  auto const topRightColor = settings.highLevelColor;
+  auto const bottomRightColor = isHorizontal ? settings.highLevelColor : settings.lowLevelColor;
+  auto const bottomLeftColor = settings.lowLevelColor;
+
+  float left, top, right, bottom;
+  if (isHorizontal) {
+    top = cursorPosition.y;
+    bottom = cursorPosition.y + size.y;
+    if (alignment == LevelMeterAlignment::alignToMinValue) {
+      left = cursorPosition.x;
+      right = left + size.x * normalizedValue;
+    }
+    else if (alignment == LevelMeterAlignment::alignToMaxValue) {
+      right = left + size.x;
+      left = right - normalizedValue * size.x;
+    }
+  }
+  else { // is vertical
+    left = cursorPosition.x;
+    right = left + size.x;
+    if (alignment == LevelMeterAlignment::alignToMinValue) {
+      bottom = cursorPosition.y + size.y;
+      top = bottom - normalizedValue * size.y;
+    }
+    else if (alignment == LevelMeterAlignment::alignToMaxValue) {
+      top = cursorPosition.y;
+      bottom = top + normalizedValue * size.y;
+    }
+  }
+  if (right > left && bottom > top) {
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    drawList->AddRectFilledMultiColor({ left, top },
+                                      { right, bottom },
+                                      ImGui::ColorConvertFloat4ToU32(topLeftColor),
+                                      ImGui::ColorConvertFloat4ToU32(topRightColor),
+                                      ImGui::ColorConvertFloat4ToU32(bottomRightColor),
+                                      ImGui::ColorConvertFloat4ToU32(bottomLeftColor));
+  }
+}
+
+static float computeMeterValue(int meterTag,
+                               LevelMeterSettings const& settings,
+                               std::function<float(float)> const& scaling) {
+  auto const meters = getMeters();
+  auto const rawValue = meters ? meters->get(meterTag) : settings.fallbackValue;
+  auto const scaledValue = scaling(rawValue);
+  return scaledValue;
+}
+
+void LevelMeter(int meterTag,
+                std::string const& name,
+                ImVec2 size,
+                LevelMeterSettings const& settings,
+                LevelMeterAlignment alignment,
+                std::function<float(float)> const& scaling) {
+  auto const scaledValue = computeMeterValue(meterTag, settings, scaling);
+  auto const cursorPosition = ImGui::GetCursorScreenPos();
+  ImGui::InvisibleButton((name + "##LEVELMETER").c_str(), size);
+  DrawLevelMeter(scaledValue, cursorPosition, size, settings, alignment, scaling);
+}
+
+void BidirectionalLevelMeter(int meterTag,
+                             std::string const& name,
+                             ImVec2 size,
+                             LevelMeterSettings settings,
+                             std::function<float(float)> const& scaling) {
+  assert(settings.minValue < settings.centerValue);
+  assert(settings.maxValue > settings.centerValue);
+  auto const scaledValue = computeMeterValue(meterTag, settings, scaling);
+  auto const centerPercentage = (settings.centerValue - settings.minValue) / (settings.maxValue - settings.minValue);
+  bool const isHorizontal = size.x > size.y;
+  auto const cursorPosition = ImGui::GetCursorScreenPos();
+  ImGui::InvisibleButton((name + "##LEVELMETERBI").c_str(), size);
+  if (isHorizontal) {
+    auto const lowerMeterLeftTop = cursorPosition;
+    auto const lowerMeterSize = ImVec2{ centerPercentage * size.x, size.y };
+    DrawLevelMeter(
+      scaledValue, lowerMeterLeftTop, lowerMeterSize, settings, LevelMeterAlignment::alignToMaxValue, scaling);
+    auto const higherMeterLeftTop = ImVec2{ lowerMeterLeftTop.x + lowerMeterSize.x, lowerMeterLeftTop.y };
+    auto const higherMeterSize = ImVec2{ size.x - lowerMeterSize.x, lowerMeterSize.y };
+    DrawLevelMeter(
+      scaledValue, higherMeterLeftTop, higherMeterSize, settings, LevelMeterAlignment::alignToMinValue, scaling);
+  }
+  else {
+    auto const higherMeterLeftTop = cursorPosition;
+    auto const higherMeterSize = ImVec2{ size.x, centerPercentage * size.y };
+    DrawLevelMeter(
+      scaledValue, higherMeterLeftTop, higherMeterSize, settings, LevelMeterAlignment::alignToMinValue, scaling);
+    auto const lowerMeterLeftTop = ImVec2{ higherMeterLeftTop.x, higherMeterLeftTop.y + higherMeterSize.y };
+    auto const lowerMeterSize = ImVec2{ size.x, size.y - higherMeterSize.y };
+    DrawLevelMeter(
+      scaledValue, lowerMeterLeftTop, lowerMeterSize, settings, LevelMeterAlignment::alignToMaxValue, scaling);
+  }
 }
 
 namespace detail {

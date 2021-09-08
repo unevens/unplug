@@ -75,6 +75,59 @@ void MeterValueLabelCentered(int meterTag,
                              float height = 0.f);
 
 /**
+ * Style for level meter filling
+ * */
+enum class FillStyle
+{
+  gradient,
+  solid
+};
+
+/**
+ * Alignment options for level meters: generally, use align to min value for a meter that shows only positive values,
+ * and align alignToMaxValue for a meter that shows only negative values. For a meter that shows both positive and
+ * negative values, use a BidirectionalLevelMeter.
+ * */
+enum class LevelMeterAlignment
+{
+  alignToMinValue,
+  alignToMaxValue
+};
+
+/**
+ * Settings for a level meter
+ * */
+struct LevelMeterSettings
+{
+  float minValue = -90.0;
+  float maxValue = 12.0;
+  float centerValue = 0.0f; // only used by bidirectional level meters
+  ImVec4 lowLevelColor = { 0.f, 1.f, 0.f, 1.f };
+  ImVec4 highLevelColor = { 1.f, 0.f, 0.f, 1.f };
+  FillStyle fillStyle = FillStyle::gradient;
+  float fallbackValue = 0.f;
+};
+
+/**
+ * Level meter. Best suited for meter that have values that don't change sign.
+ * */
+void LevelMeter(int meterTag,
+                std::string const& name,
+                ImVec2 size,
+                LevelMeterSettings const& settings,
+                LevelMeterAlignment alignment = LevelMeterAlignment::alignToMinValue,
+                std::function<float(float)> const& scaling = linearToDB<float>);
+
+/**
+ * Bidirectional level meter. Best suited for values that can have both positive and negative values.
+ * */
+void BidirectionalLevelMeter(int meterTag,
+                             std::string const& name,
+                             ImVec2 size,
+                             LevelMeterSettings settings,
+                             std::function<float(float)> const& scaling = linearToDB<float>);
+
+/**
  * Displays the value of a parameter as text, allowing user input upon click or double click, centered in the rectangle
  * between the current position and size
  * */

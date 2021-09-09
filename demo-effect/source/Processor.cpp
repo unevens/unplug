@@ -103,7 +103,7 @@ Steinberg::tresult GainProcessor::setupProcessing(Vst::ProcessSetup& newSetup) {
   if (result == kResultFalse) {
     return kResultFalse;
   }
-  auto const levelSmoothingTime = 0.1;
+  auto const levelSmoothingTime = 1.0;
   levelSmooothingAlpha = 1.f - std::exp(-2 * M_PI / (newSetup.sampleRate * levelSmoothingTime));
   return kResultOk;
 }

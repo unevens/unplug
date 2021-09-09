@@ -294,8 +294,11 @@ static void DrawLevelMeter(float scaledValue,
                            bool isHorizontal) {
   auto const normalizedValue =
     std::max(0.f, std::min(1.f, (scaledValue - settings.minValue) / (settings.maxValue - settings.minValue)));
-  auto const colorAlpha = settings.colorScaling(normalizedValue);
-  auto const valueColor = mix(settings.minValueColor, settings.maxValueColor, settings.intermediateColor, colorAlpha);
+  auto const valueColor = mix(settings.minValueColor,
+                              settings.maxValueColor,
+                              settings.intermediateColor,
+                              normalizedValue,
+                              settings.relativePositionOfIntermediateColor);
   auto topLeftColor = valueColor;
   auto topRightColor = valueColor;
   auto bottomRightColor = valueColor;
@@ -339,12 +342,39 @@ static void DrawLevelMeter(float scaledValue,
   if (right > left && bottom > top) {
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     if (settings.fillStyle == FillStyle::gradient) {
-      drawList->AddRectFilledMultiColor({ left, top },
-                                        { right, bottom },
-                                        ImGui::ColorConvertFloat4ToU32(topLeftColor),
-                                        ImGui::ColorConvertFloat4ToU32(topRightColor),
-                                        ImGui::ColorConvertFloat4ToU32(bottomRightColor),
-                                        ImGui::ColorConvertFloat4ToU32(bottomLeftColor));
+      bool const beyondIntermediate = alignment == LevelMeterAlign::toMinValue
+                                        ? normalizedValue > settings.relativePositionOfIntermediateColor
+                                        : normalizedValue < settings.relativePositionOfIntermediateColor;
+      if (beyondIntermediate) {
+        auto intermediateX = cursorPosition.x + settings.relativePositionOfIntermediateColor * size.x;
+        auto intermediateY = cursorPosition.y + size.y * (1.f - settings.relativePositionOfIntermediateColor);
+        {
+          drawList->AddRectFilledMultiColor(
+            { left, top },
+            { isHorizontal ? intermediateX : right, isHorizontal ? bottom : intermediateY },
+            ImGui::ColorConvertFloat4ToU32(isHorizontal ? topLeftColor : settings.intermediateColor),
+            ImGui::ColorConvertFloat4ToU32(isHorizontal ? settings.intermediateColor : topRightColor),
+            ImGui::ColorConvertFloat4ToU32(isHorizontal ? settings.intermediateColor : bottomRightColor),
+            ImGui::ColorConvertFloat4ToU32(bottomLeftColor));
+        }
+        {
+          drawList->AddRectFilledMultiColor(
+            { isHorizontal ? intermediateX : left, isHorizontal ? top : intermediateY },
+            { right, bottom },
+            ImGui::ColorConvertFloat4ToU32(isHorizontal ? settings.intermediateColor : topLeftColor),
+            ImGui::ColorConvertFloat4ToU32(topRightColor),
+            ImGui::ColorConvertFloat4ToU32(isHorizontal ? bottomRightColor : settings.intermediateColor),
+            ImGui::ColorConvertFloat4ToU32(settings.intermediateColor));
+        }
+      }
+      else {
+        drawList->AddRectFilledMultiColor({ left, top },
+                                          { right, bottom },
+                                          ImGui::ColorConvertFloat4ToU32(topLeftColor),
+                                          ImGui::ColorConvertFloat4ToU32(topRightColor),
+                                          ImGui::ColorConvertFloat4ToU32(bottomRightColor),
+                                          ImGui::ColorConvertFloat4ToU32(bottomLeftColor));
+      }
     }
     else {
       drawList->AddRectFilled({ left, top }, { right, bottom }, ImGui::ColorConvertFloat4ToU32(valueColor));

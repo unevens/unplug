@@ -106,10 +106,10 @@ struct LevelMeterSettings
   ImVec4 minValueColor = { 0.f, 1.f, 0.f, 1.f };
   ImVec4 maxValueColor = { 1.f, 0.f, 0.f, 1.f };
   ImVec4 intermediateColor = { 1.f, 1.f, 0.f, 1.f };
-  FillStyle fillStyle = FillStyle::solid;
+  float relativePositionOfIntermediateColor = 0.5f;
+  FillStyle fillStyle = FillStyle::gradient;
   float fallbackValue = 0.f;
   std::function<float(float)> scaling = linearToDB<float>;
-  std::function<float(float)> colorScaling = [](float x) { return x * x * x; };
 };
 
 struct DifferenceLevelMeterSettings : LevelMeterSettings
@@ -118,7 +118,6 @@ struct DifferenceLevelMeterSettings : LevelMeterSettings
   DifferenceLevelMeterSettings() {
     minValue = -36.f;
     maxValue = 36.f;
-    colorScaling = [](float x) { return x; };
   }
 };
 
@@ -265,9 +264,10 @@ inline ImVec4 mix(ImVec4 a, ImVec4 b, float amountOfB) {
   return a + (b - a) * amountOfB;
 }
 
-inline ImVec4 mix(ImVec4 a, ImVec4 b, ImVec4 intermediate, float amountOfB) {
-  return amountOfB > 0.5f ? intermediate + (b - intermediate) * (2.f * amountOfB - 1.f)
-                          : a + (intermediate - a) * 2.f * amountOfB;
+inline ImVec4 mix(ImVec4 a, ImVec4 b, ImVec4 intermediate, float amountOfB, float intermediatePoint = 0.5f) {
+  return amountOfB > intermediatePoint
+           ? intermediate + (b - intermediate) * ((amountOfB - intermediatePoint) / (1.f - intermediatePoint))
+           : a + (intermediate - a) * (amountOfB / intermediatePoint);
 }
 
 /**

@@ -118,7 +118,7 @@ public:
 
   void mapParameter(ParamIndex paramIndex, int controller);
 
-  int getParameter(int controller, int channel) const;
+  ParamIndex getParameter(int controller, int channel) const;
 
 private:
   std::array<detail::MidiMappingSingleChannel, 16> midiMappingByChannel;

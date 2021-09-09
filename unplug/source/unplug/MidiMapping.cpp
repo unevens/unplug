@@ -44,7 +44,7 @@ void MidiMapping::mapParameter(ParamIndex paramIndex, int controller) {
   }
 }
 
-int MidiMapping::getParameter(int controller, int channel) const {
+ParamIndex MidiMapping::getParameter(int controller, int channel) const {
   assert(channel < midiMappingByChannel.size());
   if (channel < midiMappingByChannel.size()) {
     return midiMappingByChannel[channel].getParameter(controller);

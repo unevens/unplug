@@ -27,7 +27,7 @@ public:
                      std::function<double(double)> linearToNonlinear,
                      ParamValue minInNonlinearScale = -90.0,
                      ParamValue maxInNonlinearScale = 6.0,
-                     ParamValue defaultValuePlain = 0.0,
+                     ParamValue defaultValueInNonlinearScale = 0.0,
                      int32 flags = ParameterInfo::kCanAutomate,
                      UnitID unitID = kRootUnitId,
                      const TChar* shortTitle = nullptr);

@@ -23,11 +23,18 @@ NonlinearParameter::NonlinearParameter(const TChar* title,
                                        std::function<double(double)> linearToNonlinear_,
                                        ParamValue minInNonlinearScale,
                                        ParamValue maxInNonlinearScale,
-                                       ParamValue defaultValuePlain,
+                                       ParamValue defaultValueInNonlinearScale,
                                        int32 flags,
                                        UnitID unitID,
                                        const TChar* shortTitle)
-  : Parameter(title, tag, unplug::ToVstTChar{}("dB").c_str(), defaultValuePlain, 0, flags, unitID, shortTitle)
+  : Parameter(title,
+              tag,
+              unplug::ToVstTChar{}("dB").c_str(),
+              nonlinearToLinear_(defaultValueInNonlinearScale),
+              0,
+              flags,
+              unitID,
+              shortTitle)
   , nonlinearToLinear(std::move(nonlinearToLinear_))
   , linearToNonlinear(std::move(linearToNonlinear_))
   , minLinear(nonlinearToLinear(minInNonlinearScale))

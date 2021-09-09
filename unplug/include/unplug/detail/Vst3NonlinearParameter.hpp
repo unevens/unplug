@@ -14,6 +14,7 @@
 #pragma once
 
 #include "public.sdk/source/vst/vstparameters.h"
+#include <functional>
 
 namespace Steinberg::Vst {
 

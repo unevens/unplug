@@ -16,6 +16,7 @@
 #include "unplug/MidiMapping.hpp"
 #include <atomic>
 #include <cassert>
+#include <functional>
 #include <string>
 #include <vector>
 

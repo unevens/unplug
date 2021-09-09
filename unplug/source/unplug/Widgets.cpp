@@ -276,7 +276,6 @@ bool KnobWithLabels(ParamIndex paramIndex,
                     float power,
                     float angleOffset,
                     std::function<void(KnobDrawData const&)> const& drawer) {
-  auto& parameters = getParameters();
   NameLabelCentered(paramIndex);
   auto const isActive = Knob(paramIndex, power, angleOffset, drawer);
   auto const bkgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
@@ -480,7 +479,6 @@ void applyRangedParameters(ParameterAccess& parameters, ParamIndex paramIndex, E
 KnobOutput Knob(const char* name, float const inputValue, float angleOffset) {
   // originally based on https://github.com/ocornut/imgui/issues/942
   auto const radius = 0.5f * ImGui::CalcItemWidth();
-  ImGuiStyle& style = ImGui::GetStyle();
   ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
   ImVec2 center = ImVec2(cursorPosition.x + radius, cursorPosition.y + radius);
 

@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #include "unplug/detail/GetSortedParameterDescriptions.hpp"
+#include <algorithm>
 
 namespace unplug::detail {
 

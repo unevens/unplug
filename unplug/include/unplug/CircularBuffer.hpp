@@ -15,6 +15,7 @@
 #include "unplug/Index.hpp"
 #include <algorithm>
 #include <atomic>
+#include <cassert>
 #include <cmath>
 #include <vector>
 

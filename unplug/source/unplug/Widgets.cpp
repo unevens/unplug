@@ -290,58 +290,72 @@ static void DrawLevelMeter(float scaledValue,
                            ImVec2 cursorPosition,
                            ImVec2 size,
                            LevelMeterSettings const& settings,
-                           LevelMeterAlignment alignment,
-                           std::function<float(float)> const& scaling) {
-  auto const normalizedValue = (scaledValue - settings.minValue) / (settings.maxValue - settings.minValue);
-
-  bool const isHorizontal = size.x > size.y;
-  auto const topLeftColor = isHorizontal ? settings.lowLevelColor : settings.highLevelColor;
-  auto const topRightColor = settings.highLevelColor;
-  auto const bottomRightColor = isHorizontal ? settings.highLevelColor : settings.lowLevelColor;
-  auto const bottomLeftColor = settings.lowLevelColor;
+                           LevelMeterAlign alignment,
+                           bool isHorizontal) {
+  auto const normalizedValue =
+    std::max(0.f, std::min(1.f, (scaledValue - settings.minValue) / (settings.maxValue - settings.minValue)));
+  auto const colorAlpha = settings.colorScaling(normalizedValue);
+  auto const valueColor = mix(settings.minValueColor, settings.maxValueColor, settings.intermediateColor, colorAlpha);
+  auto topLeftColor = valueColor;
+  auto topRightColor = valueColor;
+  auto bottomRightColor = valueColor;
+  auto bottomLeftColor = valueColor;
 
   float left, top, right, bottom;
   if (isHorizontal) {
     top = cursorPosition.y;
     bottom = cursorPosition.y + size.y;
-    if (alignment == LevelMeterAlignment::alignToMinValue) {
+    auto const valueX = cursorPosition.x + size.x * normalizedValue;
+    if (alignment == LevelMeterAlign::toMinValue) {
       left = cursorPosition.x;
-      right = left + size.x * normalizedValue;
+      right = valueX;
+      if (settings.fillStyle == FillStyle::gradient) {
+        topLeftColor = settings.minValueColor;
+        bottomLeftColor = settings.minValueColor;
+      }
     }
-    else if (alignment == LevelMeterAlignment::alignToMaxValue) {
-      right = left + size.x;
-      left = right - normalizedValue * size.x;
+    else if (alignment == LevelMeterAlign::toMaxValue) {
+      right = cursorPosition.x + size.x;
+      left = valueX;
+      if (settings.fillStyle == FillStyle::gradient) {
+        topRightColor = settings.maxValueColor;
+        bottomRightColor = settings.maxValueColor;
+      }
     }
   }
   else { // is vertical
     left = cursorPosition.x;
     right = left + size.x;
-    if (alignment == LevelMeterAlignment::alignToMinValue) {
+    auto const valueY = cursorPosition.y + size.y * (1.f - normalizedValue);
+    if (alignment == LevelMeterAlign::toMinValue) {
       bottom = cursorPosition.y + size.y;
-      top = bottom - normalizedValue * size.y;
+      top = valueY;
     }
-    else if (alignment == LevelMeterAlignment::alignToMaxValue) {
+    else if (alignment == LevelMeterAlign::toMaxValue) {
       top = cursorPosition.y;
-      bottom = top + normalizedValue * size.y;
+      bottom = valueY;
     }
   }
   if (right > left && bottom > top) {
     ImDrawList* drawList = ImGui::GetWindowDrawList();
-    drawList->AddRectFilledMultiColor({ left, top },
-                                      { right, bottom },
-                                      ImGui::ColorConvertFloat4ToU32(topLeftColor),
-                                      ImGui::ColorConvertFloat4ToU32(topRightColor),
-                                      ImGui::ColorConvertFloat4ToU32(bottomRightColor),
-                                      ImGui::ColorConvertFloat4ToU32(bottomLeftColor));
+    if (settings.fillStyle == FillStyle::gradient) {
+      drawList->AddRectFilledMultiColor({ left, top },
+                                        { right, bottom },
+                                        ImGui::ColorConvertFloat4ToU32(topLeftColor),
+                                        ImGui::ColorConvertFloat4ToU32(topRightColor),
+                                        ImGui::ColorConvertFloat4ToU32(bottomRightColor),
+                                        ImGui::ColorConvertFloat4ToU32(bottomLeftColor));
+    }
+    else {
+      drawList->AddRectFilled({ left, top }, { right, bottom }, ImGui::ColorConvertFloat4ToU32(valueColor));
+    }
   }
 }
 
-static float computeMeterValue(MeterIndex meterIndex,
-                               LevelMeterSettings const& settings,
-                               std::function<float(float)> const& scaling) {
+static float computeMeterValue(MeterIndex meterIndex, LevelMeterSettings const& settings) {
   auto const meters = getMeters();
   auto const rawValue = meters ? meters->get(meterIndex) : settings.fallbackValue;
-  auto const scaledValue = scaling(rawValue);
+  auto const scaledValue = settings.scaling(rawValue);
   return scaledValue;
 }
 
@@ -349,22 +363,22 @@ void LevelMeter(MeterIndex meterIndex,
                 std::string const& name,
                 ImVec2 size,
                 LevelMeterSettings const& settings,
-                LevelMeterAlignment alignment,
-                std::function<float(float)> const& scaling) {
-  auto const scaledValue = computeMeterValue(meterIndex, settings, scaling);
+                LevelMeterAlign alignment) {
+  auto const scaledValue = computeMeterValue(meterIndex, settings);
   auto const cursorPosition = ImGui::GetCursorScreenPos();
   ImGui::InvisibleButton((name + "##LEVELMETER").c_str(), size);
-  DrawLevelMeter(scaledValue, cursorPosition, size, settings, alignment, scaling);
+  bool const isHorizontal = size.x > size.y;
+  DrawLevelMeter(scaledValue, cursorPosition, size, settings, alignment, isHorizontal);
 }
 
-void BidirectionalLevelMeter(MeterIndex meterIndex,
-                             std::string const& name,
-                             ImVec2 size,
-                             LevelMeterSettings settings,
-                             std::function<float(float)> const& scaling) {
+void DifferenceLevelMeter(MeterIndex meterIndex,
+                          std::string const& name,
+                          ImVec2 size,
+                          DifferenceLevelMeterSettings settings) {
   assert(settings.minValue < settings.centerValue);
   assert(settings.maxValue > settings.centerValue);
-  auto const scaledValue = computeMeterValue(meterIndex, settings, scaling);
+  auto const scaledValue = computeMeterValue(meterIndex, settings);
+  auto const scaledDifference = scaledValue - settings.centerValue;
   auto const centerPercentage = (settings.centerValue - settings.minValue) / (settings.maxValue - settings.minValue);
   bool const isHorizontal = size.x > size.y;
   auto const cursorPosition = ImGui::GetCursorScreenPos();
@@ -372,22 +386,36 @@ void BidirectionalLevelMeter(MeterIndex meterIndex,
   if (isHorizontal) {
     auto const lowerMeterLeftTop = cursorPosition;
     auto const lowerMeterSize = ImVec2{ centerPercentage * size.x, size.y };
-    DrawLevelMeter(
-      scaledValue, lowerMeterLeftTop, lowerMeterSize, settings, LevelMeterAlignment::alignToMaxValue, scaling);
-    auto const higherMeterLeftTop = ImVec2{ lowerMeterLeftTop.x + lowerMeterSize.x, lowerMeterLeftTop.y };
-    auto const higherMeterSize = ImVec2{ size.x - lowerMeterSize.x, lowerMeterSize.y };
-    DrawLevelMeter(
-      scaledValue, higherMeterLeftTop, higherMeterSize, settings, LevelMeterAlignment::alignToMinValue, scaling);
+    if (scaledDifference < 0) {
+      settings.maxValue = settings.centerValue;
+      std::swap(settings.maxValueColor, settings.minValueColor);
+      DrawLevelMeter(
+        scaledDifference, lowerMeterLeftTop, lowerMeterSize, settings, LevelMeterAlign::toMaxValue, isHorizontal);
+    }
+    if (scaledDifference > 0) {
+      auto const higherMeterLeftTop = ImVec2{ lowerMeterLeftTop.x + lowerMeterSize.x, lowerMeterLeftTop.y };
+      auto const higherMeterSize = ImVec2{ size.x - lowerMeterSize.x, lowerMeterSize.y };
+      settings.minValue = settings.centerValue;
+      DrawLevelMeter(
+        scaledDifference, higherMeterLeftTop, higherMeterSize, settings, LevelMeterAlign::toMinValue, isHorizontal);
+    }
   }
   else {
     auto const higherMeterLeftTop = cursorPosition;
     auto const higherMeterSize = ImVec2{ size.x, centerPercentage * size.y };
-    DrawLevelMeter(
-      scaledValue, higherMeterLeftTop, higherMeterSize, settings, LevelMeterAlignment::alignToMinValue, scaling);
+    if (scaledDifference > 0) {
+      settings.minValue = settings.centerValue;
+      DrawLevelMeter(
+        scaledDifference, higherMeterLeftTop, higherMeterSize, settings, LevelMeterAlign::toMinValue, isHorizontal);
+    }
     auto const lowerMeterLeftTop = ImVec2{ higherMeterLeftTop.x, higherMeterLeftTop.y + higherMeterSize.y };
     auto const lowerMeterSize = ImVec2{ size.x, size.y - higherMeterSize.y };
-    DrawLevelMeter(
-      scaledValue, lowerMeterLeftTop, lowerMeterSize, settings, LevelMeterAlignment::alignToMaxValue, scaling);
+    if (scaledDifference < 0) {
+      settings.maxValue = settings.centerValue;
+      std::swap(settings.maxValueColor, settings.minValueColor);
+      DrawLevelMeter(
+        scaledDifference, lowerMeterLeftTop, lowerMeterSize, settings, LevelMeterAlign::toMaxValue, isHorizontal);
+    }
   }
 }
 

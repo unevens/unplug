@@ -28,6 +28,14 @@ void paint() {
   DragFloat(Param::gain);
   SliderFloat(Param::gain);
   MeterValueLabelCentered(Meter::level);
+
+  auto const differenceLevelMeterSettings = DifferenceLevelMeterSettings{};
+  DifferenceLevelMeter(Meter::level, "LevelMeter", { width, 50.f }, differenceLevelMeterSettings);
+
+  auto levelMeterSettings = LevelMeterSettings{};
+  LevelMeter(Meter::level, "LevelMeter1", { width, 50.f }, levelMeterSettings, LevelMeterAlign::toMinValue);
+  levelMeterSettings.maxValueColor = ImVec4{ 0.f, 0.f, 1.f, 1.f };
+  LevelMeter(Meter::level, "LevelMeter2", { width, 50.f }, levelMeterSettings, LevelMeterAlign::toMaxValue);
 }
 
 std::array<int, 2> getDefaultSize() {

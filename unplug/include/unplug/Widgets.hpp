@@ -13,6 +13,7 @@
 
 #pragma once
 #include "imgui.h"
+#include "imgui_internal.h" //ImVec2 and ImVec4 operators
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
 #include "unplug/ParameterAccess.hpp"
@@ -87,14 +88,12 @@ enum class FillStyle
 };
 
 /**
- * Alignment options for level meters: generally, use align to min value for a meter that shows only positive values,
- * and align alignToMaxValue for a meter that shows only negative values. For a meter that shows both positive and
- * negative values, use a BidirectionalLevelMeter.
+ * Alignment options for level meters.
  * */
-enum class LevelMeterAlignment
+enum class LevelMeterAlign
 {
-  alignToMinValue,
-  alignToMaxValue
+  toMinValue,
+  toMaxValue
 };
 
 /**
@@ -104,31 +103,41 @@ struct LevelMeterSettings
 {
   float minValue = -90.0;
   float maxValue = 12.0;
-  float centerValue = 0.0f; // only used by bidirectional level meters
-  ImVec4 lowLevelColor = { 0.f, 1.f, 0.f, 1.f };
-  ImVec4 highLevelColor = { 1.f, 0.f, 0.f, 1.f };
-  FillStyle fillStyle = FillStyle::gradient;
+  ImVec4 minValueColor = { 0.f, 1.f, 0.f, 1.f };
+  ImVec4 maxValueColor = { 1.f, 0.f, 0.f, 1.f };
+  ImVec4 intermediateColor = { 1.f, 1.f, 0.f, 1.f };
+  FillStyle fillStyle = FillStyle::solid;
   float fallbackValue = 0.f;
+  std::function<float(float)> scaling = linearToDB<float>;
+  std::function<float(float)> colorScaling = [](float x) { return x * x * x; };
+};
+
+struct DifferenceLevelMeterSettings : LevelMeterSettings
+{
+  float centerValue = 0.0f;
+  DifferenceLevelMeterSettings() {
+    minValue = -36.f;
+    maxValue = 36.f;
+    colorScaling = [](float x) { return x; };
+  }
 };
 
 /**
- * Level meter. Best suited for meter that have values that don't change sign.
+ * Level meter.
  * */
 void LevelMeter(MeterIndex meterIndex,
                 std::string const& name,
                 ImVec2 size,
                 LevelMeterSettings const& settings,
-                LevelMeterAlignment alignment = LevelMeterAlignment::alignToMinValue,
-                std::function<float(float)> const& scaling = linearToDB<float>);
+                LevelMeterAlign alignment = LevelMeterAlign::toMinValue);
 
 /**
- * Bidirectional level meter. Best suited for values that can have both positive and negative values.
+ * Difference level meter.
  * */
-void BidirectionalLevelMeter(MeterIndex meterIndex,
-                             std::string const& name,
-                             ImVec2 size,
-                             LevelMeterSettings settings,
-                             std::function<float(float)> const& scaling = linearToDB<float>);
+void DifferenceLevelMeter(MeterIndex meterIndex,
+                          std::string const& name,
+                          ImVec2 size,
+                          DifferenceLevelMeterSettings settings);
 
 /**
  * Displays the value of a parameter as text, allowing user input upon click or double click, centered in the rectangle
@@ -247,6 +256,19 @@ struct ControlOutput
  * Controls a parameter with a custom control, used internally by most control that allows to edit a parameter
  * */
 bool Control(ParamIndex paramIndex, std::function<ControlOutput(ParameterData const& parameter)> const& control);
+
+inline ImVec4 operator*(ImVec4 const& lhs, float rhs) noexcept {
+  return { lhs.x * rhs, lhs.y * rhs, lhs.z * rhs, lhs.w * rhs };
+}
+
+inline ImVec4 mix(ImVec4 a, ImVec4 b, float amountOfB) {
+  return a + (b - a) * amountOfB;
+}
+
+inline ImVec4 mix(ImVec4 a, ImVec4 b, ImVec4 intermediate, float amountOfB) {
+  return amountOfB > 0.5f ? intermediate + (b - intermediate) * (2.f * amountOfB - 1.f)
+                          : a + (intermediate - a) * 2.f * amountOfB;
+}
 
 /**
  * implementation details that can be useful to implement custom controls

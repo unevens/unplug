@@ -46,9 +46,11 @@ public:
 
   ParameterValueType get(ParamIndex paramIndex) const;
 
-  void setNormalized(ParamIndex paramIndex, ParameterValueType value);
+  ParameterValueType setNormalized(ParamIndex paramIndex, ParameterValueType valueNormalized);
 
   ParameterValueType getNormalized(ParamIndex paramIndex) const;
+
+  ParameterValueType valueFromNormalized(ParamIndex paramIndex, ParameterValueType valueNormalized);
 
   void initialize(std::vector<ParameterDescription> const& parameterDescriptions);
 
@@ -83,9 +85,11 @@ ParameterValueType TParameterStorage<numParameters>::get(ParamIndex paramIndex) 
 }
 
 template<int numParameters>
-void TParameterStorage<numParameters>::setNormalized(ParamIndex paramIndex, ParameterValueType value)
+ParameterValueType TParameterStorage<numParameters>::setNormalized(ParamIndex paramIndex, ParameterValueType valueNormalized)
 {
-  set(paramIndex, parameters[paramIndex].convert.fromNormalized(value));
+  auto const value = valueFromNormalized(paramIndex, valueNormalized);
+  set(paramIndex, value);
+  return value;
 }
 
 template<int numParameters>
@@ -121,6 +125,12 @@ void TParameterStorage<numParameters>::initializeDefaultValues(
   for (int i = 0; i < parameterDescriptions.size(); ++i) {
     parameters[i].value.store(parameterDescriptions[i].defaultValue);
   }
+}
+template<int numParameters>
+ParameterValueType TParameterStorage<numParameters>::valueFromNormalized(ParamIndex paramIndex,
+                                                                         ParameterValueType valueNormalized)
+{
+  return parameters[paramIndex].convert.fromNormalized(valueNormalized);
 }
 
 template<int numParameters>

@@ -30,7 +30,6 @@ void process(Inputs const& inputs, Outputs& outputs, int numInputs, int numOutpu
 
 tresult PLUGIN_API GainProcessor::process(Vst::ProcessData& data)
 {
-
   updateParametersToLastPoint(data);
 
   auto const gain = parameterStorage.get(Param::gain);

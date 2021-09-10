@@ -20,12 +20,14 @@ namespace unplug {
 inline static constexpr auto pi = static_cast<float>(M_PI);
 
 template<class T = double>
-T linearToDB(T linear) {
+T linearToDB(T linear)
+{
   return T(20) * std::log10(std::abs(linear) + std::numeric_limits<T>::epsilon());
 }
 
 template<class T = double>
-T dBToLinear(T dB) {
+T dBToLinear(T dB)
+{
   return std::pow(T(10), dB / T(20));
 }
 

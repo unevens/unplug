@@ -15,7 +15,8 @@
 
 namespace unplug::detail {
 
-std::string ParameterEditRegister::getControllerEditingParameter(ParamIndex paramIndex) const {
+std::string ParameterEditRegister::getControllerEditingParameter(ParamIndex paramIndex) const
+{
   auto it = paramsBeingEditedByControls.find(paramIndex);
   if (it != paramsBeingEditedByControls.end())
     return it->second;
@@ -23,15 +24,18 @@ std::string ParameterEditRegister::getControllerEditingParameter(ParamIndex para
     return {};
 }
 
-bool ParameterEditRegister::isParameterBeingEdited(ParamIndex paramIndex) const {
+bool ParameterEditRegister::isParameterBeingEdited(ParamIndex paramIndex) const
+{
   return paramsBeingEditedByControls.find(paramIndex) != paramsBeingEditedByControls.end();
 }
 
-void ParameterEditRegister::unregisterEdit(ParamIndex paramIndex) {
+void ParameterEditRegister::unregisterEdit(ParamIndex paramIndex)
+{
   paramsBeingEditedByControls.erase(paramIndex);
 }
 
-void ParameterEditRegister::registerEdit(ParamIndex paramIndex, std::string control) {
+void ParameterEditRegister::registerEdit(ParamIndex paramIndex, std::string control)
+{
   paramsBeingEditedByControls.emplace(paramIndex, std::move(control));
 }
 } // namespace unplug::detail

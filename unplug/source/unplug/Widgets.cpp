@@ -215,8 +215,12 @@ bool SliderInt(ParamIndex paramIndex, ShowLabel showLabel, const char* format, I
     auto outputValue = static_cast<int>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "VSLIDERINT");
     auto const formatWithUnit = makeFormat(parameter, format);
-    bool const isActive = ImGui::SliderInt(
-      controlName.c_str(), &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
+    bool const isActive = ImGui::SliderInt(controlName.c_str(),
+                                           &outputValue,
+                                           static_cast<int>(parameter.minValue),
+                                           static_cast<int>(parameter.maxValue),
+                                           formatWithUnit.c_str(),
+                                           flags);
     return ControlOutput{ controlName, static_cast<float>(outputValue), isActive };
   });
 }
@@ -226,8 +230,13 @@ bool VSliderInt(ParamIndex paramIndex, ImVec2 size, ShowLabel showLabel, const c
     auto outputValue = static_cast<int>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "VSLIDERINT");
     auto const formatWithUnit = makeFormat(parameter, format);
-    bool const isActive = ImGui::VSliderInt(
-      controlName.c_str(), size, &outputValue, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
+    bool const isActive = ImGui::VSliderInt(controlName.c_str(),
+                                            size,
+                                            &outputValue,
+                                            static_cast<int>(parameter.minValue),
+                                            static_cast<int>(parameter.maxValue),
+                                            formatWithUnit.c_str(),
+                                            flags);
     return ControlOutput{ controlName, static_cast<float>(outputValue), isActive };
   });
 }

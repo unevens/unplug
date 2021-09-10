@@ -20,7 +20,8 @@ namespace unplug {
 class DenormaFlusher final
 {
 public:
-  DenormaFlusher() {
+  DenormaFlusher()
+  {
     _controlfp_s(&prev_word, 0, 0);
 
     unsigned int new_word;
@@ -29,7 +30,8 @@ public:
     word_was_changed = (prev_word != new_word);
   }
 
-  ~DenormaFlusher() {
+  ~DenormaFlusher()
+  {
     if (word_was_changed) {
       unsigned int word;
       _controlfp_s(&word, _DN_SAVE, _MCW_DN);
@@ -53,12 +55,16 @@ namespace unplug {
 class DenormaFlusher final
 {
 public:
-  DenormaFlusher() {
+  DenormaFlusher()
+  {
     fegetenv(&prev_env);
     fesetenv(FE_DFL_DISABLE_SSE_DENORMS_ENV);
   }
 
-  ~DenormaFlusher() { fesetenv(&prev_env); }
+  ~DenormaFlusher()
+  {
+    fesetenv(&prev_env);
+  }
 
 private:
   fenv_t prev_env;

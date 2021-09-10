@@ -16,16 +16,23 @@
 
 class WaveformCircularBuffer : public unplug::CircularBuffer<std::vector<double>>
 {
-  float getPointsPerSecond() override { return 128; }
+  float getPointsPerSecond() override
+  {
+    return 128;
+  }
 
-  float getDurationInSeconds() override { return 10; }
+  float getDurationInSeconds() override
+  {
+    return 10;
+  }
 };
 
 struct CircularBuffers
 {
   WaveformCircularBuffer waveform;
 
-  void resize(float sampleRate, float refreshRate, int maxAudioBlockSize) {
+  void resize(float sampleRate, float refreshRate, int maxAudioBlockSize)
+  {
     waveform.resize(sampleRate, refreshRate, maxAudioBlockSize);
   }
 };

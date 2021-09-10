@@ -38,7 +38,10 @@ class EventHandler final
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
 
 public:
-  EventHandler(pugl::View& view, ParameterAccess& parameters, std::shared_ptr<MeterStorage>& meters, std::shared_ptr<CircularBufferStorage>& circularBuffers);
+  EventHandler(pugl::View& view,
+               ParameterAccess& parameters,
+               std::shared_ptr<MeterStorage>& meters,
+               std::shared_ptr<CircularBufferStorage>& circularBuffers);
 
   void handleScroll(float dx, float dy);
 

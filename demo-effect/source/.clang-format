@@ -10,7 +10,7 @@ BraceWrapping:
   AfterClass:      true
   AfterControlStatement: MultiLine
   AfterEnum:       true
-  AfterFunction:   false
+  AfterFunction:   true
   AfterNamespace:  false
   AfterObjCDeclaration: false
   AfterStruct:     true

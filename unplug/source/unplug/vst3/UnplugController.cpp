@@ -29,7 +29,8 @@ namespace Steinberg::Vst {
 using namespace unplug;
 using Presets = detail::Presets;
 
-tresult PLUGIN_API UnplugController::initialize(FUnknown* context) {
+tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
+{
   tresult result = EditControllerEx1::initialize(context);
   if (result != kResultOk) {
     return result;
@@ -152,7 +153,8 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context) {
   return kResultOk;
 }
 
-tresult PLUGIN_API UnplugController::setComponentState(IBStream* state) {
+tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
+{
   // loads the dsp state
   if (!state)
     return kResultFalse;
@@ -170,7 +172,8 @@ tresult PLUGIN_API UnplugController::setComponentState(IBStream* state) {
   return kResultOk;
 }
 
-tresult PLUGIN_API UnplugController::setState(IBStream* state) {
+tresult PLUGIN_API UnplugController::setState(IBStream* state)
+{
   // used to load ui-only data
   IBStreamer streamer(state, kLittleEndian);
   auto const loadInteger = [&](int64_t& x) { return streamer.readInt64((int64&)x); };
@@ -197,7 +200,8 @@ tresult PLUGIN_API UnplugController::setState(IBStream* state) {
   return persistentData.load(loadInteger, loadIntegerArray, loadDoubleArray, loadBytes) ? kResultTrue : kResultFalse;
 }
 
-tresult PLUGIN_API UnplugController::getState(IBStream* state) {
+tresult PLUGIN_API UnplugController::getState(IBStream* state)
+{
   // used to save ui-only data
   IBStreamer streamer(state, kLittleEndian);
   auto const saveInteger = [&](int64_t const& x) { return streamer.writeInt64(x); };
@@ -214,7 +218,8 @@ tresult PLUGIN_API UnplugController::getState(IBStream* state) {
   return kResultTrue;
 }
 
-IPlugView* PLUGIN_API UnplugController::createView(FIDString name) {
+IPlugView* PLUGIN_API UnplugController::createView(FIDString name)
+{
   if (FIDStringsEqual(name, ViewType::kEditor)) {
     auto ui = new View(*this);
     auto message = owned(allocateMessage());
@@ -229,7 +234,8 @@ IPlugView* PLUGIN_API UnplugController::createView(FIDString name) {
 tresult UnplugController::getMidiControllerAssignment(int32 busIndex,
                                                       int16 channel,
                                                       CtrlNumber midiControllerNumber,
-                                                      ParamID& index) {
+                                                      ParamID& index)
+{
   if (busIndex == 0) {
     auto const mappedParameter = midiMapping.getParameter(static_cast<int>(midiControllerNumber), channel);
     if (mappedParameter != MidiMapping::unmapped) {
@@ -240,7 +246,8 @@ tresult UnplugController::getMidiControllerAssignment(int32 busIndex,
   return kResultFalse;
 }
 
-tresult UnplugController::setParamNormalized(ParamID index, ParamValue value) {
+tresult UnplugController::setParamNormalized(ParamID index, ParamValue value)
+{
   if (Parameter* parameter = getParameterObject(index)) {
     parameter->setNormalized(value);
     bool const isProgramChange = (parameter->getInfo().flags & ParameterInfo::kIsProgramChange) != 0;
@@ -253,7 +260,8 @@ tresult UnplugController::setParamNormalized(ParamID index, ParamValue value) {
   return kResultFalse;
 }
 
-void UnplugController::applyPreset(int presetIndex) {
+void UnplugController::applyPreset(int presetIndex)
+{
   if (Presets::get().size() > presetIndex) {
     auto& preset = Presets::get()[presetIndex];
     for (auto [parameterTag, value] : preset.parameterValues) {
@@ -269,7 +277,8 @@ void UnplugController::applyPreset(int presetIndex) {
   }
 }
 
-tresult PLUGIN_API UnplugController::notify(IMessage* message) {
+tresult PLUGIN_API UnplugController::notify(IMessage* message)
+{
   using namespace vst3::messaageIds;
   if (!message)
     return kInvalidArgument;
@@ -291,7 +300,8 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message) {
 
   return EditControllerEx1::notify(message);
 }
-void UnplugController::onViewClosed() {
+void UnplugController::onViewClosed()
+{
   auto message = owned(allocateMessage());
   message->setMessageID(vst3::messaageIds::userInterfaceChangedId);
   message->getAttributes()->setInt(vst3::messaageIds::userInterfaceStateId, 0);

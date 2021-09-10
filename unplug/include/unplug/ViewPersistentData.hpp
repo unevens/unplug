@@ -30,7 +30,8 @@ struct ViewPersistentData
   bool save(SaveInteger saveInteger,
             SaveIntegerArray saveIntegerArray,
             SaveDoubleArray saveDoubleArray,
-            SaveBytes saveBytes) const {
+            SaveBytes saveBytes) const
+  {
     {
       auto const numIntegersToSave = static_cast<int64_t>(integers.size());
       if (!saveInteger(numIntegersToSave))
@@ -72,7 +73,8 @@ struct ViewPersistentData
   bool load(LoadInteger loadInteger,
             LoadIntegerArray loadIntegerArray,
             LoadDoubleArray loadDoubleArray,
-            LoadBytes loadBytes) {
+            LoadBytes loadBytes)
+  {
     auto copy = ViewPersistentData{};
     bool const loaded = copy.loadInternal(loadInteger, loadIntegerArray, loadDoubleArray, loadBytes);
     if (loaded) {
@@ -86,7 +88,8 @@ private:
   bool loadInternal(LoadInteger loadInteger,
                     LoadIntegerArray loadIntegerArray,
                     LoadDoubleArray loadDoubleArray,
-                    LoadBytes loadBytes) {
+                    LoadBytes loadBytes)
+  {
     {
       int64_t numIntegersToLoad = 0;
       if (!loadInteger(numIntegersToLoad))

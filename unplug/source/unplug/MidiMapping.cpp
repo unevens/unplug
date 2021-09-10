@@ -17,34 +17,40 @@
 namespace unplug {
 namespace detail {
 
-MidiMappingSingleChannel::MidiMappingSingleChannel() {
+MidiMappingSingleChannel::MidiMappingSingleChannel()
+{
   std::fill(midiMapping.begin(), midiMapping.end(), unmapped);
 }
 
-void MidiMappingSingleChannel::mapParameter(ParamIndex paramIndex, int controller) {
+void MidiMappingSingleChannel::mapParameter(ParamIndex paramIndex, int controller)
+{
   midiMapping[static_cast<std::size_t>(controller)] = paramIndex;
 }
 
-ParamIndex MidiMappingSingleChannel::getParameter(int controller) const {
+ParamIndex MidiMappingSingleChannel::getParameter(int controller) const
+{
   return midiMapping[static_cast<std::size_t>(controller)];
 }
 
 } // namespace detail
 
-void MidiMapping::mapParameter(ParamIndex paramIndex, int controller, int channel) {
+void MidiMapping::mapParameter(ParamIndex paramIndex, int controller, int channel)
+{
   assert(channel < midiMappingByChannel.size());
   if (channel < midiMappingByChannel.size()) {
     midiMappingByChannel[channel].mapParameter(paramIndex, controller);
   }
 }
 
-void MidiMapping::mapParameter(ParamIndex paramIndex, int controller) {
+void MidiMapping::mapParameter(ParamIndex paramIndex, int controller)
+{
   for (auto& channelMidiMapping : midiMappingByChannel) {
     channelMidiMapping.mapParameter(paramIndex, controller);
   }
 }
 
-ParamIndex MidiMapping::getParameter(int controller, int channel) const {
+ParamIndex MidiMapping::getParameter(int controller, int channel) const
+{
   assert(channel < midiMappingByChannel.size());
   if (channel < midiMappingByChannel.size()) {
     return midiMappingByChannel[channel].getParameter(controller);

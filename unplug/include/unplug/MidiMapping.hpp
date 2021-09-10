@@ -12,8 +12,8 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include <array>
 #include "unplug/Index.hpp"
+#include <array>
 
 namespace unplug {
 
@@ -96,7 +96,7 @@ namespace detail {
 class MidiMappingSingleChannel final
 {
 public:
-  static constexpr auto unmapped = ParamIndex{-1};
+  static constexpr auto unmapped = ParamIndex{ -1 };
 
   MidiMappingSingleChannel();
 

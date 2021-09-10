@@ -17,16 +17,19 @@
 
 using namespace Steinberg;
 
-GainProcessor::GainProcessor() {
+GainProcessor::GainProcessor()
+{
   setControllerClass(kUnplugDemoEffectControllerUID);
 }
 
 GainProcessor::~GainProcessor() = default;
 
 template<class Sample, class Inputs, class Outputs>
-void process(Inputs const& inputs, Outputs& outputs, int numInputs, int numOutputs, int numSamples) {}
+void process(Inputs const& inputs, Outputs& outputs, int numInputs, int numOutputs, int numSamples)
+{}
 
-tresult PLUGIN_API GainProcessor::process(Vst::ProcessData& data) {
+tresult PLUGIN_API GainProcessor::process(Vst::ProcessData& data)
+{
 
   updateParametersToLastPoint(data);
 
@@ -98,7 +101,8 @@ tresult PLUGIN_API GainProcessor::process(Vst::ProcessData& data) {
   return kResultOk;
 }
 
-Steinberg::tresult GainProcessor::setupProcessing(Vst::ProcessSetup& newSetup) {
+Steinberg::tresult GainProcessor::setupProcessing(Vst::ProcessSetup& newSetup)
+{
   tresult result = UnplugProcessor::setupProcessing(newSetup);
   if (result == kResultFalse) {
     return kResultFalse;
@@ -108,7 +112,8 @@ Steinberg::tresult GainProcessor::setupProcessing(Vst::ProcessSetup& newSetup) {
   return kResultOk;
 }
 
-tresult GainProcessor::setActive(TBool state) {
+tresult GainProcessor::setActive(TBool state)
+{
   auto const input = getAudioInput(0);
   assert(input);
   if (input) {

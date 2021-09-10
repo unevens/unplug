@@ -115,7 +115,8 @@ struct LevelMeterSettings
 struct DifferenceLevelMeterSettings : LevelMeterSettings
 {
   float centerValue = 0.0f;
-  DifferenceLevelMeterSettings() {
+  DifferenceLevelMeterSettings()
+  {
     minValue = -36.f;
     maxValue = 36.f;
   }
@@ -256,15 +257,18 @@ struct ControlOutput
  * */
 bool Control(ParamIndex paramIndex, std::function<ControlOutput(ParameterData const& parameter)> const& control);
 
-inline ImVec4 operator*(ImVec4 const& lhs, float rhs) noexcept {
+inline ImVec4 operator*(ImVec4 const& lhs, float rhs) noexcept
+{
   return { lhs.x * rhs, lhs.y * rhs, lhs.z * rhs, lhs.w * rhs };
 }
 
-inline ImVec4 mix(ImVec4 a, ImVec4 b, float amountOfB) {
+inline ImVec4 mix(ImVec4 a, ImVec4 b, float amountOfB)
+{
   return a + (b - a) * amountOfB;
 }
 
-inline ImVec4 mix(ImVec4 a, ImVec4 b, ImVec4 intermediate, float amountOfB, float intermediatePoint = 0.5f) {
+inline ImVec4 mix(ImVec4 a, ImVec4 b, ImVec4 intermediate, float amountOfB, float intermediatePoint = 0.5f)
+{
   return amountOfB > intermediatePoint
            ? intermediate + (b - intermediate) * ((amountOfB - intermediatePoint) / (1.f - intermediatePoint))
            : a + (intermediate - a) * (amountOfB / intermediatePoint);

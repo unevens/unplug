@@ -34,14 +34,16 @@ namespace detail {
 class Presets
 {
 public:
-  static std::vector<Preset> const& get() {
+  static std::vector<Preset> const& get()
+  {
     static Presets instance;
     return instance.presets;
   }
 
 private:
   Presets()
-    : presets(getPresets()) {}
+    : presets(getPresets())
+  {}
 
   ~Presets() = default;
   Presets(const Presets&) = delete;

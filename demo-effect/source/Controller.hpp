@@ -21,5 +21,8 @@ public:
   GainController() = default;
   ~GainController() override = default;
 
-  static FUnknown* createInstance(void* /*context*/) { return (IEditController*)new GainController; }
+  static FUnknown* createInstance(void* /*context*/)
+  {
+    return (IEditController*)new GainController;
+  }
 };

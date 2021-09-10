@@ -24,7 +24,8 @@ using Presets = detail::Presets;
 
 namespace Steinberg::Vst {
 
-void UnplugProcessor::onInitialization() {
+void UnplugProcessor::onInitialization()
+{
   //--- create Audio IO ------
   addAudioInput(STR16("Stereo In"), SpeakerArr::kStereo);
   addAudioOutput(STR16("Stereo Out"), SpeakerArr::kStereo);
@@ -33,7 +34,8 @@ void UnplugProcessor::onInitialization() {
   addEventInput(STR16("Event In"), 1);
 }
 
-tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context) {
+tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
+{
   tresult result = AudioEffect::initialize(context);
   if (result != kResultOk) {
     return result;
@@ -47,12 +49,14 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context) {
   return kResultOk;
 }
 
-tresult PLUGIN_API UnplugProcessor::terminate() {
+tresult PLUGIN_API UnplugProcessor::terminate()
+{
   onTermination();
   return AudioEffect::terminate();
 }
 
-void UnplugProcessor::updateParametersToLastPoint(ProcessData& data) {
+void UnplugProcessor::updateParametersToLastPoint(ProcessData& data)
+{
   if (data.inputParameterChanges) {
     int32 numParamsChanged = data.inputParameterChanges->getParameterCount();
     for (int32 index = 0; index < numParamsChanged; index++) {
@@ -70,7 +74,8 @@ void UnplugProcessor::updateParametersToLastPoint(ProcessData& data) {
   }
 }
 
-tresult PLUGIN_API UnplugProcessor::setupProcessing(ProcessSetup& newSetup) {
+tresult PLUGIN_API UnplugProcessor::setupProcessing(ProcessSetup& newSetup)
+{
   tresult result = AudioEffect::setupProcessing(newSetup);
   if (result != kResultOk) {
     return result;
@@ -84,7 +89,8 @@ tresult PLUGIN_API UnplugProcessor::setupProcessing(ProcessSetup& newSetup) {
   return kResultOk;
 }
 
-tresult PLUGIN_API UnplugProcessor::setState(IBStream* state) {
+tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
+{
   IBStreamer streamer(state, kLittleEndian);
   for (int i = 0; i < NumParameters::value; ++i) {
     double value;
@@ -96,7 +102,8 @@ tresult PLUGIN_API UnplugProcessor::setState(IBStream* state) {
   return kResultOk;
 }
 
-tresult PLUGIN_API UnplugProcessor::getState(IBStream* state) {
+tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
+{
   IBStreamer streamer(state, kLittleEndian);
   for (int i = 0; i < NumParameters::value; ++i) {
     double const value = parameterStorage.get(i);
@@ -107,7 +114,8 @@ tresult PLUGIN_API UnplugProcessor::getState(IBStream* state) {
   return kResultOk;
 }
 
-tresult PLUGIN_API UnplugProcessor::canProcessSampleSize(int32 symbolicSampleSize) {
+tresult PLUGIN_API UnplugProcessor::canProcessSampleSize(int32 symbolicSampleSize)
+{
   if (symbolicSampleSize == Vst::kSample32)
     return kResultTrue;
 
@@ -117,7 +125,8 @@ tresult PLUGIN_API UnplugProcessor::canProcessSampleSize(int32 symbolicSampleSiz
   return kResultFalse;
 }
 
-tresult PLUGIN_API UnplugProcessor::notify(IMessage* message) {
+tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
+{
   using namespace vst3::messaageIds;
   if (!message)
     return kInvalidArgument;
@@ -153,7 +162,8 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message) {
   return AudioEffect::notify(message);
 }
 
-tresult UnplugProcessor::setActive(TBool state) {
+tresult UnplugProcessor::setActive(TBool state)
+{
   if constexpr (NumMeters::value > 0) {
     if (state) {
       if (!meterStorage) {
@@ -178,7 +188,8 @@ tresult UnplugProcessor::setActive(TBool state) {
 tresult UnplugProcessor::setBusArrangements(SpeakerArrangement* inputs,
                                             int32 numIns,
                                             SpeakerArrangement* outputs,
-                                            int32 numOuts){
+                                            int32 numOuts)
+{
   return acceptBusArrangement(inputs,
                               numIns,
                               outputs,
@@ -195,7 +206,8 @@ tresult UnplugProcessor::acceptBusArrangement(
   SpeakerArrangement* outputs,
   int32 numOuts,
   bool acceptSidechain,
-  const std::function<bool(int numInputs, int numOutputs, int numSidechain)>& acceptNumChannels) {
+  const std::function<bool(int numInputs, int numOutputs, int numSidechain)>& acceptNumChannels)
+{
   if (numOuts != 1) {
     return kResultFalse;
   }

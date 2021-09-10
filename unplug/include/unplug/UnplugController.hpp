@@ -34,6 +34,7 @@ public:
   using IEditController = IEditController;
   using MidiMapping = unplug::MidiMapping;
   using View = unplug::vst3::detail::Vst3View;
+  using Version = std::array<int32, 4>;
 
   UnplugController() = default;
   ~UnplugController() override = default;

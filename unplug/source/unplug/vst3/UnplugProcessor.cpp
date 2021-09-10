@@ -14,6 +14,7 @@
 #include "unplug/UnplugProcessor.hpp"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
+#include "unplug/GetVersion.hpp"
 #include "unplug/Presets.hpp"
 #include "unplug/UserInterface.hpp"
 #include "unplug/detail/GetSortedParameterDescriptions.hpp"
@@ -92,6 +93,10 @@ tresult PLUGIN_API UnplugProcessor::setupProcessing(ProcessSetup& newSetup)
 tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
 {
   IBStreamer streamer(state, kLittleEndian);
+  Version version;
+  if (!streamer.readInt32Array(version.data(), version.size())) {
+    return kResultFalse;
+  }
   for (int i = 0; i < NumParameters::value; ++i) {
     double value;
     if (!streamer.readDouble(value)) {
@@ -105,6 +110,10 @@ tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
 tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
 {
   IBStreamer streamer(state, kLittleEndian);
+  auto constexpr version = getVersion();
+  if (!streamer.writeInt32Array(version.data(), version.size())) {
+    return kResultFalse;
+  }
   for (int i = 0; i < NumParameters::value; ++i) {
     double const value = parameterStorage.get(i);
     if (!streamer.writeDouble(value)) {

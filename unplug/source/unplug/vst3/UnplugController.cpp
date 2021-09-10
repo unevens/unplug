@@ -16,6 +16,7 @@
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/base/ustring.h"
 #include "unplug/GetParameterDescriptions.hpp"
+#include "unplug/GetVersion.hpp"
 #include "unplug/Presets.hpp"
 #include "unplug/StringConversion.hpp"
 #include "unplug/UserInterface.hpp"
@@ -190,13 +191,13 @@ tresult PLUGIN_API UnplugController::setState(IBStream* state)
       return true;
     }
   };
-  std::array<int64, 2> loadedSize{};
-  if (!loadInteger(loadedSize[0]))
+  if (!streamer.readInt32Array(lastViewSize.data(), lastViewSize.size())) {
     return kResultFalse;
-  if (!loadInteger(loadedSize[1]))
+  }
+  auto version = Version{ 0 };
+  if (!streamer.readInt32Array(version.data(), version.size())) {
     return kResultFalse;
-  lastViewSize[0] = loadedSize[0];
-  lastViewSize[1] = loadedSize[1];
+  }
   return persistentData.load(loadInteger, loadIntegerArray, loadDoubleArray, loadBytes) ? kResultTrue : kResultFalse;
 }
 
@@ -212,8 +213,13 @@ tresult PLUGIN_API UnplugController::getState(IBStream* state)
     return streamer.writeDoubleArray(x, static_cast<int>(size));
   };
   auto const saveBytes = [&](void const* x, int64_t size) { return streamer.writeRaw(x, static_cast<int>(size)); };
-  saveInteger(lastViewSize[0]);
-  saveInteger(lastViewSize[1]);
+  if (!streamer.writeInt32Array(lastViewSize.data(), lastViewSize.size())) {
+    return kResultFalse;
+  }
+  auto constexpr version = getVersion();
+  if (!streamer.writeInt32Array(version.data(), version.size())) {
+    return kResultFalse;
+  }
   persistentData.save(saveInteger, saveIntegerArray, saveDoubleArray, saveBytes);
   return kResultTrue;
 }

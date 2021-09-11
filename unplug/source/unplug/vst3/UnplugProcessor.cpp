@@ -43,7 +43,7 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
   }
 
   auto const parameterDescriptions = detail::getSortedParameterDescriptions();
-  parameterStorage.initialize(parameterDescriptions);
+  processingData.parameters.initialize(parameterDescriptions);
 
   onInitialization();
 
@@ -68,7 +68,7 @@ void UnplugProcessor::updateParametersToLastPoint(ProcessData& data)
           int32 sampleOffset;
           paramQueue->getPoint(numPoints - 1, sampleOffset, value);
           auto const parameterTag = paramQueue->getParameterId();
-          parameterStorage.setNormalized(parameterTag, value);
+          processingData.parameters.setNormalized(parameterTag, value);
         }
       }
     }
@@ -81,10 +81,10 @@ tresult PLUGIN_API UnplugProcessor::setupProcessing(ProcessSetup& newSetup)
   if (result != kResultOk) {
     return result;
   }
-  if (!circularBufferStorage) {
-    circularBufferStorage = std::make_shared<CircularBufferStorage>();
+  if (!processingData.circularBuffers) {
+    processingData.circularBuffers = std::make_shared<CircularBufferStorage>();
   }
-  circularBufferStorage->get().resize(
+  processingData.circularBuffers->get().resize(
     newSetup.sampleRate, UserInterface::getRefreshRate(), newSetup.maxSamplesPerBlock);
   onSetupProcessing(newSetup);
   return kResultOk;
@@ -102,7 +102,7 @@ tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
     if (!streamer.readDouble(value)) {
       return kResultFalse;
     }
-    parameterStorage.set(i, value);
+    processingData.parameters.set(i, value);
   }
   return kResultOk;
 }
@@ -115,7 +115,7 @@ tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
     return kResultFalse;
   }
   for (int i = 0; i < NumParameters::value; ++i) {
-    double const value = parameterStorage.get(i);
+    double const value = processingData.parameters.get(i);
     if (!streamer.writeDouble(value)) {
       return kResultFalse;
     }
@@ -148,7 +148,7 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
       auto& preset = Presets::get()[programIndex];
       int i = 0;
       for (auto [parameterTag, value] : preset.parameterValues) {
-        parameterStorage.set(i++, value);
+        processingData.parameters.set(i++, value);
       }
       return kResultOk;
     }
@@ -161,7 +161,7 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
     bool gotStateOk = message->getAttributes()->getInt(userInterfaceStateId, userInterfaceState) == kResultOk;
     assert(gotStateOk);
     if (gotStateOk) {
-      isUserInterfaceOpen.store(userInterfaceState != 0, std::memory_order_release);
+      processingData.isUserInterfaceOpen.store(userInterfaceState != 0, std::memory_order_release);
       return kResultOk;
     }
     else {
@@ -175,19 +175,19 @@ tresult UnplugProcessor::setActive(TBool state)
 {
   if constexpr (NumMeters::value > 0) {
     if (state) {
-      if (!meterStorage) {
-        meterStorage = std::make_shared<MeterStorage>();
+      if (!processingData.meters) {
+        processingData.meters = std::make_shared<MeterStorage>();
       }
     }
     else {
-      meterStorage = nullptr;
+      processingData.meters = nullptr;
     }
     auto message = owned(allocateMessage());
     message->setMessageID(vst3::messaageIds::meterSharingId);
-    auto const meterStorageAddress = reinterpret_cast<uintptr_t>(&meterStorage);
+    auto const meterStorageAddress = reinterpret_cast<uintptr_t>(&processingData.meters);
     message->getAttributes()->setBinary(
       vst3::messaageIds::meterStorageId, &meterStorageAddress, sizeof(meterStorageAddress));
-    auto const circularBufferStorageAddress = reinterpret_cast<uintptr_t>(&circularBufferStorage);
+    auto const circularBufferStorageAddress = reinterpret_cast<uintptr_t>(&processingData.circularBuffers);
     message->getAttributes()->setBinary(
       vst3::messaageIds::circularBuffersId, &circularBufferStorageAddress, sizeof(circularBufferStorageAddress));
     sendMessage(message);

@@ -13,26 +13,18 @@
 
 #pragma once
 
-#include "unplug/UnplugProcessor.hpp"
+#include "unplug/Index.hpp"
 
-class GainProcessor final : public unplug::UnplugProcessor
+namespace unplug {
+template<class SampleType>
+struct IO
 {
-public:
-  GainProcessor();
-  ~GainProcessor() override;
-
-  static Steinberg::FUnknown* createInstance(void* /*context*/)
-  {
-    return (Steinberg::Vst::IAudioProcessor*)new GainProcessor;
-  }
-
-  Steinberg::tresult PLUGIN_API process(Steinberg::Vst::ProcessData& data) override;
-
-  Steinberg::tresult PLUGIN_API setupProcessing(Steinberg::Vst::ProcessSetup& newSetup) override;
-
-  Steinberg::tresult PLUGIN_API setActive(Steinberg::TBool state) override;
-
-private:
-  std::vector<float> levels;
-  float levelSmooothingAlpha = 0.0;
+  SampleType** inputs;
+  Index numInputs;
+  SampleType** outputs;
+  Index numOutputs;
+  SampleType** sidechainInputs;
+  Index numSidechainInputs;
 };
+
+} // namespace unplug

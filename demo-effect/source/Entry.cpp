@@ -11,9 +11,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#include "Controller.hpp"
+#include "GainController.hpp"
+#include "GainProcessor.hpp"
 #include "Id.hpp"
-#include "Processor.hpp"
 #include "version.h"
 
 #include "public.sdk/source/main/pluginfactory.h"

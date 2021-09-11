@@ -16,9 +16,11 @@
 #include "CircularBuffers.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
+#include "ProcessingData.hpp"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "unplug/GetParameterDescriptions.hpp"
+#include "unplug/IO.hpp"
 #include "unplug/MeterStorage.hpp"
 #include "unplug/ParameterStorage.hpp"
 #include <atomic>
@@ -29,8 +31,11 @@ namespace Steinberg::Vst {
 class UnplugProcessor : public AudioEffect
 {
 public:
+  using Index = unplug::Index;
   using ParamId = unplug::ParamIndex;
   using MeterId = unplug::MeterIndex;
+  template<class SampleType>
+  using IO = unplug::IO<SampleType>;
 
   //--- ---------------------------------------------------------------------
   // AudioEffect overrides:
@@ -59,16 +64,12 @@ public:
                                         int32 numOuts) override;
 
 protected:
-  template<class Setup,
-           class AutomatedProcessing,
-           class StaticProcessing,
-           class SetParameterAutomation,
-           class StopParameterAutomation>
-  void process(ProcessData& data,
-               Setup setup,
-               AutomatedProcessing automatedProcessing,
-               StaticProcessing staticProcessing,
-               SetParameterAutomation setParameterAutomation);
+  template<class SampleType, class StaticProcessing, class AutomatedProcessing, class SetParameterAutomation>
+  void processWithSamplePreciseAutomation(ProcessData& data,
+                                          IO<SampleType> io,
+                                          StaticProcessing staticProcessing,
+                                          AutomatedProcessing automatedProcessing,
+                                          SetParameterAutomation setParameterAutomation);
 
   void updateParametersToLastPoint(ProcessData& data);
 
@@ -100,37 +101,58 @@ private:
   }
 
 protected:
-  unplug::ParameterStorage parameterStorage;
+  unplug::ProcessingData processingData;
   std::array<int32, unplug::NumParameters::value> automationPointsHandled;
-  std::shared_ptr<unplug::MeterStorage> meterStorage;
-  std::shared_ptr<unplug::CircularBufferStorage> circularBufferStorage;
-  std::atomic<bool> isUserInterfaceOpen{ false };
 };
 
 } // namespace Steinberg::Vst
 
 namespace unplug {
 using UnplugProcessor = Steinberg::Vst::UnplugProcessor;
+
+namespace detail {
+template<class SampleType>
+SampleType** getBuffer(Steinberg::Vst::AudioBusBuffers& buffers)
+{
+  static_assert(std::is_same_v<SampleType, double> || std::is_same_v<SampleType, float>);
+  if constexpr (std::is_same_v<SampleType, double>) {
+    return buffers.channelBuffers64;
+  }
+  else {
+    return buffers.channelBuffers32;
+  }
 }
+} // namespace detail
+
+template<class SampleType>
+IO<SampleType> getIO(Steinberg::Vst::ProcessData& data)
+{
+  using namespace detail;
+  return {
+    data.numInputs >= 1 ? getBuffer<SampleType>(data.inputs[0]) : nullptr,
+    data.numInputs >= 1 ? data.inputs[0].numChannels : 0,
+    data.numOutputs >= 1 ? getBuffer<SampleType>(data.outputs[0]) : nullptr,
+    data.numOutputs >= 1 ? data.outputs[0].numChannels : 0,
+    data.numInputs >= 2 ? getBuffer<SampleType>(data.inputs[1]) : nullptr,
+    data.numInputs >= 2 ? data.inputs[1].numChannels : 0,
+  };
+}
+
+} // namespace unplug
 
 namespace Steinberg::Vst {
 
-template<class Setup,
-         class AutomatedProcessing,
-         class StaticProcessing,
-         class SetParameterAutomation,
-         class StopParameterAutomation>
-void UnplugProcessor::process(ProcessData& data,
-                              Setup setup,
-                              AutomatedProcessing automatedProcessing,
-                              StaticProcessing staticProcessing,
-                              SetParameterAutomation setParameterAutomation)
+template<class SampleType, class StaticProcessing, class AutomatedProcessing, class SetParameterAutomation>
+void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
+                                                         IO<SampleType> io,
+                                                         StaticProcessing staticProcessing,
+                                                         AutomatedProcessing automatedProcessing,
+                                                         SetParameterAutomation setParameterAutomation)
 {
-  setup(parameterStorage);
   if (data.inputParameterChanges) {
     int32 const numParamsChanged = data.inputParameterChanges->getParameterCount();
     if (numParamsChanged == 0) {
-      staticProcessing(data);
+      staticProcessing(io, data.numSamples);
     }
     else {
       // reset cache of handled points
@@ -147,8 +169,8 @@ void UnplugProcessor::process(ProcessData& data,
             paramQueue->getPoint(0, sampleOffset, value);
             if (sampleOffset > 0) {
               auto const parameterId = paramQueue->getParameterId();
-              value = parameterStorage.valueFromNormalized(parameterId, value);
-              auto const prevValue = parameterStorage.get(parameterId);
+              value = processingData.parameters.valueFromNormalized(parameterId, value);
+              auto const prevValue = processingData.parameters.get(parameterId);
               setParameterAutomation(parameterId, -1, prevValue, sampleOffset, value);
               automationPointsHandled[index] = 1;
               --numChangesToHandle;
@@ -156,7 +178,7 @@ void UnplugProcessor::process(ProcessData& data,
           }
         }
       }
-      //handle other changes until the end
+      // handle other changes until the end
       int32 currentSample = 0;
       while (numChangesToHandle > 0) {
         int32 nextSample = data.numSamples;
@@ -176,14 +198,14 @@ void UnplugProcessor::process(ProcessData& data,
               }
               const bool startsAtCurrentSample = sampleOffset == currentSample;
               if (startsAtCurrentSample) {
-                value = parameterStorage.valueFromNormalized(parameterId, value);
+                value = processingData.parameters.valueFromNormalized(parameterId, value);
                 ParamValue nextValue;
                 int32 nextSampleOffset;
                 // get the end
                 auto const endPoint = point + 1;
                 if (endPoint < numPoints) {
                   paramQueue->getPoint(endPoint, nextSampleOffset, nextValue);
-                  nextValue = parameterStorage.valueFromNormalized(parameterId, nextValue);
+                  nextValue = processingData.parameters.valueFromNormalized(parameterId, nextValue);
                 }
                 else {
                   nextSampleOffset = data.numSamples;
@@ -197,7 +219,7 @@ void UnplugProcessor::process(ProcessData& data,
                   auto const endPointAfterJump = endPoint + 1;
                   if (endPointAfterJump < numPoints) {
                     paramQueue->getPoint(endPointAfterJump, nextSampleOffsetAfterJump, nextValueAfterJump);
-                    nextValueAfterJump = parameterStorage.valueFromNormalized(parameterId, nextValueAfterJump);
+                    nextValueAfterJump = processingData.parameters.valueFromNormalized(parameterId, nextValueAfterJump);
                   }
                   else {
                     nextSampleOffsetAfterJump = data.numSamples;
@@ -220,13 +242,13 @@ void UnplugProcessor::process(ProcessData& data,
             }
           }
         }
-        automatedProcessing(data, currentSample, nextSample);
+        automatedProcessing(io, currentSample, nextSample);
         currentSample = nextSample;
       }
     }
   }
   else {
-    staticProcessing(data);
+    staticProcessing(io, data.numSamples);
   }
   updateParametersToLastPoint(data);
 }

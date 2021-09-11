@@ -13,6 +13,14 @@ set(unplug_cpp_standard 20)
 # sets the version of openGL to use: supported values are 2 and 3
 set(unplug_opengl_version 3)
 
+# on MacOS, by default unplug will build an universal binary. you can set unplug_override_macos_arch to the architecture
+# you want to build by uncommenting one of the next two lines. It can be useful because Compiler Explorer does not support
+# universal binaries.
+# Note: CMake sometimes does not update this when you reload the project without deleting the build folder manually.
+set(unplug_override_macos_arch "")
+#set(unplug_override_macos_arch "arm64")
+#set(unplug_override_macos_arch "x85_64")
+
 # set this to TRUE to make public some function to query the parameters that return false on failure. See Vst3ParameterAccess.hpp
 set(unplug_expose_vst3style_parameter_api FALSE)
 
@@ -25,17 +33,25 @@ endif (WIN32)
 
 #universal binary if building on arm64
 if (APPLE)
-    execute_process(
-            COMMAND uname -m
-            RESULT_VARIABLE result
-            OUTPUT_VARIABLE MACHINE_ARCHITECTURE
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if (MACHINE_ARCHITECTURE STREQUAL "arm64")
-        set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
-        message(STATUS "Supported architectures: x86_64, arm64")
+    if (unplug_override_macos_arch STREQUAL "arm64")
+        set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "")
+        message(STATUS "Supported architectures: arm64 (forced by user)")
+    elseif (unplug_override_macos_arch STREQUAL "x86_64")
+        set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "")
+        message(STATUS "Supported architectures: x86_64 (forced by user)")
     else ()
-        message(STATUS "Supported architectures: ${MACHINE_ARCHITECTURE}")
+        execute_process(
+                COMMAND uname -m
+                RESULT_VARIABLE result
+                OUTPUT_VARIABLE MACHINE_ARCHITECTURE
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if (MACHINE_ARCHITECTURE STREQUAL "arm64")
+            set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
+            message(STATUS "Supported architectures: x86_64, arm64")
+        else ()
+            message(STATUS "Supported architectures: ${MACHINE_ARCHITECTURE}")
+        endif ()
     endif ()
 endif (APPLE)
 

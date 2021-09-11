@@ -59,12 +59,6 @@ public:
                                         int32 numOuts) override;
 
 protected:
-  struct AutomationPoint
-  {
-    int32 parameter;
-    int32 point;
-  };
-
   template<class Setup,
            class AutomatedProcessing,
            class StaticProcessing,
@@ -74,8 +68,7 @@ protected:
                Setup setup,
                AutomatedProcessing automatedProcessing,
                StaticProcessing staticProcessing,
-               SetParameterAutomation setParameterAutomation,
-               StopParameterAutomation stopParameterAutomation);
+               SetParameterAutomation setParameterAutomation);
 
   void updateParametersToLastPoint(ProcessData& data);
 
@@ -108,9 +101,7 @@ private:
 
 protected:
   unplug::ParameterStorage parameterStorage;
-
   std::array<int32, unplug::NumParameters::value> automationPointsHandled;
-
   std::shared_ptr<unplug::MeterStorage> meterStorage;
   std::shared_ptr<unplug::CircularBufferStorage> circularBufferStorage;
   std::atomic<bool> isUserInterfaceOpen{ false };
@@ -133,8 +124,7 @@ void UnplugProcessor::process(ProcessData& data,
                               Setup setup,
                               AutomatedProcessing automatedProcessing,
                               StaticProcessing staticProcessing,
-                              SetParameterAutomation setParameterAutomation,
-                              StopParameterAutomation stopParameterAutomation)
+                              SetParameterAutomation setParameterAutomation)
 {
   setup(parameterStorage);
   if (data.inputParameterChanges) {

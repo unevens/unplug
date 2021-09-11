@@ -10,9 +10,6 @@ set(unplug_plugin_version 1.0.0)
 #set the cpp standard you want to use for the plugin (must be at least c++17)
 set(unplug_cpp_standard 20)
 
-#set the cpp standard you want to use for the plugin (must be at least c++17)
-set(unplug_cpp_standard 20)
-
 # sets the version of openGL to use: supported values are 2 and 3
 set(unplug_opengl_version 3)
 

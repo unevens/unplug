@@ -109,6 +109,7 @@ struct LevelMeterSettings
   float relativePositionOfIntermediateColor = 0.5f;
   FillStyle fillStyle = FillStyle::gradient;
   float fallbackValue = 0.f;
+  float thicknessAtZero = 1.f;
   std::function<float(float)> scaling = linearToDB<float>;
 };
 
@@ -132,12 +133,29 @@ void LevelMeter(MeterIndex meterIndex,
                 LevelMeterAlign alignment = LevelMeterAlign::toMinValue);
 
 /**
+ * Level meter taking an explicit value
+ * */
+void LevelMeterRaw(float value,
+                   std::string const& name,
+                   ImVec2 size,
+                   LevelMeterSettings const& settings,
+                   LevelMeterAlign alignment = LevelMeterAlign::toMinValue);
+
+/**
  * Difference level meter.
  * */
 void DifferenceLevelMeter(MeterIndex meterIndex,
                           std::string const& name,
                           ImVec2 size,
                           DifferenceLevelMeterSettings settings);
+
+/**
+ * Difference level taking an explicit value.
+ * */
+void DifferenceLevelMeterRaw(float value,
+                             std::string const& name,
+                             ImVec2 size,
+                             DifferenceLevelMeterSettings settings);
 
 /**
  * Displays the value of a parameter as text, allowing user input upon click or double click, centered in the rectangle

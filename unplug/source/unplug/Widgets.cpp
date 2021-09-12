@@ -24,15 +24,18 @@ namespace unplug {
 
 using namespace detail;
 
-static std::string makeLabel(ShowLabel showLabel, std::string const& parameterName, const char* controlSuffix) {
+static std::string makeLabel(ShowLabel showLabel, std::string const& parameterName, const char* controlSuffix)
+{
   return showLabel == ShowLabel::yes ? parameterName + "##" + controlSuffix : "##" + parameterName + controlSuffix;
 }
 
-static std::string makeFormat(ParameterData const& parameter, const char* format) {
+static std::string makeFormat(ParameterData const& parameter, const char* format)
+{
   return !parameter.measureUnit.empty() ? format + parameter.measureUnit : format;
 }
 
-bool Combo(ParamIndex paramIndex, ShowLabel showLabel) {
+bool Combo(ParamIndex paramIndex, ShowLabel showLabel)
+{
   using namespace ImGui;
 
   auto& parameters = getParameters();
@@ -89,7 +92,8 @@ bool Combo(ParamIndex paramIndex, ShowLabel showLabel) {
   return hasValueChanged;
 }
 
-bool Checkbox(ParamIndex paramIndex, ShowLabel showLabel) {
+bool Checkbox(ParamIndex paramIndex, ShowLabel showLabel)
+{
   return Control(paramIndex, [=](ParameterData const& parameter) {
     auto isChecked = parameter.value != 0.0;
     auto const controlName = makeLabel(showLabel, parameter.name, "CHECKBOX");
@@ -98,7 +102,8 @@ bool Checkbox(ParamIndex paramIndex, ShowLabel showLabel) {
   });
 }
 
-void TextCentered(std::string const& text, float height) {
+void TextCentered(std::string const& text, float height)
+{
   auto const bkgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
   ImGui::PushStyleColor(ImGuiCol_Button, bkgColor);
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, bkgColor);
@@ -107,26 +112,30 @@ void TextCentered(std::string const& text, float height) {
   ImGui::PopStyleColor(3);
 }
 
-void NameLabel(ParamIndex paramIndex) {
+void NameLabel(ParamIndex paramIndex)
+{
   auto& parameters = getParameters();
   auto const name = parameters.getName(paramIndex);
   return ImGui::TextUnformatted(name.c_str());
 }
 
-void NameLabelCentered(ParamIndex paramIndex, float height) {
+void NameLabelCentered(ParamIndex paramIndex, float height)
+{
   auto& parameters = getParameters();
   auto const name = parameters.getName(paramIndex);
   TextCentered(name + "##LABELCENTERED", height);
 }
 
-void ValueLabel(ParamIndex paramIndex, ShowLabel showLabel) {
+void ValueLabel(ParamIndex paramIndex, ShowLabel showLabel)
+{
   auto& parameters = getParameters();
   auto const valueAsText = parameters.getValueAsText(paramIndex);
   auto const text = showLabel == ShowLabel::yes ? (parameters.getName(paramIndex) + ": " + valueAsText) : valueAsText;
   return ImGui::TextUnformatted(text.c_str());
 }
 
-void ValueLabelCentered(ParamIndex paramIndex, ShowLabel showLabel, float height) {
+void ValueLabelCentered(ParamIndex paramIndex, ShowLabel showLabel, float height)
+{
   auto& parameters = getParameters();
   auto const valueAsText = parameters.getValueAsText(paramIndex);
   auto const text =
@@ -135,7 +144,8 @@ void ValueLabelCentered(ParamIndex paramIndex, ShowLabel showLabel, float height
   TextCentered(text, height);
 }
 
-void MeterValueLabel(MeterIndex meterIndex, std::function<std::string(float)> const& toString, float fallbackValue) {
+void MeterValueLabel(MeterIndex meterIndex, std::function<std::string(float)> const& toString, float fallbackValue)
+{
   auto meters = getMeters();
   auto const value = meters ? meters->get(meterIndex) : fallbackValue;
   auto const valueAsText = toString(value);
@@ -145,7 +155,8 @@ void MeterValueLabel(MeterIndex meterIndex, std::function<std::string(float)> co
 void MeterValueLabelCentered(MeterIndex meterIndex,
                              std::function<std::string(float)> const& toString,
                              float fallbackValue,
-                             float height) {
+                             float height)
+{
   auto meters = getMeters();
   auto const value = meters ? meters->get(meterIndex) : fallbackValue;
   auto const valueAsText = toString(value);
@@ -159,14 +170,17 @@ ParameterData::ParameterData(ParameterAccess& parameters, ParamIndex paramIndex)
   , minValue(static_cast<float>(parameters.getMinValue(paramIndex)))
   , maxValue(static_cast<float>(parameters.getMaxValue(paramIndex)))
   , measureUnit(parameters.getMeasureUnit(paramIndex))
-  , isBeingEdited(parameters.isBeingEdited(paramIndex)) {}
+  , isBeingEdited(parameters.isBeingEdited(paramIndex))
+{}
 
 EditingState::EditingState(const ParameterData& parameterData, bool isControlActive, std::string controlName)
   : isParameterBeingEdited(parameterData.isBeingEdited)
   , isControlActive(isControlActive)
-  , controlName(std::move(controlName)) {}
+  , controlName(std::move(controlName))
+{}
 
-bool Control(ParamIndex paramIndex, std::function<ControlOutput(ParameterData const& parameter)> const& control) {
+bool Control(ParamIndex paramIndex, std::function<ControlOutput(ParameterData const& parameter)> const& control)
+{
   auto& parameters = getParameters();
   auto const parameter = ParameterData{ parameters, paramIndex };
   auto const areaInfo = beginRegisterArea();
@@ -177,7 +191,8 @@ bool Control(ParamIndex paramIndex, std::function<ControlOutput(ParameterData co
   return output.isActive;
 }
 
-bool ValueAsText(ParamIndex paramIndex, ShowLabel showLabel, const char* format, bool noHighlight) {
+bool ValueAsText(ParamIndex paramIndex, ShowLabel showLabel, const char* format, bool noHighlight)
+{
   return Control(paramIndex, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "FLOATASTEXT");
@@ -188,7 +203,8 @@ bool ValueAsText(ParamIndex paramIndex, ShowLabel showLabel, const char* format,
   });
 }
 
-bool SliderFloat(ParamIndex paramIndex, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags) {
+bool SliderFloat(ParamIndex paramIndex, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
+{
   return Control(paramIndex, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "SLIDERFLOAT");
@@ -199,7 +215,8 @@ bool SliderFloat(ParamIndex paramIndex, ShowLabel showLabel, const char* format,
   });
 }
 
-bool VSliderFloat(ParamIndex paramIndex, ImVec2 size, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags) {
+bool VSliderFloat(ParamIndex paramIndex, ImVec2 size, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
+{
   return Control(paramIndex, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "VSLIDERFLOAT");
@@ -210,7 +227,8 @@ bool VSliderFloat(ParamIndex paramIndex, ImVec2 size, ShowLabel showLabel, const
   });
 }
 
-bool SliderInt(ParamIndex paramIndex, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags) {
+bool SliderInt(ParamIndex paramIndex, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
+{
   return Control(paramIndex, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<int>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "VSLIDERINT");
@@ -225,7 +243,8 @@ bool SliderInt(ParamIndex paramIndex, ShowLabel showLabel, const char* format, I
   });
 }
 
-bool VSliderInt(ParamIndex paramIndex, ImVec2 size, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags) {
+bool VSliderInt(ParamIndex paramIndex, ImVec2 size, ShowLabel showLabel, const char* format, ImGuiSliderFlags flags)
+{
   return Control(paramIndex, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<int>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "VSLIDERINT");
@@ -241,7 +260,8 @@ bool VSliderInt(ParamIndex paramIndex, ImVec2 size, ShowLabel showLabel, const c
   });
 }
 
-bool DragFloat(ParamIndex paramIndex, ShowLabel showLabel, float speed, const char* format, ImGuiSliderFlags flags) {
+bool DragFloat(ParamIndex paramIndex, ShowLabel showLabel, float speed, const char* format, ImGuiSliderFlags flags)
+{
   return Control(paramIndex, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "DRAGFLOAT");
@@ -252,7 +272,8 @@ bool DragFloat(ParamIndex paramIndex, ShowLabel showLabel, float speed, const ch
   });
 }
 
-void DrawSimpleKnob(KnobDrawData const& knob) {
+void DrawSimpleKnob(KnobDrawData const& knob)
+{
   auto const radius = 0.5f * ImGui::CalcItemWidth();
   // originally based on https://github.com/ocornut/imgui/issues/942
   ImU32 col32 = ImGui::GetColorU32(knob.isActive    ? ImGuiCol_FrameBgActive
@@ -265,10 +286,8 @@ void DrawSimpleKnob(KnobDrawData const& knob) {
   drawList->AddLine(knob.center, knob.pointerPosition, col32line, 1);
 }
 
-bool Knob(ParamIndex paramIndex,
-          float power,
-          float angleOffset,
-          std::function<void(KnobDrawData const&)> const& drawer) {
+bool Knob(ParamIndex paramIndex, float power, float angleOffset, std::function<void(KnobDrawData const&)> const& drawer)
+{
   return Control(paramIndex, [&](ParameterData const& parameter) {
     auto controlName = parameter.name + "##KNOB";
     auto const scaledInput =
@@ -284,7 +303,8 @@ bool Knob(ParamIndex paramIndex,
 bool KnobWithLabels(ParamIndex paramIndex,
                     float power,
                     float angleOffset,
-                    std::function<void(KnobDrawData const&)> const& drawer) {
+                    std::function<void(KnobDrawData const&)> const& drawer)
+{
   NameLabelCentered(paramIndex);
   auto const isActive = Knob(paramIndex, power, angleOffset, drawer);
   auto const bkgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
@@ -299,7 +319,8 @@ static void DrawLevelMeter(float scaledValue,
                            ImVec2 size,
                            LevelMeterSettings const& settings,
                            LevelMeterAlign alignment,
-                           bool isHorizontal) {
+                           bool isHorizontal)
+{
   auto const normalizedValue =
     std::max(0.f, std::min(1.f, (scaledValue - settings.minValue) / (settings.maxValue - settings.minValue)));
   auto const valueColor = mix(settings.minValueColor,
@@ -390,32 +411,45 @@ static void DrawLevelMeter(float scaledValue,
   }
 }
 
-static float computeMeterValue(MeterIndex meterIndex, LevelMeterSettings const& settings) {
+static float getMeterValue(MeterIndex meterIndex, LevelMeterSettings const& settings)
+{
   auto const meters = getMeters();
   auto const rawValue = meters ? meters->get(meterIndex) : settings.fallbackValue;
-  auto const scaledValue = settings.scaling(rawValue);
-  return scaledValue;
+  return rawValue;
 }
 
-void LevelMeter(MeterIndex meterIndex,
-                std::string const& name,
-                ImVec2 size,
-                LevelMeterSettings const& settings,
-                LevelMeterAlign alignment) {
-  auto const scaledValue = computeMeterValue(meterIndex, settings);
+void LevelMeterRaw(float rawValue,
+                   std::string const& name,
+                   ImVec2 size,
+                   LevelMeterSettings const& settings,
+                   LevelMeterAlign alignment)
+{
+  auto const scaledValue = settings.scaling(rawValue);
   auto const cursorPosition = ImGui::GetCursorScreenPos();
   ImGui::InvisibleButton((name + "##LEVELMETER").c_str(), size);
   bool const isHorizontal = size.x > size.y;
   DrawLevelMeter(scaledValue, cursorPosition, size, settings, alignment, isHorizontal);
 }
 
-void DifferenceLevelMeter(MeterIndex meterIndex,
-                          std::string const& name,
-                          ImVec2 size,
-                          DifferenceLevelMeterSettings settings) {
+void LevelMeter(MeterIndex meterIndex,
+                std::string const& name,
+                ImVec2 size,
+                LevelMeterSettings const& settings,
+                LevelMeterAlign alignment)
+{
+  auto const rawValue = getMeterValue(meterIndex, settings);
+  LevelMeterRaw(rawValue, name, size, settings, alignment);
+}
+
+void DifferenceLevelMeterRaw(float rawValue,
+                             std::string const& name,
+                             ImVec2 size,
+                             DifferenceLevelMeterSettings settings)
+{
+
   assert(settings.minValue < settings.centerValue);
   assert(settings.maxValue > settings.centerValue);
-  auto const scaledValue = computeMeterValue(meterIndex, settings);
+  auto const scaledValue = settings.scaling(rawValue);
   auto const scaledDifference = scaledValue - settings.centerValue;
   auto const centerPercentage = (settings.centerValue - settings.minValue) / (settings.maxValue - settings.minValue);
   bool const isHorizontal = size.x > size.y;
@@ -437,6 +471,14 @@ void DifferenceLevelMeter(MeterIndex meterIndex,
       DrawLevelMeter(
         scaledDifference, higherMeterLeftTop, higherMeterSize, settings, LevelMeterAlign::toMinValue, isHorizontal);
     }
+    if (std::abs(scaledDifference) < std::numeric_limits<float>::epsilon()) {
+      ImDrawList* drawList = ImGui::GetWindowDrawList();
+      auto const color = ImGui::ColorConvertFloat4ToU32(settings.minValueColor);
+      auto const x = cursorPosition.x + centerPercentage * size.x;
+      auto const top = ImVec2{ x, cursorPosition.y };
+      auto const bottom = ImVec2{ x, cursorPosition.y + size.y };
+      drawList->AddLine(top, bottom, color, settings.thicknessAtZero);
+    }
   }
   else {
     auto const higherMeterLeftTop = cursorPosition;
@@ -454,12 +496,30 @@ void DifferenceLevelMeter(MeterIndex meterIndex,
       DrawLevelMeter(
         scaledDifference, lowerMeterLeftTop, lowerMeterSize, settings, LevelMeterAlign::toMaxValue, isHorizontal);
     }
+    if (std::abs(scaledDifference) < std::numeric_limits<float>::epsilon()) {
+      ImDrawList* drawList = ImGui::GetWindowDrawList();
+      auto const color = ImGui::ColorConvertFloat4ToU32(settings.minValueColor);
+      auto const y = cursorPosition.y + centerPercentage * size.y;
+      auto const left = ImVec2{ cursorPosition.x, y };
+      auto const right = ImVec2{ cursorPosition.x + size.x, y };
+      drawList->AddLine(left, right, color, settings.thicknessAtZero);
+    }
   }
+}
+
+void DifferenceLevelMeter(MeterIndex meterIndex,
+                          std::string const& name,
+                          ImVec2 size,
+                          DifferenceLevelMeterSettings settings)
+{
+  auto const rawValue = getMeterValue(meterIndex, settings);
+  DifferenceLevelMeterRaw(rawValue, name, size, settings);
 }
 
 namespace detail {
 
-void applyRangedParameters(ParameterAccess& parameters, ParamIndex paramIndex, EditingState editingState, float value) {
+void applyRangedParameters(ParameterAccess& parameters, ParamIndex paramIndex, EditingState editingState, float value)
+{
 
   if (editingState.isParameterBeingEdited) {
     auto const controlDoingTheEditing = parameters.getEditingControl(paramIndex);
@@ -485,7 +545,8 @@ void applyRangedParameters(ParameterAccess& parameters, ParamIndex paramIndex, E
   }
 }
 
-KnobOutput Knob(const char* name, float const inputValue, float angleOffset) {
+KnobOutput Knob(const char* name, float const inputValue, float angleOffset)
+{
   // originally based on https://github.com/ocornut/imgui/issues/942
   auto const radius = 0.5f * ImGui::CalcItemWidth();
   ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
@@ -532,7 +593,8 @@ bool EditableScalar(const char* label,
                     void* p_min,
                     void* p_max,
                     const char* format,
-                    bool noHighlight) {
+                    bool noHighlight)
+{
   // based on ImGui::DragScalar
   using namespace ImGui;
   ImGuiWindow* window = GetCurrentWindow();
@@ -607,21 +669,25 @@ bool EditableScalar(const char* label,
   return false;
 }
 
-bool EditableFloat(const char* label, float* value, float min, float max, const char* format, bool noHighlight) {
+bool EditableFloat(const char* label, float* value, float min, float max, const char* format, bool noHighlight)
+{
   return EditableScalar(label, ImGuiDataType_Float, value, &min, &max, format, noHighlight);
 }
 
-bool EditableInt(const char* label, int* value, int min, int max, const char* format, bool noHighlight) {
+bool EditableInt(const char* label, int* value, int min, int max, const char* format, bool noHighlight)
+{
   return EditableScalar(label, ImGuiDataType_S32, value, &min, &max, format, noHighlight);
 }
 
-BeginRegisteAreaInfo beginRegisterArea() {
+BeginRegisteAreaInfo beginRegisterArea()
+{
   auto const width = 0.5f * ImGui::CalcItemWidth();
   auto const leftTop = ImGui::GetCursorScreenPos();
   return { static_cast<int>(leftTop.x), static_cast<int>(leftTop.y), static_cast<int>(leftTop.x + width) };
 }
 
-void endRegisterArea(ParameterAccess& parameters, ParamIndex paramIndex, BeginRegisteAreaInfo const& area) {
+void endRegisterArea(ParameterAccess& parameters, ParamIndex paramIndex, BeginRegisteAreaInfo const& area)
+{
   auto const bottom = static_cast<int>(ImGui::GetCursorScreenPos().y);
   parameters.addParameterRectangle(paramIndex, area[0], area[1], area[2], bottom);
 }

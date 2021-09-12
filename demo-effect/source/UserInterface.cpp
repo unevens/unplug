@@ -30,13 +30,19 @@ void paint()
   SliderFloat(Param::gain);
   MeterValueLabelCentered(Meter::level);
 
-  auto const differenceLevelMeterSettings = DifferenceLevelMeterSettings{};
-  DifferenceLevelMeter(Meter::level, "LevelMeter", { width, 50.f }, differenceLevelMeterSettings);
-
   auto levelMeterSettings = LevelMeterSettings{};
-  LevelMeter(Meter::level, "LevelMeter1", { width, 50.f }, levelMeterSettings, LevelMeterAlign::toMinValue);
-  levelMeterSettings.maxValueColor = ImVec4{ 0.f, 0.f, 1.f, 1.f };
-  LevelMeter(Meter::level, "LevelMeter2", { width, 50.f }, levelMeterSettings, LevelMeterAlign::toMaxValue);
+  LevelMeter(Meter::level, "LevelMeter", { width, 50.f }, levelMeterSettings);
+
+  // just to show the DifferenceLevelMeter and to demonstrate how to use the *Raw level meters. Normally
+  // the DifferencceLevelMeter would be used to show something like the gain reduction of a compressor using the
+  // appropriate MeterIndex.
+  auto& parameters = getParameters();
+  auto const gain = static_cast<float>(parameters.getValue(Param::gain));
+  auto differenceLevelMeterSettings = DifferenceLevelMeterSettings{};
+  differenceLevelMeterSettings.scaling = [](float x) { return x; };
+  differenceLevelMeterSettings.maxValue = static_cast<float>(parameters.getMaxValue(Param::gain));
+  differenceLevelMeterSettings.minValue = static_cast<float>(parameters.getMinValue(Param::gain));
+  DifferenceLevelMeterRaw(gain, "GainMeter", { width, 50.f }, differenceLevelMeterSettings);
 }
 
 std::array<int, 2> getDefaultSize()

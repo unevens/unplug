@@ -223,6 +223,12 @@ public:
     return circularBuffers;
   }
 
+  TCircularBufferStorage() = default;
+
+  TCircularBufferStorage(TCircularBufferStorage const&) = delete;
+
+  TCircularBufferStorage& operator=(TCircularBufferStorage const&) = delete;
+
 private:
   CircularBuffersClass circularBuffers;
   static inline thread_local CircularBuffersClass* currentInstance = nullptr;

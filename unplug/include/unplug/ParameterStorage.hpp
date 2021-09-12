@@ -85,7 +85,8 @@ ParameterValueType TParameterStorage<numParameters>::get(ParamIndex paramIndex) 
 }
 
 template<int numParameters>
-ParameterValueType TParameterStorage<numParameters>::setNormalized(ParamIndex paramIndex, ParameterValueType valueNormalized)
+ParameterValueType TParameterStorage<numParameters>::setNormalized(ParamIndex paramIndex,
+                                                                   ParameterValueType valueNormalized)
 {
   auto const value = valueFromNormalized(paramIndex, valueNormalized);
   set(paramIndex, value);

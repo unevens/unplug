@@ -17,6 +17,7 @@
 #include "Parameters.hpp"
 #include "unplug/Automation.hpp"
 #include "unplug/IO.hpp"
+#include "unplug/Math.hpp"
 #include "unplug/PluginState.hpp"
 #include <numeric>
 
@@ -61,31 +62,34 @@ struct State
 
 namespace detail {
 template<class SampleType>
-void levelMetering(State& data, SampleType** outputs, Index numOutputChannels, Index startSample, Index endSample)
+void levelMetering(State& state, SampleType** outputs, Index numOutputChannels, Index startSample, Index endSample)
 {
-  bool const wantsLevelMetering = data.pluginState.meters && data.pluginState.isUserInterfaceOpen;
+  bool const wantsLevelMetering = state.pluginState.meters && state.pluginState.isUserInterfaceOpen;
   if (wantsLevelMetering) {
-    assert(data.metering.levels.size() == numOutputChannels);
-    data.metering.levels.resize(numOutputChannels);
+    assert(state.metering.levels.size() == numOutputChannels);
+    state.metering.levels.resize(numOutputChannels);
     for (Index channel = 0; channel < numOutputChannels; ++channel) {
       for (Index sample = startSample; sample < endSample; ++sample) {
-        data.metering.levels[channel] +=
-          data.metering.levelSmoothingAlpha *
-          static_cast<float>(std::abs(outputs[channel][sample]) - data.metering.levels[channel]);
+        state.metering.levels[channel] +=
+          state.metering.levelSmoothingAlpha *
+          static_cast<float>(std::abs(outputs[channel][sample]) - state.metering.levels[channel]);
       }
     }
-    auto const level = std::reduce(data.metering.levels.begin(), data.metering.levels.end()) /
-                       static_cast<float>(data.metering.levels.size());
-    data.pluginState.meters->set(Meter::level, level);
+    auto const level = std::reduce(state.metering.levels.begin(), state.metering.levels.end()) /
+                       static_cast<float>(state.metering.levels.size());
+    state.pluginState.meters->set(Meter::level, level);
+    auto& circularBuffers = state.pluginState.circularBuffers->get();
+    unplug::sendToCircularBuffer(circularBuffers.level, outputs, numOutputChannels, startSample, endSample);
+    unplug::sendToWaveformCircularBuffer(circularBuffers.waveform, outputs, numOutputChannels, startSample, endSample);
   }
 }
 } // namespace detail
 
 template<class SampleType>
-void staticProcessing(State& data, IO<SampleType> io, Index numSamples)
+void staticProcessing(State& state, IO<SampleType> io, Index numSamples)
 {
-  auto const gain = data.pluginState.parameters.get(Param::gain);
-  bool const bypass = data.pluginState.parameters.get(Param::bypass) > 0.0;
+  auto const gain = state.pluginState.parameters.get(Param::gain);
+  bool const bypass = state.pluginState.parameters.get(Param::bypass) > 0.0;
   auto in = io.getIn(0);
   auto out = io.getOut(0);
   auto const numInputChannels = in.numChannels;
@@ -107,11 +111,15 @@ void staticProcessing(State& data, IO<SampleType> io, Index numSamples)
     auto outputBuffer = out.buffers[channelIndex];
     std::fill(outputBuffer, outputBuffer + numSamples, 0.0);
   }
-  detail::levelMetering(data, out.buffers, out.numChannels, 0, numSamples);
+  detail::levelMetering(state, out.buffers, out.numChannels, 0, numSamples);
 }
 
 template<class SampleType>
-void automatedProcessing(State& data, Automation<SampleType>& automation, IO<SampleType> io, Index startSample, Index endSample)
+void automatedProcessing(State& state,
+                         Automation<SampleType>& automation,
+                         IO<SampleType> io,
+                         Index startSample,
+                         Index endSample)
 {
   bool const bypass = automation.parameters[Param::bypass].currentValue > 0.0;
   auto in = io.getIn(0);
@@ -138,13 +146,12 @@ void automatedProcessing(State& data, Automation<SampleType>& automation, IO<Sam
     auto outputBuffer = out.buffers[channelIndex];
     std::fill(outputBuffer + startSample, outputBuffer + endSample, 0.0);
   }
-  detail::levelMetering(data, out.buffers, out.numChannels, startSample, endSample);
+  detail::levelMetering(state, out.buffers, out.numChannels, startSample, endSample);
 }
 
 template<class SampleType>
-unplug::LinearAutomation<SampleType> prepareAutomation(State& data)
+unplug::LinearAutomation<SampleType> prepareAutomation(State& state)
 {
-  return unplug::LinearAutomation<SampleType>(data.pluginState.parameters);
+  return unplug::LinearAutomation<SampleType>(state.pluginState.parameters);
 };
-
 }; // namespace GainDsp

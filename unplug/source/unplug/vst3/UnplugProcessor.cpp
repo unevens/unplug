@@ -12,7 +12,6 @@
 //------------------------------------------------------------------------
 
 #include "unplug/UnplugProcessor.hpp"
-#include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "unplug/GetVersion.hpp"
 #include "unplug/Presets.hpp"
@@ -43,7 +42,7 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
   }
 
   auto const parameterDescriptions = detail::getSortedParameterDescriptions();
-  processingData.parameters.initialize(parameterDescriptions);
+  pluginState.parameters.initialize(parameterDescriptions);
 
   onInitialization();
 
@@ -68,26 +67,11 @@ void UnplugProcessor::updateParametersToLastPoint(ProcessData& data)
           int32 sampleOffset;
           paramQueue->getPoint(numPoints - 1, sampleOffset, value);
           auto const parameterTag = paramQueue->getParameterId();
-          processingData.parameters.setNormalized(parameterTag, value);
+          pluginState.parameters.setNormalized(parameterTag, value);
         }
       }
     }
   }
-}
-
-tresult PLUGIN_API UnplugProcessor::setupProcessing(ProcessSetup& newSetup)
-{
-  tresult result = AudioEffect::setupProcessing(newSetup);
-  if (result != kResultOk) {
-    return result;
-  }
-  if (!processingData.circularBuffers) {
-    processingData.circularBuffers = std::make_shared<CircularBufferStorage>();
-  }
-  processingData.circularBuffers->get().resize(
-    newSetup.sampleRate, UserInterface::getRefreshRate(), newSetup.maxSamplesPerBlock);
-  onSetupProcessing(newSetup);
-  return kResultOk;
 }
 
 tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
@@ -102,9 +86,9 @@ tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
     if (!streamer.readDouble(value)) {
       return kResultFalse;
     }
-    processingData.parameters.set(i, value);
+    pluginState.parameters.set(i, value);
   }
-  return kResultOk;
+  return onSetState(streamer) ? kResultOk : kResultFalse;
 }
 
 tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
@@ -115,12 +99,12 @@ tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
     return kResultFalse;
   }
   for (int i = 0; i < NumParameters::value; ++i) {
-    double const value = processingData.parameters.get(i);
+    double const value = pluginState.parameters.get(i);
     if (!streamer.writeDouble(value)) {
       return kResultFalse;
     }
   }
-  return kResultOk;
+  return onGetState(streamer) ? kResultOk : kResultFalse;
 }
 
 tresult PLUGIN_API UnplugProcessor::canProcessSampleSize(int32 symbolicSampleSize)
@@ -148,7 +132,7 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
       auto& preset = Presets::get()[programIndex];
       int i = 0;
       for (auto [parameterTag, value] : preset.parameterValues) {
-        processingData.parameters.set(i++, value);
+        pluginState.parameters.set(i++, value);
       }
       return kResultOk;
     }
@@ -161,7 +145,7 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
     bool gotStateOk = message->getAttributes()->getInt(userInterfaceStateId, userInterfaceState) == kResultOk;
     assert(gotStateOk);
     if (gotStateOk) {
-      processingData.isUserInterfaceOpen.store(userInterfaceState != 0, std::memory_order_release);
+      pluginState.isUserInterfaceOpen.store(userInterfaceState != 0, std::memory_order_release);
       return kResultOk;
     }
     else {
@@ -174,25 +158,32 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
 
 tresult UnplugProcessor::setActive(TBool state)
 {
-  if constexpr (NumMeters::value > 0) {
-    if (state) {
-      if (!processingData.meters) {
-        processingData.meters = std::make_shared<MeterStorage>();
-      }
+  if (state) {
+    if (!pluginState.meters) {
+      pluginState.meters = std::make_shared<MeterStorage>();
     }
-    else {
-      processingData.meters = nullptr;
-    }
-    auto message = owned(allocateMessage());
-    message->setMessageID(vst3::messaageIds::meterSharingId);
-    auto const meterStorageAddress = reinterpret_cast<uintptr_t>(&processingData.meters);
-    message->getAttributes()->setBinary(
-      vst3::messaageIds::meterStorageId, &meterStorageAddress, sizeof(meterStorageAddress));
-    auto const circularBufferStorageAddress = reinterpret_cast<uintptr_t>(&processingData.circularBuffers);
-    message->getAttributes()->setBinary(
-      vst3::messaageIds::circularBuffersId, &circularBufferStorageAddress, sizeof(circularBufferStorageAddress));
-    sendMessage(message);
   }
+  else {
+    pluginState.meters = nullptr;
+  }
+
+  if (!pluginState.circularBuffers) {
+    pluginState.circularBuffers = std::make_shared<CircularBufferStorage>();
+  }
+  auto const numIO = getNumIO();
+  pluginState.circularBuffers->get().resize(
+    processSetup.sampleRate, UserInterface::getRefreshRate(), processSetup.maxSamplesPerBlock, numIO);
+
+  auto message = owned(allocateMessage());
+  message->setMessageID(vst3::messaageIds::meterSharingId);
+  auto const meterStorageAddress = reinterpret_cast<uintptr_t>(&pluginState.meters);
+  message->getAttributes()->setBinary(
+    vst3::messaageIds::meterStorageId, &meterStorageAddress, sizeof(meterStorageAddress));
+  auto const circularBufferStorageAddress = reinterpret_cast<uintptr_t>(&pluginState.circularBuffers);
+  message->getAttributes()->setBinary(
+    vst3::messaageIds::circularBuffersId, &circularBufferStorageAddress, sizeof(circularBufferStorageAddress));
+  sendMessage(message);
+
   onSetActive(state);
   return AudioEffect::setActive(state);
 }
@@ -244,7 +235,8 @@ tresult UnplugProcessor::acceptSimpleBusArrangement(
   }
   return kResultTrue;
 }
-UnplugProcessor::NumIO UnplugProcessor::getNumIO()
+
+unplug::NumIO UnplugProcessor::getNumIO()
 {
   auto const input = getAudioInput(0);
   auto const output = getAudioOutput(0);

@@ -13,6 +13,8 @@
 
 #pragma once
 #include "unplug/Index.hpp"
+#include "unplug/Math.hpp"
+#include "unplug/NumIO.hpp"
 #include <algorithm>
 #include <atomic>
 #include <cassert>
@@ -21,13 +23,21 @@
 
 namespace unplug {
 
-template<class Buffer>
+template<class ElementType, class Allocator = std::allocator<ElementType>>
 class CircularBuffer
 {
 public:
-  virtual float getPointsPerSecond() = 0;
+  using Buffer = std::vector<ElementType, Allocator>;
 
-  virtual float getDurationInSeconds() = 0;
+  Buffer& getBuffer()
+  {
+    return buffer;
+  }
+
+  auto& at(Index channel, Index pointIndex)
+  {
+    return buffer[numChannels * pointIndex + channel];
+  }
 
   Index getCircularIndex(Index index) const
   {
@@ -37,7 +47,7 @@ public:
 
   Index getWritePosition() const
   {
-    return writePosition.load(std::memory_order_acquire);
+    return static_cast<Index>(writePosition.load(std::memory_order_acquire));
   }
 
   Index getReadPosition() const
@@ -55,27 +65,19 @@ public:
     return pointsPerSample;
   }
 
-  void incrementWritePosition(int amount)
+  float getSamplesPerPoint() const
   {
-    writePosition.fetch_add(amount, std::memory_order_release);
+    return samplesPerPoint;
   }
 
-  void resize(float sampleRate, float refreshRate, Index maxAudioBlockSize)
+  Index getNumChannels() const
   {
-    auto const pointsPerSecond = getPointsPerSecond();
-    auto const durationInSeconds = getDurationInSeconds();
-    pointsPerSample = pointsPerSecond / sampleRate;
-    auto const maxWriteIncrementPerAudioBlock = pointsPerSample * static_cast<float>(maxAudioBlockSize);
-    readBlockSize = static_cast<int>(std::ceil(durationInSeconds * pointsPerSecond));
-    auto const audioBlockDuration = static_cast<float>(maxAudioBlockSize) / sampleRate;
-    auto const refreshTime = 1.f / refreshRate;
-    auto const audioBlocksPerUserInterfaceRefreshTime = refreshTime / audioBlockDuration;
-    resize(static_cast<int>(std::ceil(maxWriteIncrementPerAudioBlock)), audioBlocksPerUserInterfaceRefreshTime);
+    return numChannels;
   }
 
-  Buffer& getBuffer()
+  void incrementWritePosition(Index amount)
   {
-    return buffer;
+    writePosition.fetch_add(static_cast<int>(amount), std::memory_order_release);
   }
 
   template<class T>
@@ -84,7 +86,38 @@ public:
     std::fill(std::begin(buffer), std::end(buffer), valueToResetTo);
   }
 
+  void resize(float sampleRate, float refreshRate, Index maxAudioBlockSize, NumIO numIO)
+  {
+    numChannels = choseNumChannels(numIO);
+    auto const pointsPerSecond = getPointsPerSecond();
+    auto const durationInSeconds = getDurationInSeconds();
+    pointsPerSample = pointsPerSecond / sampleRate;
+    samplesPerPoint = 1.f / pointsPerSample;
+    auto const maxWriteIncrementPerAudioBlock = numChannels * pointsPerSample * static_cast<float>(maxAudioBlockSize);
+    readBlockSize = numChannels * static_cast<int>(std::ceil(durationInSeconds * pointsPerSecond));
+    auto const audioBlockDuration = static_cast<float>(maxAudioBlockSize) / sampleRate;
+    auto const refreshTime = 1.f / refreshRate;
+    auto const audioBlocksPerUserInterfaceRefreshTime = refreshTime / audioBlockDuration;
+    resize(static_cast<int>(std::ceil(maxWriteIncrementPerAudioBlock)), audioBlocksPerUserInterfaceRefreshTime);
+  }
+
 private:
+  // todo: make these editable at runtime (allocating and deallocating on ui and sending buffer to audio thread)
+  virtual float getPointsPerSecond() const
+  {
+    return 128;
+  }
+
+  virtual float getDurationInSeconds() const
+  {
+    return 8;
+  }
+
+  virtual Index choseNumChannels(NumIO numIO) const
+  {
+    return numIO.numOuts;
+  }
+
   void resize(Index maxWriteIncrementPerAudioBlock, float audioBlocksPerUserInterfaceRefreshTime)
   {
     auto const bufferForProduction =
@@ -107,11 +140,69 @@ private:
     buffer.resize(newSize);
   }
 
+  Index numChannels = 1;
   std::atomic<unsigned int> writePosition{ 0 };
-  int readBlockSize = 0;
+  Index readBlockSize = 0;
   float pointsPerSample = 1.f;
+  float samplesPerPoint = 1.f;
   Buffer buffer;
 };
+
+template<class SampleType,
+         class PreprocessValue,
+         class PostprocessValue,
+         class ElementType = float,
+         class Allocator = std::allocator<ElementType>>
+void sendToCircularBuffer(unplug::CircularBuffer<ElementType, Allocator>& circularBuffer,
+                          SampleType** buffers,
+                          Index numChannels,
+                          Index startSample,
+                          Index endSample,
+                          PreprocessValue preprocessValue,
+                          PostprocessValue postprocessValue)
+{
+  using FractionalIndex = unplug::FractionalIndex;
+  auto currentWritePosition = circularBuffer.getWritePosition();
+  auto const samplesPerPoint = FractionalIndex(circularBuffer.getSamplesPerPoint());
+  auto const invSamplePerPoint = 1.f / samplesPerPoint.value;
+  auto const numPoints =
+    FractionalIndex(static_cast<float>(endSample - startSample) * circularBuffer.getPointsPerSample());
+  for (Index channel = 0; channel < numChannels; ++channel) {
+    for (Index pointIndex = currentWritePosition; pointIndex < currentWritePosition + numPoints.integer; ++pointIndex) {
+      auto const firstSampleIndex = FractionalIndex(static_cast<float>(pointIndex) * samplesPerPoint.value);
+      auto pointValue = ElementType(0.f);
+      auto firstSampleValue = buffers[channel][firstSampleIndex.integer];
+      pointValue += (1.f - firstSampleIndex.fractional) * preprocessValue(firstSampleValue);
+      for (Index offset = 1; offset <= samplesPerPoint.integer; ++offset) {
+        auto sampleValue = buffers[channel][firstSampleIndex.integer + offset];
+        pointValue += preprocessValue(sampleValue);
+      }
+      auto const lastSampleIndex = FractionalIndex(firstSampleIndex.value + samplesPerPoint.value);
+      assert(lastSampleIndex.integer < endSample);
+      auto const lastSampleValue = buffers[channel][std::min(lastSampleIndex.integer, endSample - 1)];
+      pointValue += lastSampleIndex.fractional * preprocessValue(lastSampleValue);
+      circularBuffer.at(channel, pointIndex) = postprocessValue(pointValue * invSamplePerPoint);
+    }
+  }
+  circularBuffer.incrementWritePosition(numPoints.integer);
+}
+
+template<class SampleType, class ElementType = float, class Allocator = std::allocator<ElementType>>
+void sendToCircularBuffer(unplug::CircularBuffer<ElementType, Allocator>& circularBuffer,
+                          SampleType** buffers,
+                          Index numChannels,
+                          Index startSample,
+                          Index endSample)
+{
+  sendToCircularBuffer(
+    circularBuffer,
+    buffers,
+    numChannels,
+    startSample,
+    endSample,
+    [](SampleType value) { return static_cast<ElementType>(value); },
+    [](SampleType value) { return static_cast<ElementType>(value); });
+}
 
 template<class CircularBuffersClass>
 class TCircularBufferStorage
@@ -136,5 +227,4 @@ private:
   CircularBuffersClass circularBuffers;
   static inline thread_local CircularBuffersClass* currentInstance = nullptr;
 };
-
 }; // namespace unplug

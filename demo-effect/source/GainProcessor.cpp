@@ -17,7 +17,7 @@
 namespace Steinberg::Vst {
 
 GainProcessor::GainProcessor()
-  : dspState{ processingData }
+  : dspState{ pluginState }
 {
   setControllerClass(kUnplugDemoEffectControllerUID);
 }
@@ -33,15 +33,11 @@ tresult PLUGIN_API GainProcessor::process(ProcessData& data)
   return kResultOk;
 }
 
-void GainProcessor::onSetupProcessing(ProcessSetup& newSetup)
-{
-  dspState.metering.setSampleRate(newSetup.sampleRate);
-}
-
 void GainProcessor::onSetActive(bool isActive)
 {
   auto const numIO = getNumIO();
   dspState.metering.setNumChannels(numIO.numOuts);
+  dspState.metering.setSampleRate(processSetup.sampleRate);
 }
 
 tresult PLUGIN_API GainProcessor::setProcessing(TBool state)

@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/Index.hpp"
 #include <cmath>
 #include <string>
 
@@ -34,5 +35,18 @@ T dBToLinear(T dB)
 std::string linearToDBAsText(float linear);
 
 std::string linearToDBAsTextWithDecimalDigits(float linear, int numDecimalDigits);
+
+struct FractionalIndex final
+{
+  float value;
+  Index integer;
+  float fractional;
+
+  FractionalIndex(float value)
+    : value(value)
+    , integer(static_cast<Index>(std::trunc(value)))
+    , fractional(value - static_cast<float>(integer))
+  {}
+};
 
 } // namespace unplug

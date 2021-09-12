@@ -30,8 +30,6 @@ public:
 
   tresult PLUGIN_API process(ProcessData& data) override;
 
-  void onSetupProcessing(ProcessSetup& newSetup) override;
-
   void onSetActive(bool isActive) override;
 
   tresult PLUGIN_API setProcessing(TBool state) override;

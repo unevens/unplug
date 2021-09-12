@@ -17,6 +17,7 @@
 #include "Meters.hpp"
 #include "Parameters.hpp"
 #include "PluginState.hpp"
+#include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "unplug/AutomationEvent.hpp"
@@ -33,14 +34,14 @@ namespace Steinberg::Vst {
 
 class UnplugProcessor : public AudioEffect
 {
-public:
+protected:
   using Index = unplug::Index;
   using ParamId = unplug::ParamIndex;
   using MeterId = unplug::MeterIndex;
   template<class SampleType>
   using IO = unplug::IO<SampleType>;
+  using NumIO = unplug::NumIO;
 
-protected:
   /** helper function for processing without sample precise automation */
   template<class SampleType, class StaticProcessing>
   void staticProcessing(ProcessData& data, StaticProcessing staticProcessing);
@@ -69,12 +70,6 @@ protected:
     bool acceptSidechain,
     const std::function<bool(int numInputs, int numOutputs, int numSidechain)>& acceptNumChannels);
 
-  struct NumIO
-  {
-    Index numIns;
-    Index numOuts;
-  };
-
   NumIO getNumIO();
 
   /** Called from initialize, at first after constructor */
@@ -82,13 +77,6 @@ protected:
 
   /** Called at the end before destructor, by terminate */
   virtual void onTermination() {}
-
-  /**
-   * Called by setupProcessing on the UI Thread, before the processing is started. The newSetup object contains
-   * information such as the maximum number of samples per audio block and the currentSample rate, so this is the right
-   * place where to allocate resources that depend on those.
-   * */
-  virtual void onSetupProcessing(ProcessSetup& newSetup) {}
 
   /** Called by setActive on the UI Thread, before the processing is started, or after it is finished. */
   virtual void onSetActive(bool isActive) {}
@@ -106,8 +94,18 @@ protected:
                                     SpeakerArrangement* outputs,
                                     int32 numOuts);
 
+  virtual bool onGetState(IBStreamer& streamer)
+  {
+    return true;
+  }
+
+  virtual bool onSetState(IBStreamer& streamer)
+  {
+    return true;
+  }
+
 protected:
-  unplug::PluginState processingData;
+  unplug::PluginState pluginState;
   unplug::detail::CachedIO ioCache;
   std::array<int32, unplug::NumParameters::value> automationPointsHandled;
 
@@ -115,8 +113,6 @@ public:
   tresult PLUGIN_API initialize(FUnknown* context) final;
 
   tresult PLUGIN_API terminate() final;
-
-  tresult PLUGIN_API setupProcessing(ProcessSetup& newSetup) final;
 
   tresult PLUGIN_API setState(IBStream* state) final;
 
@@ -180,8 +176,8 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
             paramQueue->getPoint(0, sampleOffset, value);
             if (sampleOffset > 0) {
               auto const parameterId = paramQueue->getParameterId();
-              value = processingData.parameters.valueFromNormalized(parameterId, value);
-              auto const prevValue = processingData.parameters.get(parameterId);
+              value = pluginState.parameters.valueFromNormalized(parameterId, value);
+              auto const prevValue = pluginState.parameters.get(parameterId);
               setParameterAutomation(automation, AutomationEvent(parameterId, -1, prevValue, sampleOffset, value));
               automationPointsHandled[index] = 1;
               --numChangesToHandle;
@@ -209,14 +205,14 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
               }
               const bool startsAtCurrentSample = sampleOffset == currentSample;
               if (startsAtCurrentSample) {
-                value = processingData.parameters.valueFromNormalized(parameterId, value);
+                value = pluginState.parameters.valueFromNormalized(parameterId, value);
                 ParamValue nextValue;
                 int32 nextSampleOffset;
                 // get the end
                 auto const endPoint = point + 1;
                 if (endPoint < numPoints) {
                   paramQueue->getPoint(endPoint, nextSampleOffset, nextValue);
-                  nextValue = processingData.parameters.valueFromNormalized(parameterId, nextValue);
+                  nextValue = pluginState.parameters.valueFromNormalized(parameterId, nextValue);
                 }
                 else {
                   nextSampleOffset = data.numSamples;
@@ -230,7 +226,7 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
                   auto const endPointAfterJump = endPoint + 1;
                   if (endPointAfterJump < numPoints) {
                     paramQueue->getPoint(endPointAfterJump, nextSampleOffsetAfterJump, nextValueAfterJump);
-                    nextValueAfterJump = processingData.parameters.valueFromNormalized(parameterId, nextValueAfterJump);
+                    nextValueAfterJump = pluginState.parameters.valueFromNormalized(parameterId, nextValueAfterJump);
                   }
                   else {
                     nextSampleOffsetAfterJump = data.numSamples;

@@ -12,22 +12,15 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/CircularBuffer.hpp"
-#include "unplug/WaveformCircularBuffer.hpp"
-#include "unplug/IO.hpp"
 
-struct CircularBuffers
-{
-  unplug::WaveformCircularBuffer waveform;
-  unplug::CircularBuffer<float> level;
-
-  void resize(float sampleRate, float refreshRate, int maxAudioBlockSize, unplug::NumIO numIO)
-  {
-    waveform.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
-    level.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
-  }
-};
+#include "unplug/Index.hpp"
 
 namespace unplug {
-using CircularBufferStorage = TCircularBufferStorage<CircularBuffers>;
-}
+
+struct NumIO final
+{
+  Index numIns;
+  Index numOuts;
+};
+
+} // namespace unplug

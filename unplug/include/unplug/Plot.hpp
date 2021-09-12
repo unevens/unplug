@@ -12,22 +12,23 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "implot.h"
 #include "unplug/CircularBuffer.hpp"
-#include "unplug/WaveformCircularBuffer.hpp"
-#include "unplug/IO.hpp"
-
-struct CircularBuffers
-{
-  unplug::WaveformCircularBuffer waveform;
-  unplug::CircularBuffer<float> level;
-
-  void resize(float sampleRate, float refreshRate, int maxAudioBlockSize, unplug::NumIO numIO)
-  {
-    waveform.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
-    level.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
-  }
-};
 
 namespace unplug {
-using CircularBufferStorage = TCircularBufferStorage<CircularBuffers>;
+
+template<class SampleType, class Allocator>
+void PlotCircularBuffer(const char* name,
+                        CircularBuffer<std::vector<SampleType, Allocator>>& circularBuffer,
+                        float xScale = 1.f,
+                        float x0 = 0.f)
+{
+  ImPlot::BeginPlot(name);
+  auto& buffer = circularBuffer.getBuffer().data();
+  auto offset = circularBuffer.getReadPosition();
+  auto size = circularBuffer.getReadBlockSize();
+  ImPlot::PlotLine(name, buffer + offset, size, xScale, x0, 0, sizeof(SampleType) * circularBuffer.getNumChannels());
+  ImPlot::EndPlot();
 }
+
+}; // namespace unplug

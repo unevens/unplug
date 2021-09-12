@@ -14,6 +14,7 @@
 #pragma once
 
 #include "Parameters.hpp"
+#include "unplug/AutomationEvent.hpp"
 #include "unplug/ProcessingData.hpp"
 
 namespace unplug {
@@ -44,15 +45,12 @@ struct AutomationCache
 
 template<class SampleType>
 void setParameterAutomation(AutomationCache<SampleType>& automationCache,
-                            ParamIndex paramIndex,
-                            SampleType firstSample,
-                            SampleType valueAtFirstSample,
-                            SampleType lastSample,
-                            SampleType valueAtLastSample)
+                            AutomationEvent<SampleType> const& automationEvent)
 {
-  auto& parameter = automationCache.parameters[paramIndex];
-  parameter.currentValue = valueAtFirstSample;
-  parameter.delta = (valueAtLastSample - valueAtFirstSample) / (lastSample - firstSample);
+  auto& parameter = automationCache.parameters[automationEvent.paramIndex];
+  parameter.currentValue = automationEvent.valueAtFirstSample;
+  parameter.delta = (automationEvent.valueAtLastSample - automationEvent.valueAtFirstSample) /
+                    (automationEvent.lastSample - automationEvent.firstSample);
 }
 
 } // namespace unplug

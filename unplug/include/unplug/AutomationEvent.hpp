@@ -12,43 +12,30 @@
 //------------------------------------------------------------------------
 
 #pragma once
-
-#include "unplug/detail/CachedIO.hpp"
+#include "Index.hpp"
 
 namespace unplug {
 
-namespace detail {
-struct CachedIO;
-}
-
 template<class SampleType>
-class IO final
+struct AutomationEvent final
 {
-public:
-  struct Channels
-  {
-    SampleType** buffers{ nullptr };
-    Index numChannels = 0;
-  };
+  ParamIndex paramIndex;
+  SampleType firstSample;
+  SampleType valueAtFirstSample;
+  SampleType lastSample;
+  SampleType valueAtLastSample;
 
-  Channels getIn(Index inIndex)
-  {
-    auto const& in = io.ins[inIndex];
-    return { in.template getChannels<SampleType>(), in.numChannels };
-  }
-
-  Channels getOut(Index outIndex)
-  {
-    auto const& out = io.outs[outIndex];
-    return { out.template getChannels<SampleType>(), out.numChannels };
-  }
-
-  explicit IO(detail::CachedIO& io)
-    : io{ io }
+  explicit AutomationEvent(ParamIndex paramIndex,
+                           Index firstSample,
+                           SampleType valueAtFirstSample,
+                           Index lastSample,
+                           SampleType valueAtLastSample)
+    : paramIndex{ paramIndex }
+    , firstSample{ static_cast<SampleType>(firstSample) }
+    , valueAtFirstSample{ valueAtFirstSample }
+    , lastSample{ static_cast<SampleType>(lastSample) }
+    , valueAtLastSample{ valueAtLastSample }
   {}
-
-private:
-  detail::CachedIO& io;
 };
 
 } // namespace unplug

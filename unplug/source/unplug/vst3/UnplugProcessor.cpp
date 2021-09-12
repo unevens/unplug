@@ -194,22 +194,17 @@ tresult UnplugProcessor::setActive(TBool state)
   }
   return AudioEffect::setActive(state);
 }
+
 tresult UnplugProcessor::setBusArrangements(SpeakerArrangement* inputs,
                                             int32 numIns,
                                             SpeakerArrangement* outputs,
                                             int32 numOuts)
 {
-  return acceptBusArrangement(inputs,
-                              numIns,
-                              outputs,
-                              numOuts,
-                              false,
-                              [](int numInputChannels, int numOutputChannels, int numSidechainChannnels) {
-                                return numInputChannels == numOutputChannels;
-                              });
+  ioCache.resize(numIns, numOuts);
+  return kResultFalse;
 }
 
-tresult UnplugProcessor::acceptBusArrangement(
+tresult UnplugProcessor::acceptSimpleBusArrangement(
   SpeakerArrangement* inputs,
   int32 numIns,
   SpeakerArrangement* outputs,
@@ -246,6 +241,24 @@ tresult UnplugProcessor::acceptBusArrangement(
     getAudioInput(0)->setName(STR16("Sidechain"));
   }
   return kResultTrue;
+}
+UnplugProcessor::NumIO UnplugProcessor::getNumIO()
+{
+  auto const input = getAudioInput(0);
+  auto const output = getAudioOutput(0);
+  assert(input);
+  if (input) {
+    BusInfo inputInfo{};
+    bool const gotInputInfoOk = input->getInfo(inputInfo);
+    assert(gotInputInfoOk);
+    BusInfo outputInfo{};
+    bool const gotOutputInfoOk = output->getInfo(outputInfo);
+    assert(gotOutputInfoOk);
+    if (gotInputInfoOk && gotOutputInfoOk) {
+      return {inputInfo.channelCount, outputInfo.channelCount};
+    }
+  }
+  return {0,0};
 }
 
 } // namespace Steinberg::Vst

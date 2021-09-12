@@ -15,7 +15,9 @@
 
 #include "unplug/UnplugController.hpp"
 
-class GainController final : public unplug::UnplugController
+namespace Steinberg::Vst {
+
+class GainController final : public UnplugController
 {
 public:
   GainController() = default;
@@ -26,3 +28,5 @@ public:
     return (IEditController*)new GainController;
   }
 };
+
+} // namespace Steinberg::Vst

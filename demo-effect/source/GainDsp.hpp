@@ -37,24 +37,28 @@ public:
   {
     auto const gain = pluginData.parameters.get(Param::gain);
     bool const bypass = pluginData.parameters.get(Param::bypass) > 0.0;
-    auto const sharedChannels = std::min(io.numOutputs, io.numInputs);
+    auto in = io.getIn(0);
+    auto out = io.getOut(0);
+    auto const numInputChannels = in.numChannels;
+    auto const numOutputChannels = out.numChannels;
+    auto const sharedChannels = std::min(numOutputChannels, numInputChannels);
     for (Index channelIndex = 0; channelIndex < sharedChannels; ++channelIndex) {
-      auto& in = io.inputs[channelIndex];
-      auto& out = io.outputs[channelIndex];
+      auto inputBuffer = in.buffers[channelIndex];
+      auto outputBuffer = out.buffers[channelIndex];
       if (bypass) {
-        std::copy(&in[0], &in[0] + numSamples, &out[0]);
+        std::copy(inputBuffer, inputBuffer + numSamples, outputBuffer);
       }
       else {
         for (int s = 0; s < numSamples; ++s) {
-          out[s] = gain * in[s];
+          outputBuffer[s] = gain * inputBuffer[s];
         }
       }
     }
-    for (Index channelIndex = sharedChannels; channelIndex < io.numOutputs; ++channelIndex) {
-      auto& out = io.outputs[channelIndex];
-      std::fill(&out[0], &out[0] + numSamples, 0.0);
+    for (Index channelIndex = sharedChannels; channelIndex < numOutputChannels; ++channelIndex) {
+      auto outputBuffer = out.buffers[channelIndex];
+      std::fill(outputBuffer, outputBuffer + numSamples, 0.0);
     }
-    levelMetering(io.outputs, io.numOutputs, numSamples);
+    levelMetering(out.buffers, out.numChannels, 0, numSamples);
   }
 
   template<class SampleType>
@@ -64,26 +68,31 @@ public:
                            Index endSample)
   {
     bool const bypass = automation.parameters[Param::bypass].currentValue > 0.0;
-    auto const sharedChannels = std::min(io.numOutputs, io.numInputs);
+    auto in = io.getIn(0);
+    auto out = io.getOut(0);
+    auto const numInputChannels = in.numChannels;
+    auto const numOutputChannels = out.numChannels;
+    auto const sharedChannels = std::min(numOutputChannels, numInputChannels);
     if (bypass) {
       for (Index channelIndex = 0; channelIndex < sharedChannels; ++channelIndex) {
-        auto& in = io.inputs[channelIndex];
-        auto& out = io.outputs[channelIndex];
-        std::copy(in + startSample, in + endSample, out);
+        auto inputBuffer = in.buffers[channelIndex];
+        auto outputBuffer = out.buffers[channelIndex];
+        std::copy(inputBuffer + startSample, inputBuffer + endSample, outputBuffer + startSample);
       }
     }
     else {
       for (Index s = startSample; s < endSample; ++s) {
         for (Index channelIndex = 0; channelIndex < sharedChannels; ++channelIndex) {
           auto const gain = automation.increment(Param::gain);
-          io.outputs[channelIndex][s] = gain * io.inputs[channelIndex][s];
+          out.buffers[channelIndex][s] = gain * in.buffers[channelIndex][s];
         }
       }
     }
-    for (Index channelIndex = sharedChannels; channelIndex < io.numOutputs; ++channelIndex) {
-      auto& out = io.outputs[channelIndex];
-      std::fill(out + startSample, out + endSample, 0.0);
+    for (Index channelIndex = sharedChannels; channelIndex < numOutputChannels; ++channelIndex) {
+      auto outputBuffer = out.buffers[channelIndex];
+      std::fill(outputBuffer + startSample, outputBuffer + endSample, 0.0);
     }
+    levelMetering(out.buffers, out.numChannels, startSample, endSample);
   }
 
   void setup(double sampleRate, Index maxBlockSize)
@@ -104,14 +113,14 @@ public:
 
 private:
   template<class SampleType>
-  void levelMetering(SampleType** outputs, Index numOutputChannels, int numSamples)
+  void levelMetering(SampleType** outputs, Index numOutputChannels, Index startSample, Index endSample)
   {
     bool const wantsLevelMetering = pluginData.meters && pluginData.isUserInterfaceOpen;
     if (wantsLevelMetering) {
       assert(levels.size() == numOutputChannels);
       levels.resize(numOutputChannels);
       for (Index channel = 0; channel < numOutputChannels; ++channel) {
-        for (Index sample = 0; sample < numSamples; ++sample) {
+        for (Index sample = startSample; sample < endSample; ++sample) {
           levels[channel] +=
             levelSmoothingAlpha * static_cast<float>(std::abs(outputs[channel][sample]) - levels[channel]);
         }

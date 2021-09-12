@@ -13,10 +13,8 @@
 
 #include "GainProcessor.hpp"
 #include "Id.hpp"
-#include <numeric>
 
-using namespace Steinberg;
-using namespace Steinberg::Vst;
+namespace Steinberg::Vst {
 
 GainProcessor::GainProcessor()
   : dsp{ processingData }
@@ -49,27 +47,15 @@ Steinberg::tresult GainProcessor::setupProcessing(ProcessSetup& newSetup)
 
 tresult GainProcessor::setActive(TBool state)
 {
-  auto const input = getAudioInput(0);
-  auto const output = getAudioOutput(0);
-  assert(input);
-  if (input) {
-    BusInfo inputInfo{};
-    bool const gotInputInfoOk = input->getInfo(inputInfo);
-    assert(gotInputInfoOk);
-    BusInfo outputInfo{};
-    bool const gotOutputInfoOk = output->getInfo(outputInfo);
-    assert(gotOutputInfoOk);
-    if (gotInputInfoOk && gotOutputInfoOk) {
-      dsp.setNumChannels(inputInfo.channelCount, outputInfo.channelCount);
-    }
-  }
+  auto const numIO = getNumIO();
+  dsp.setNumChannels(numIO.numIns, numIO.numOuts);
   return UnplugProcessor::setActive(state);
 }
 
 Steinberg::tresult GainProcessor::setProcessing(Steinberg::TBool state)
 {
   dsp.reset();
-  return AudioEffect::setProcessing(state);
+  return UnplugProcessor::setProcessing(state);
 }
 
 template<class SampleType>
@@ -77,21 +63,33 @@ void GainProcessor::TProcess(ProcessData& data)
 {
   using namespace unplug;
   auto automationCache = AutomationCache<SampleType>{ processingData.parameters };
-  auto io = getIO<SampleType>(data);
 
-  processWithSamplePreciseAutomation(
+  processWithSamplePreciseAutomation<SampleType>(
     data,
-    io,
-    [this](IO<SampleType>& io, Index numSamples) { return dsp.staticProcessing(io, numSamples); },
-    [&](IO<SampleType>& io, Index startSample, Index endSample) {
+    [this](IO<SampleType> io, Index numSamples) { return dsp.staticProcessing(io, numSamples); },
+    [&](IO<SampleType> io, Index startSample, Index endSample) {
       return dsp.template automatedProcessing(automationCache, io, startSample, endSample);
     },
-    [&](ParamIndex paramIndex,
-        SampleType firstSample,
-        SampleType valueAtFirstSample,
-        SampleType lastSample,
-        SampleType valueAtLastSample) {
-      setParameterAutomation(
-        automationCache, paramIndex, firstSample, valueAtFirstSample, lastSample, valueAtLastSample);
+    [&](unplug::AutomationEvent<SampleType> automationEvent) {
+      setParameterAutomation(automationCache, automationEvent);
     });
 }
+
+Steinberg::tresult GainProcessor::setBusArrangements(SpeakerArrangement* inputs,
+                                                     int32 numIns,
+                                                     SpeakerArrangement* outputs,
+                                                     int32 numOuts)
+{
+  UnplugProcessor::setBusArrangements(inputs, numIns, outputs, numOuts);
+  bool const hasSidechain = false;
+  return acceptSimpleBusArrangement(inputs,
+                                    numIns,
+                                    outputs,
+                                    numOuts,
+                                    hasSidechain,
+                                    [](int numInputChannels, int numOutputChannels, int numSidechainChannnels) {
+                                      return numInputChannels == numOutputChannels;
+                                    });
+}
+
+} // namespace Steinberg::Vst

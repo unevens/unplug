@@ -78,8 +78,3 @@ private:
 };
 
 } // namespace Steinberg::Vst
-
-namespace unplug {
-
-using UnplugController = Steinberg::Vst::UnplugController;
-}

@@ -16,28 +16,36 @@
 #include "GainDsp.hpp"
 #include "unplug/UnplugProcessor.hpp"
 
-class GainProcessor final : public unplug::UnplugProcessor
+namespace Steinberg::Vst {
+
+class GainProcessor final : public UnplugProcessor
 {
 public:
   GainProcessor();
   ~GainProcessor() override;
 
-  static Steinberg::FUnknown* createInstance(void* /*context*/)
+  static FUnknown* createInstance(void* /*context*/)
   {
-    return (Steinberg::Vst::IAudioProcessor*)new GainProcessor;
+    return (IAudioProcessor*)new GainProcessor;
   }
 
-  Steinberg::tresult PLUGIN_API process(Steinberg::Vst::ProcessData& data) override;
+  tresult PLUGIN_API process(ProcessData& data) override;
 
-  Steinberg::tresult PLUGIN_API setupProcessing(Steinberg::Vst::ProcessSetup& newSetup) override;
+  tresult PLUGIN_API setupProcessing(ProcessSetup& newSetup) override;
 
-  Steinberg::tresult PLUGIN_API setActive(Steinberg::TBool state) override;
+  tresult PLUGIN_API setActive(TBool state) override;
 
-  Steinberg::tresult PLUGIN_API setProcessing(Steinberg::TBool state) override;
+  tresult PLUGIN_API setProcessing(TBool state) override;
+
+  tresult setBusArrangements(SpeakerArrangement* inputs,
+                             int32 numIns,
+                             SpeakerArrangement* outputs,
+                             int32 numOuts) override;
 
 private:
   template<class SampleType>
-  void TProcess(Steinberg::Vst::ProcessData& data);
+  void TProcess(ProcessData& data);
 
   GainDsp dsp;
 };
+} // namespace Steinberg::Vst

@@ -61,14 +61,21 @@ Steinberg::tresult GainProcessor::setProcessing(Steinberg::TBool state)
 template<class SampleType>
 void GainProcessor::TProcess(ProcessData& data)
 {
-  processWithSamplePreciseAutomation<SampleType>(
-    data,
-    [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); },
-    [this]() { return GainDsp::prepareAutomation<SampleType>(dspState); },
-    [&](auto& automation, IO<SampleType> io, Index startSample, Index endSample) {
-      GainDsp::automatedProcessing(dspState, automation, io, startSample, endSample);
-    },
-    [&](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); });
+  constexpr auto useSamplePreciseAutomation = true;
+  if constexpr (useSamplePreciseAutomation) {
+    processWithSamplePreciseAutomation<SampleType>(
+      data,
+      [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); },
+      [this]() { return GainDsp::prepareAutomation<SampleType>(dspState); },
+      [&](auto& automation, IO<SampleType> io, Index startSample, Index endSample) {
+        GainDsp::automatedProcessing(dspState, automation, io, startSample, endSample);
+      },
+      [&](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); });
+  }
+  else {
+    staticProcessing<SampleType>(
+      data, [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); });
+  }
 }
 
 Steinberg::tresult GainProcessor::setBusArrangements(SpeakerArrangement* inputs,

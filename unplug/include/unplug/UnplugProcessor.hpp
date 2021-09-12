@@ -67,6 +67,9 @@ public:
                                         int32 numOuts) override;
 
 protected:
+  template<class SampleType, class StaticProcessing>
+  void staticProcessing(ProcessData& data, StaticProcessing staticProcessing);
+
   template<class SampleType,
            class StaticProcessing,
            class PrepareAutomation,
@@ -120,13 +123,14 @@ protected:
   std::array<int32, unplug::NumParameters::value> automationPointsHandled;
 };
 
-} // namespace Steinberg::Vst
-
-namespace unplug {
-using UnplugProcessor = Steinberg::Vst::UnplugProcessor;
-} // namespace unplug
-
-namespace Steinberg::Vst {
+template<class SampleType, class StaticProcessing>
+void UnplugProcessor::staticProcessing(ProcessData& data, StaticProcessing staticProcessing)
+{
+  unplug::detail::setupIO<SampleType>(ioCache, data);
+  auto io = IO<SampleType>(ioCache);
+  updateParametersToLastPoint(data);
+  staticProcessing(io, data.numSamples);
+}
 
 template<class SampleType,
          class StaticProcessing,

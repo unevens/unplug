@@ -15,12 +15,12 @@
 
 #include "Parameters.hpp"
 #include "unplug/AutomationEvent.hpp"
-#include "unplug/ProcessingData.hpp"
+#include "unplug/PluginState.hpp"
 
 namespace unplug {
 
 template<class SampleType>
-struct AutomationCache
+struct LinearAutomation
 {
   struct ParameterCache
   {
@@ -35,7 +35,7 @@ struct AutomationCache
     return parameter.currentValue;
   }
 
-  explicit AutomationCache(ParameterStorage const& parameterStorage)
+  explicit LinearAutomation(ParameterStorage const& parameterStorage)
   {
     for (ParamIndex paramIndex = 0; paramIndex < unplug::NumParameters::value; ++paramIndex) {
       parameters[paramIndex].currentValue = parameterStorage.get(paramIndex);
@@ -44,10 +44,10 @@ struct AutomationCache
 };
 
 template<class SampleType>
-void setParameterAutomation(AutomationCache<SampleType>& automationCache,
+void setParameterAutomation(LinearAutomation<SampleType>& automation,
                             AutomationEvent<SampleType> const& automationEvent)
 {
-  auto& parameter = automationCache.parameters[automationEvent.paramIndex];
+  auto& parameter = automation.parameters[automationEvent.paramIndex];
   parameter.currentValue = automationEvent.valueAtFirstSample;
   parameter.delta = (automationEvent.valueAtLastSample - automationEvent.valueAtFirstSample) /
                     (automationEvent.lastSample - automationEvent.firstSample);

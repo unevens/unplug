@@ -16,7 +16,7 @@
 #include "CircularBuffers.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
-#include "ProcessingData.hpp"
+#include "PluginState.hpp"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "unplug/AutomationEvent.hpp"
@@ -67,9 +67,14 @@ public:
                                         int32 numOuts) override;
 
 protected:
-  template<class SampleType, class StaticProcessing, class AutomatedProcessing, class SetParameterAutomation>
+  template<class SampleType,
+           class StaticProcessing,
+           class PrepareAutomation,
+           class AutomatedProcessing,
+           class SetParameterAutomation>
   void processWithSamplePreciseAutomation(ProcessData& data,
                                           StaticProcessing staticProcessing,
+                                          PrepareAutomation prepareAutomation,
                                           AutomatedProcessing automatedProcessing,
                                           SetParameterAutomation setParameterAutomation);
 
@@ -83,7 +88,11 @@ protected:
     bool acceptSidechain,
     const std::function<bool(int numInputs, int numOutputs, int numSidechain)>& acceptNumChannels);
 
-  struct NumIO { Index numIns; Index numOuts; };
+  struct NumIO
+  {
+    Index numIns;
+    Index numOuts;
+  };
   NumIO getNumIO();
 
 private:
@@ -106,7 +115,7 @@ private:
   }
 
 protected:
-  unplug::ProcessingData processingData;
+  unplug::PluginState processingData;
   unplug::detail::CachedIO ioCache;
   std::array<int32, unplug::NumParameters::value> automationPointsHandled;
 };
@@ -119,15 +128,21 @@ using UnplugProcessor = Steinberg::Vst::UnplugProcessor;
 
 namespace Steinberg::Vst {
 
-template<class SampleType, class StaticProcessing, class AutomatedProcessing, class SetParameterAutomation>
+template<class SampleType,
+         class StaticProcessing,
+         class PrepareAutomation,
+         class AutomatedProcessing,
+         class SetParameterAutomation>
 void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
                                                          StaticProcessing staticProcessing,
+                                                         PrepareAutomation prepareAutomation,
                                                          AutomatedProcessing automatedProcessing,
                                                          SetParameterAutomation setParameterAutomation)
 {
   using AutomationEvent = unplug::AutomationEvent<SampleType>;
   unplug::detail::setupIO<SampleType>(ioCache, data);
   auto io = IO<SampleType>(ioCache);
+  auto automation = prepareAutomation();
   if (data.inputParameterChanges) {
     int32 const numParamsChanged = data.inputParameterChanges->getParameterCount();
     if (numParamsChanged == 0) {
@@ -150,7 +165,7 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
               auto const parameterId = paramQueue->getParameterId();
               value = processingData.parameters.valueFromNormalized(parameterId, value);
               auto const prevValue = processingData.parameters.get(parameterId);
-              setParameterAutomation(AutomationEvent(parameterId, -1, prevValue, sampleOffset, value));
+              setParameterAutomation(automation, AutomationEvent(parameterId, -1, prevValue, sampleOffset, value));
               automationPointsHandled[index] = 1;
               --numChangesToHandle;
             }
@@ -204,13 +219,15 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
                     nextSampleOffsetAfterJump = data.numSamples;
                     nextValueAfterJump = nextValue;
                   }
-                  setParameterAutomation(AutomationEvent(
-                    parameterId, sampleOffset, nextValue, nextSampleOffsetAfterJump, nextValueAfterJump));
+                  setParameterAutomation(
+                    automation,
+                    AutomationEvent(
+                      parameterId, sampleOffset, nextValue, nextSampleOffsetAfterJump, nextValueAfterJump));
                   nextSample = std::min(nextSample, nextSampleOffsetAfterJump);
                 }
                 else {
                   setParameterAutomation(
-                    AutomationEvent(parameterId, sampleOffset, value, nextSampleOffset, nextValue));
+                    automation, AutomationEvent(parameterId, sampleOffset, value, nextSampleOffset, nextValue));
                   nextSample = std::min(nextSample, nextSampleOffset);
                 }
                 --numChangesToHandle;
@@ -222,7 +239,7 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
             }
           }
         }
-        automatedProcessing(io, currentSample, nextSample);
+        automatedProcessing(automation, io, currentSample, nextSample);
         currentSample = nextSample;
       }
     }

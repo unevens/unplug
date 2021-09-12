@@ -18,7 +18,7 @@
 
 namespace unplug {
 
-struct ProcessingData
+struct PluginState
 {
   ParameterStorage parameters;
   std::shared_ptr<MeterStorage> meters;

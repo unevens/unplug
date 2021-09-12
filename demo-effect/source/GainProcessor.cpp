@@ -17,7 +17,7 @@
 namespace Steinberg::Vst {
 
 GainProcessor::GainProcessor()
-  : dsp{ processingData }
+  : dspState{ processingData }
 {
   setControllerClass(kUnplugDemoEffectControllerUID);
 }
@@ -41,38 +41,34 @@ Steinberg::tresult GainProcessor::setupProcessing(ProcessSetup& newSetup)
   if (result == kResultFalse) {
     return kResultFalse;
   }
-  dsp.setup(newSetup.sampleRate, newSetup.maxSamplesPerBlock);
+  dspState.metering.setSampleRate(newSetup.sampleRate);
   return kResultOk;
 }
 
 tresult GainProcessor::setActive(TBool state)
 {
   auto const numIO = getNumIO();
-  dsp.setNumChannels(numIO.numIns, numIO.numOuts);
+  dspState.metering.setNumChannels(numIO.numOuts);
   return UnplugProcessor::setActive(state);
 }
 
 Steinberg::tresult GainProcessor::setProcessing(Steinberg::TBool state)
 {
-  dsp.reset();
+  dspState.metering.reset();
   return UnplugProcessor::setProcessing(state);
 }
 
 template<class SampleType>
 void GainProcessor::TProcess(ProcessData& data)
 {
-  using namespace unplug;
-  auto automationCache = AutomationCache<SampleType>{ processingData.parameters };
-
   processWithSamplePreciseAutomation<SampleType>(
     data,
-    [this](IO<SampleType> io, Index numSamples) { return dsp.staticProcessing(io, numSamples); },
-    [&](IO<SampleType> io, Index startSample, Index endSample) {
-      return dsp.template automatedProcessing(automationCache, io, startSample, endSample);
+    [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); },
+    [this]() { return GainDsp::prepareAutomation<SampleType>(dspState); },
+    [&](auto& automation, IO<SampleType> io, Index startSample, Index endSample) {
+      GainDsp::automatedProcessing(dspState, automation, io, startSample, endSample);
     },
-    [&](unplug::AutomationEvent<SampleType> automationEvent) {
-      setParameterAutomation(automationCache, automationEvent);
-    });
+    [&](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); });
 }
 
 Steinberg::tresult GainProcessor::setBusArrangements(SpeakerArrangement* inputs,

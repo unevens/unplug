@@ -46,6 +46,6 @@ private:
   template<class SampleType>
   void TProcess(ProcessData& data);
 
-  GainDsp dsp;
+  GainDsp::State dspState;
 };
 } // namespace Steinberg::Vst

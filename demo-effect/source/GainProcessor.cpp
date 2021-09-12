@@ -22,8 +22,6 @@ GainProcessor::GainProcessor()
   setControllerClass(kUnplugDemoEffectControllerUID);
 }
 
-GainProcessor::~GainProcessor() = default;
-
 tresult PLUGIN_API GainProcessor::process(ProcessData& data)
 {
   if (data.symbolicSampleSize == kSample64) {

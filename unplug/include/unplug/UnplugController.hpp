@@ -36,9 +36,6 @@ public:
   using View = unplug::vst3::detail::Vst3View;
   using Version = std::array<int32, 4>;
 
-  UnplugController() = default;
-  ~UnplugController() override = default;
-
   // IPluginBase
   tresult PLUGIN_API initialize(FUnknown* context) override;
 
@@ -72,9 +69,9 @@ private:
   void applyPreset(int presetIndex);
 
   DEFINE_INTERFACES
-  DEF_INTERFACE(IMidiMapping);
-  END_DEFINE_INTERFACES(EditController)
-  DELEGATE_REFCOUNT(EditController)
+  DEF_INTERFACE(IMidiMapping)
+  END_DEFINE_INTERFACES(EditControllerEx1)
+  DELEGATE_REFCOUNT(EditControllerEx1)
 };
 
 } // namespace Steinberg::Vst

@@ -22,7 +22,6 @@ class GainProcessor final : public UnplugProcessor
 {
 public:
   GainProcessor();
-  ~GainProcessor() override;
 
   static FUnknown* createInstance(void* /*context*/)
   {

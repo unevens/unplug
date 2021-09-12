@@ -33,27 +33,21 @@ tresult PLUGIN_API GainProcessor::process(ProcessData& data)
   return kResultOk;
 }
 
-Steinberg::tresult GainProcessor::setupProcessing(ProcessSetup& newSetup)
+void GainProcessor::onSetupProcessing(ProcessSetup& newSetup)
 {
-  tresult result = UnplugProcessor::setupProcessing(newSetup);
-  if (result == kResultFalse) {
-    return kResultFalse;
-  }
   dspState.metering.setSampleRate(newSetup.sampleRate);
-  return kResultOk;
 }
 
-tresult GainProcessor::setActive(TBool state)
+void GainProcessor::onSetActive(bool isActive)
 {
   auto const numIO = getNumIO();
   dspState.metering.setNumChannels(numIO.numOuts);
-  return UnplugProcessor::setActive(state);
 }
 
-Steinberg::tresult GainProcessor::setProcessing(Steinberg::TBool state)
+tresult PLUGIN_API GainProcessor::setProcessing(TBool state)
 {
   dspState.metering.reset();
-  return UnplugProcessor::setProcessing(state);
+  return kResultOk;
 }
 
 template<class SampleType>
@@ -74,23 +68,6 @@ void GainProcessor::TProcess(ProcessData& data)
     staticProcessing<SampleType>(
       data, [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); });
   }
-}
-
-Steinberg::tresult GainProcessor::setBusArrangements(SpeakerArrangement* inputs,
-                                                     int32 numIns,
-                                                     SpeakerArrangement* outputs,
-                                                     int32 numOuts)
-{
-  UnplugProcessor::setBusArrangements(inputs, numIns, outputs, numOuts);
-  bool const hasSidechain = false;
-  return acceptSimpleBusArrangement(inputs,
-                                    numIns,
-                                    outputs,
-                                    numOuts,
-                                    hasSidechain,
-                                    [](int numInputChannels, int numOutputChannels, int numSidechainChannnels) {
-                                      return numInputChannels == numOutputChannels;
-                                    });
 }
 
 } // namespace Steinberg::Vst

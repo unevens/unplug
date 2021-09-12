@@ -168,7 +168,8 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
       return kResultFalse;
     }
   }
-  return AudioEffect::notify(message);
+  else
+    return onNotify(message) ? kResultOk : kResultFalse;
 }
 
 tresult UnplugProcessor::setActive(TBool state)
@@ -192,6 +193,7 @@ tresult UnplugProcessor::setActive(TBool state)
       vst3::messaageIds::circularBuffersId, &circularBufferStorageAddress, sizeof(circularBufferStorageAddress));
     sendMessage(message);
   }
+  onSetActive(state);
   return AudioEffect::setActive(state);
 }
 
@@ -201,7 +203,7 @@ tresult UnplugProcessor::setBusArrangements(SpeakerArrangement* inputs,
                                             int32 numOuts)
 {
   ioCache.resize(numIns, numOuts);
-  return kResultFalse;
+  return onSetBusArrangements(inputs, numIns, outputs, numOuts) ? kResultOk : kResultFalse;
 }
 
 tresult UnplugProcessor::acceptSimpleBusArrangement(
@@ -255,14 +257,31 @@ UnplugProcessor::NumIO UnplugProcessor::getNumIO()
     bool const gotOutputInfoOk = output->getInfo(outputInfo);
     assert(gotOutputInfoOk);
     if (gotInputInfoOk && gotOutputInfoOk) {
-      return {inputInfo.channelCount, outputInfo.channelCount};
+      return { inputInfo.channelCount, outputInfo.channelCount };
     }
   }
-  return {0,0};
+  return { 0, 0 };
+}
+
+bool UnplugProcessor::onNotify(IMessage* message)
+{
+  return AudioEffect::notify(message) == kResultOk;
+}
+
+bool UnplugProcessor::onSetBusArrangements(SpeakerArrangement* inputs,
+                                           int32 numIns,
+                                           SpeakerArrangement* outputs,
+                                           int32 numOuts)
+{
+  bool const hasSidechain = false;
+  return acceptSimpleBusArrangement(inputs,
+                                    numIns,
+                                    outputs,
+                                    numOuts,
+                                    hasSidechain,
+                                    [](int numInputChannels, int numOutputChannels, int numSidechainChannnels) {
+                                      return numInputChannels == numOutputChannels;
+                                    });
 }
 
 } // namespace Steinberg::Vst
-
-namespace unplug {
-using UnplugProcessor = Steinberg::Vst::UnplugProcessor;
-}

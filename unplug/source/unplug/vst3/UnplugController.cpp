@@ -303,9 +303,10 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
     circularBuffers = *reinterpret_cast<std::shared_ptr<CircularBufferStorage>*>(getAddress(circularBuffersId));
     return kResultOk;
   }
-
-  return EditControllerEx1::notify(message);
+  else
+    return onNotify(message) ? kResultOk : kResultFalse;
 }
+
 void UnplugController::onViewClosed()
 {
   auto message = owned(allocateMessage());
@@ -314,8 +315,9 @@ void UnplugController::onViewClosed()
   sendMessage(message);
 }
 
-} // namespace Steinberg::Vst
-
-namespace unplug {
-using UnplugController = Steinberg::Vst::UnplugController;
+bool UnplugController::onNotify(IMessage* message)
+{
+  return EditControllerEx1::notify(message) == kResultOk;
 }
+
+} // namespace Steinberg::Vst

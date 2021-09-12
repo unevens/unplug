@@ -36,26 +36,26 @@ public:
   using View = unplug::vst3::detail::Vst3View;
   using Version = std::array<int32, 4>;
 
-  // IPluginBase
-  tresult PLUGIN_API initialize(FUnknown* context) override;
+  virtual bool onNotify(IMessage* message);
 
-  // EditController
-  tresult PLUGIN_API setComponentState(IBStream* state) override;
+  tresult PLUGIN_API initialize(FUnknown* context) final;
 
-  IPlugView* PLUGIN_API createView(FIDString name) override;
+  tresult PLUGIN_API setComponentState(IBStream* state) final;
 
-  tresult PLUGIN_API setState(IBStream* state) override;
+  IPlugView* PLUGIN_API createView(FIDString name) final;
 
-  tresult PLUGIN_API getState(IBStream* state) override;
+  tresult PLUGIN_API setState(IBStream* state) final;
+
+  tresult PLUGIN_API getState(IBStream* state) final;
 
   tresult PLUGIN_API getMidiControllerAssignment(int32 busIndex,
                                                  int16 channel,
                                                  CtrlNumber midiControllerNumber,
-                                                 ParamID& tag) override;
+                                                 ParamID& tag) final;
 
-  tresult PLUGIN_API setParamNormalized(ParamID tag, ParamValue value) override;
+  tresult PLUGIN_API setParamNormalized(ParamID tag, ParamValue value) final;
 
-  tresult PLUGIN_API notify(IMessage* message) override;
+  tresult PLUGIN_API notify(IMessage* message) final;
 
   void onViewClosed();
 

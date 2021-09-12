@@ -30,16 +30,11 @@ public:
 
   tresult PLUGIN_API process(ProcessData& data) override;
 
-  tresult PLUGIN_API setupProcessing(ProcessSetup& newSetup) override;
+  void onSetupProcessing(ProcessSetup& newSetup) override;
 
-  tresult PLUGIN_API setActive(TBool state) override;
+  void onSetActive(bool isActive) override;
 
   tresult PLUGIN_API setProcessing(TBool state) override;
-
-  tresult setBusArrangements(SpeakerArrangement* inputs,
-                             int32 numIns,
-                             SpeakerArrangement* outputs,
-                             int32 numOuts) override;
 
 private:
   template<class SampleType>

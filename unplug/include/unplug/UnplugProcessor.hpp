@@ -40,36 +40,12 @@ public:
   template<class SampleType>
   using IO = unplug::IO<SampleType>;
 
-  //--- ---------------------------------------------------------------------
-  // AudioEffect overrides:
-  //--- ---------------------------------------------------------------------
-  tresult PLUGIN_API initialize(FUnknown* context) override;
-
-  tresult PLUGIN_API terminate() override;
-
-  /** Will be called before any process call */
-  tresult PLUGIN_API setupProcessing(ProcessSetup& newSetup) override;
-
-  /** For persistence */
-  tresult PLUGIN_API setState(IBStream* state) override;
-  tresult PLUGIN_API getState(IBStream* state) override;
-
-  /** Reports if the plugin supports 32/64 bit floating point audio */
-  Steinberg::tresult PLUGIN_API canProcessSampleSize(Steinberg::int32 symbolicSampleSize) override;
-
-  tresult PLUGIN_API notify(IMessage* message) override;
-
-  tresult PLUGIN_API setActive(TBool state) override;
-
-  tresult PLUGIN_API setBusArrangements(SpeakerArrangement* inputs,
-                                        int32 numIns,
-                                        SpeakerArrangement* outputs,
-                                        int32 numOuts) override;
-
 protected:
+  /** helper function for processing without sample precise automation */
   template<class SampleType, class StaticProcessing>
   void staticProcessing(ProcessData& data, StaticProcessing staticProcessing);
 
+  /** helper function for processing with sample precise automation */
   template<class SampleType,
            class StaticProcessing,
            class PrepareAutomation,
@@ -81,8 +57,10 @@ protected:
                                           AutomatedProcessing automatedProcessing,
                                           SetParameterAutomation setParameterAutomation);
 
+  /** updates the parameters to the last values received by the host  */
   void updateParametersToLastPoint(ProcessData& data);
 
+  /** helper function to accept common bus arrangements  */
   tresult acceptSimpleBusArrangement(
     SpeakerArrangement* inputs,
     int32 numIns,
@@ -96,9 +74,9 @@ protected:
     Index numIns;
     Index numOuts;
   };
+
   NumIO getNumIO();
 
-private:
   /** Called from initialize, at first after constructor */
   virtual void onInitialization();
 
@@ -112,15 +90,50 @@ private:
    * */
   virtual void onSetupProcessing(ProcessSetup& newSetup) {}
 
+  /** Called by setActive on the UI Thread, before the processing is started, or after it is finished. */
+  virtual void onSetActive(bool isActive) {}
+
   virtual bool supportsDoublePrecision()
   {
     return true;
   }
 
+  /** used for communication with the controller */
+  virtual bool onNotify(IMessage* message);
+
+  virtual bool onSetBusArrangements(SpeakerArrangement* inputs,
+                                    int32 numIns,
+                                    SpeakerArrangement* outputs,
+                                    int32 numOuts);
+
 protected:
   unplug::PluginState processingData;
   unplug::detail::CachedIO ioCache;
   std::array<int32, unplug::NumParameters::value> automationPointsHandled;
+
+public:
+  tresult PLUGIN_API initialize(FUnknown* context) final;
+
+  tresult PLUGIN_API terminate() final;
+
+  tresult PLUGIN_API setupProcessing(ProcessSetup& newSetup) final;
+
+  tresult PLUGIN_API setState(IBStream* state) final;
+
+  tresult PLUGIN_API getState(IBStream* state) final;
+
+  /** Reports if the plugin supports 32/64 bit floating point audio */
+  tresult PLUGIN_API canProcessSampleSize(int32 symbolicSampleSize) final;
+
+  tresult PLUGIN_API setActive(TBool state) final;
+
+  /** used for communication with the controller */
+  tresult PLUGIN_API notify(IMessage* message) final;
+
+  tresult PLUGIN_API setBusArrangements(SpeakerArrangement* inputs,
+                                        int32 numIns,
+                                        SpeakerArrangement* outputs,
+                                        int32 numOuts) final;
 };
 
 template<class SampleType, class StaticProcessing>

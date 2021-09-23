@@ -167,11 +167,11 @@ tresult UnplugProcessor::setActive(TBool state)
     pluginState.meters = nullptr;
   }
 
-  if (!pluginState.circularBuffers) {
-    pluginState.circularBuffers = std::make_shared<CircularBufferStorage>();
+  if (!pluginState.customSharedData) {
+    pluginState.customSharedData = std::make_shared<CustomSharedData>();
   }
   auto const numIO = getNumIO();
-  pluginState.circularBuffers->get().resize(
+  pluginState.customSharedData->get().resize(
     processSetup.sampleRate, UserInterface::getRefreshRate(), processSetup.maxSamplesPerBlock, numIO);
 
   auto message = owned(allocateMessage());
@@ -179,9 +179,9 @@ tresult UnplugProcessor::setActive(TBool state)
   auto const meterStorageAddress = reinterpret_cast<uintptr_t>(&pluginState.meters);
   message->getAttributes()->setBinary(
     vst3::messaageIds::meterStorageId, &meterStorageAddress, sizeof(meterStorageAddress));
-  auto const circularBufferStorageAddress = reinterpret_cast<uintptr_t>(&pluginState.circularBuffers);
+  auto const circularBufferStorageAddress = reinterpret_cast<uintptr_t>(&pluginState.customSharedData);
   message->getAttributes()->setBinary(
-    vst3::messaageIds::circularBuffersId, &circularBufferStorageAddress, sizeof(circularBufferStorageAddress));
+    vst3::messaageIds::customStorageId, &circularBufferStorageAddress, sizeof(circularBufferStorageAddress));
   sendMessage(message);
 
   onSetActive(state);

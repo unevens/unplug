@@ -12,7 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "CircularBuffers.hpp"
+#include "CustomSharedData.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
 #include "unplug/Automation.hpp"
@@ -78,9 +78,7 @@ void levelMetering(State& state, SampleType** outputs, Index numOutputChannels, 
     auto const level = std::reduce(state.metering.levels.begin(), state.metering.levels.end()) /
                        static_cast<float>(state.metering.levels.size());
     state.pluginState.meters->set(Meter::level, level);
-    auto& circularBuffers = state.pluginState.circularBuffers->get();
-    unplug::sendToCircularBuffer(circularBuffers.level, outputs, numOutputChannels, startSample, endSample);
-    unplug::sendToWaveformCircularBuffer(circularBuffers.waveform, outputs, numOutputChannels, startSample, endSample);
+    auto& circularBuffers = state.pluginState.customSharedData->get();
   }
 }
 } // namespace detail

@@ -12,22 +12,36 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/CircularBuffer.hpp"
-#include "unplug/WaveformCircularBuffer.hpp"
-#include "unplug/IO.hpp"
-
-struct CircularBuffers
-{
-  unplug::WaveformCircularBuffer waveform;
-  unplug::CircularBuffer<float> level;
-
-  void resize(float sampleRate, float refreshRate, int maxAudioBlockSize, unplug::NumIO numIO)
-  {
-    waveform.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
-    level.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
-  }
-};
 
 namespace unplug {
-using CircularBufferStorage = TCircularBufferStorage<CircularBuffers>;
-}
+
+template<class Data>
+class SharedData
+{
+public:
+  void setCurrent()
+  {
+    currentInstance = &storage;
+  }
+
+  static Data* getCurrent()
+  {
+    return currentInstance;
+  }
+
+  Data& get()
+  {
+    return storage;
+  }
+
+  SharedData() = default;
+
+  SharedData(SharedData const&) = delete;
+
+  SharedData& operator=(SharedData const&) = delete;
+
+private:
+  Data storage;
+  static inline thread_local Data* currentInstance = nullptr;
+};
+} // namespace unplug

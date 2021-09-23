@@ -12,9 +12,9 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/ParameterStorage.hpp"
+#include "CustomSharedData.hpp"
 #include "unplug/MeterStorage.hpp"
-#include "CircularBuffers.hpp"
+#include "unplug/ParameterStorage.hpp"
 
 namespace unplug {
 
@@ -22,7 +22,7 @@ struct PluginState
 {
   ParameterStorage parameters;
   std::shared_ptr<MeterStorage> meters;
-  std::shared_ptr<CircularBufferStorage> circularBuffers;
+  std::shared_ptr<CustomSharedData> customSharedData;
   std::atomic<bool> isUserInterfaceOpen{ false };
 };
 

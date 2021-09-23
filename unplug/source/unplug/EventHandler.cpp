@@ -28,11 +28,11 @@ namespace unplug::detail {
 EventHandler::EventHandler(pugl::View& view,
                            ParameterAccess& parameters,
                            std::shared_ptr<MeterStorage>& meters,
-                           std::shared_ptr<CircularBufferStorage>& circularBuffers)
+                           std::shared_ptr<CustomSharedData>& custom)
   : view{ view }
   , parameters{ parameters }
   , meters{ meters }
-  , circularBuffers{ circularBuffers }
+  , custom{ custom }
 {}
 
 void EventHandler::handleScroll(float dx, float dy)
@@ -295,7 +295,7 @@ void EventHandler::setCurrentContext()
   if constexpr (NumMeters::value > 0) {
     detail::setMeters(meters.get());
   }
-  circularBuffers->setCurrent();
+  custom->setCurrent();
 }
 
 int EventHandler::convertButtonCode(int code)

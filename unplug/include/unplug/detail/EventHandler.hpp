@@ -12,7 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "CircularBuffers.hpp"
+#include "CustomSharedData.hpp"
 #include "imgui.h"
 #include "implot.h"
 #include "pugl/pugl.hpp"
@@ -41,7 +41,7 @@ public:
   EventHandler(pugl::View& view,
                ParameterAccess& parameters,
                std::shared_ptr<MeterStorage>& meters,
-               std::shared_ptr<CircularBufferStorage>& circularBuffers);
+               std::shared_ptr<CustomSharedData>& custom);
 
   void handleScroll(float dx, float dy);
 
@@ -106,7 +106,7 @@ private:
 private:
   ParameterAccess& parameters;
   std::shared_ptr<MeterStorage>& meters;
-  std::shared_ptr<CircularBufferStorage>& circularBuffers;
+  std::shared_ptr<CustomSharedData>& custom;
   pugl::View& view;
   ImGuiContext* imguiContext = nullptr;
   ImPlotContext* implotContext = nullptr;

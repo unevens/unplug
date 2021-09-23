@@ -48,7 +48,7 @@ tresult Vst3View::attached(void* pParent, FIDString type)
 {
   CPluginView::attached(pParent, type);
   puglView = std::make_unique<pugl::View>(world);
-  eventHandler = std::make_unique<EventHandler>(*puglView, parameters, controller.meters, controller.circularBuffers);
+  eventHandler = std::make_unique<EventHandler>(*puglView, parameters, controller.meters, controller.customData);
   puglView->setEventHandler(*eventHandler);
   puglView->setParentWindow((pugl::NativeView)pParent);
   puglView->setWindowTitle(UserInterface::getWindowName());

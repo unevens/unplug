@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "CircularBuffers.hpp"
+#include "CustomSharedData.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
 #include "PluginState.hpp"

@@ -12,23 +12,17 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "implot.h"
-#include "unplug/CircularBuffer.hpp"
+#include "unplug/IO.hpp"
+#include "unplug/NumIO.hpp"
+#include "unplug/SharedData.hpp"
+
+struct PluginCustomSharedData
+{
+  void resize(float sampleRate, float refreshRate, int maxAudioBlockSize, unplug::NumIO numIO)
+  {
+  }
+};
 
 namespace unplug {
-
-template<class SampleType, class Allocator>
-void PlotCircularBuffer(const char* name,
-                        CircularBuffer<SampleType, Allocator>& circularBuffer,
-                        float xScale = 1.f,
-                        float x0 = 0.f)
-{
-  ImPlot::BeginPlot(name);
-  auto buffer = circularBuffer.getBuffer().data();
-  auto offset = circularBuffer.getReadPosition();
-  auto size = circularBuffer.getReadBlockSize();
-  ImPlot::PlotLine(name, buffer + offset, size, xScale, x0, 0, sizeof(SampleType) * circularBuffer.getNumChannels());
-  ImPlot::EndPlot();
+using CustomSharedData = SharedData<PluginCustomSharedData>;
 }
-
-}; // namespace unplug

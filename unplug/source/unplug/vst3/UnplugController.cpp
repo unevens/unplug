@@ -300,7 +300,7 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
       return address;
     };
     meters = *reinterpret_cast<std::shared_ptr<MeterStorage>*>(getAddress(meterStorageId));
-    circularBuffers = *reinterpret_cast<std::shared_ptr<CircularBufferStorage>*>(getAddress(circularBuffersId));
+    customData = *reinterpret_cast<std::shared_ptr<CustomSharedData>*>(getAddress(customStorageId));
     return kResultOk;
   }
   else

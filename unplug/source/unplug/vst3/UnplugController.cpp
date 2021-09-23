@@ -160,6 +160,10 @@ tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
   if (!state)
     return kResultFalse;
   IBStreamer streamer(state, kLittleEndian);
+  Version version;
+  if (!streamer.readInt32Array(version.data(), version.size())) {
+    return kResultFalse;
+  }
   for (int i = 0; i < NumParameters::value; ++i) {
     double value;
     if (!streamer.readDouble(value))

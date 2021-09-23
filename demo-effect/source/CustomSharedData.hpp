@@ -14,12 +14,16 @@
 #pragma once
 #include "unplug/IO.hpp"
 #include "unplug/NumIO.hpp"
+#include "unplug/RingBuffer.hpp"
 #include "unplug/SharedData.hpp"
 
-struct PluginCustomSharedData
+struct PluginCustomSharedData final
 {
+  unplug::RingBuffer<float> levelRingBuffer;
+
   void resize(float sampleRate, float refreshRate, int maxAudioBlockSize, unplug::NumIO numIO)
   {
+    levelRingBuffer.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
   }
 };
 

@@ -19,12 +19,12 @@ namespace unplug {
 
 template<class SampleType, class Allocator>
 void PlotCircularBuffer(const char* name,
-                        CircularBuffer<std::vector<SampleType, Allocator>>& circularBuffer,
+                        CircularBuffer<SampleType, Allocator>& circularBuffer,
                         float xScale = 1.f,
                         float x0 = 0.f)
 {
   ImPlot::BeginPlot(name);
-  auto& buffer = circularBuffer.getBuffer().data();
+  auto buffer = circularBuffer.getBuffer().data();
   auto offset = circularBuffer.getReadPosition();
   auto size = circularBuffer.getReadBlockSize();
   ImPlot::PlotLine(name, buffer + offset, size, xScale, x0, 0, sizeof(SampleType) * circularBuffer.getNumChannels());

@@ -77,18 +77,20 @@ public:
 
   void incrementWritePosition(Index amount)
   {
-    writePosition.fetch_add(static_cast<int>(amount), std::memory_order_release);
+    writePosition.fetch_add(static_cast<unsigned int>(amount), std::memory_order_release);
   }
 
   template<class T>
   void reset(T valueToResetTo)
   {
     std::fill(std::begin(buffer), std::end(buffer), valueToResetTo);
+    std::fill(std::begin(accumulator), std::end(accumulator), valueToResetTo);
   }
 
   void resize(float sampleRate, float refreshRate, Index maxAudioBlockSize, NumIO numIO)
   {
     numChannels = choseNumChannels(numIO);
+    accumulator.resize(numChannels);
     auto const pointsPerSecond = getPointsPerSecond();
     auto const durationInSeconds = getDurationInSeconds();
     pointsPerSample = pointsPerSecond / sampleRate;
@@ -100,6 +102,9 @@ public:
     auto const audioBlocksPerUserInterfaceRefreshTime = refreshTime / audioBlockDuration;
     resize(static_cast<int>(std::ceil(maxWriteIncrementPerAudioBlock)), audioBlocksPerUserInterfaceRefreshTime);
   }
+
+  std::vector<ElementType, Allocator> accumulator;
+  Index accumulatedSamples;
 
 private:
   // todo: make these editable at runtime (allocating and deallocating on ui and sending buffer to audio thread)
@@ -164,27 +169,38 @@ void sendToCircularBuffer(unplug::CircularBuffer<ElementType, Allocator>& circul
   using FractionalIndex = unplug::FractionalIndex;
   auto currentWritePosition = circularBuffer.getWritePosition();
   auto const samplesPerPoint = FractionalIndex(circularBuffer.getSamplesPerPoint());
-  auto const invSamplePerPoint = 1.f / samplesPerPoint.value;
-  auto const numPoints =
-    FractionalIndex(static_cast<float>(endSample - startSample) * circularBuffer.getPointsPerSample());
-  for (Index channel = 0; channel < numChannels; ++channel) {
-    for (Index pointIndex = currentWritePosition; pointIndex < currentWritePosition + numPoints.integer; ++pointIndex) {
-      auto const firstSampleIndex = FractionalIndex(static_cast<float>(pointIndex) * samplesPerPoint.value);
-      auto pointValue = ElementType(0.f);
-      auto firstSampleValue = buffers[channel][firstSampleIndex.integer];
-      pointValue += (1.f - firstSampleIndex.fractional) * preprocessValue(firstSampleValue);
-      for (Index offset = 1; offset <= samplesPerPoint.integer; ++offset) {
-        auto sampleValue = buffers[channel][firstSampleIndex.integer + offset];
-        pointValue += preprocessValue(sampleValue);
+  auto const pointsPerSample = circularBuffer.getPointsPerSample();
+  auto pointIndex = currentWritePosition;
+  auto fistSampleOfPoint = startSample;
+  while (true) {
+    auto const numSamplesNeededForNextPoint = samplesPerPoint.integer - circularBuffer.accumulatedSamples;
+    auto const lastSamplesOfPoint = fistSampleOfPoint + numSamplesNeededForNextPoint;
+    auto const lastPointToAccumulate = std::min(endSample, lastSamplesOfPoint);
+    for (Index sample = fistSampleOfPoint; sample < lastPointToAccumulate; ++sample) {
+      for (Index channel = 0; channel < numChannels; ++channel) {
+        auto const sampleValue = preprocessValue(buffers[channel][sample]);
+        circularBuffer.accumulator[channel] += sampleValue;
       }
-      auto const lastSampleIndex = FractionalIndex(firstSampleIndex.value + samplesPerPoint.value);
-      assert(lastSampleIndex.integer < endSample);
-      auto const lastSampleValue = buffers[channel][std::min(lastSampleIndex.integer, endSample - 1)];
-      pointValue += lastSampleIndex.fractional * preprocessValue(lastSampleValue);
-      circularBuffer.at(channel, pointIndex) = postprocessValue(pointValue * invSamplePerPoint);
+    }
+    bool const accumulationIsCompleted = lastSamplesOfPoint == lastPointToAccumulate;
+    if (accumulationIsCompleted) {
+      for (Index channel = 0; channel < numChannels; ++channel) {
+        auto pointValue = postprocessValue(pointsPerSample * circularBuffer.accumulator[channel]);
+        circularBuffer.at(channel, pointIndex) = pointValue;
+        circularBuffer.accumulator[channel] = ElementType(0.f);
+      }
+      ++pointIndex;
+      fistSampleOfPoint = lastPointToAccumulate;
+      circularBuffer.accumulatedSamples = 0;
+    }
+    else {
+      circularBuffer.accumulatedSamples += lastPointToAccumulate - fistSampleOfPoint;
+      break;
     }
   }
-  circularBuffer.incrementWritePosition(numPoints.integer);
+
+  auto const numComputedPoints = pointIndex - currentWritePosition;
+  circularBuffer.incrementWritePosition(numComputedPoints);
 }
 
 template<class SampleType, class ElementType = float, class Allocator = std::allocator<ElementType>>
@@ -233,4 +249,4 @@ private:
   CircularBuffersClass circularBuffers;
   static inline thread_local CircularBuffersClass* currentInstance = nullptr;
 };
-}; // namespace unplug
+} // namespace unplug

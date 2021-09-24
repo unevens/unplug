@@ -86,7 +86,7 @@ tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
     if (!streamer.readDouble(value)) {
       return kResultFalse;
     }
-    pluginState.parameters.set(i, value);
+    pluginState.parameters.setNormalized(i, value);
   }
   return onSetState(streamer) ? kResultOk : kResultFalse;
 }
@@ -99,7 +99,7 @@ tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
     return kResultFalse;
   }
   for (int i = 0; i < NumParameters::value; ++i) {
-    double const value = pluginState.parameters.get(i);
+    double const value = pluginState.parameters.getNormalized(i);
     if (!streamer.writeDouble(value)) {
       return kResultFalse;
     }

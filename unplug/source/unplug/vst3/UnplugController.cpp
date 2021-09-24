@@ -165,15 +165,15 @@ tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
     return kResultFalse;
   }
   for (Index paramIndex = 0; paramIndex < NumParameters::value; ++paramIndex) {
-    double value;
-    if (!streamer.readDouble(value))
+    double valueNormalized;
+    if (!streamer.readDouble(valueNormalized))
       return kResultFalse;
-    auto parameter = parameters.getParameter(paramIndex);
+    auto parameter = parameters.getParameterByIndex(paramIndex);
     bool const isProgramChange = (parameter->getInfo().flags & ParameterInfo::kIsProgramChange) != 0;
     assert(!isProgramChange);
     if (!isProgramChange){
-      auto const normalizedValue = parameter->toNormalized(value);
-      setParamNormalized(paramIndex, normalizedValue);
+      auto const parameterTag = parameter->getInfo().id;
+      setParamNormalized(parameterTag, valueNormalized);
     }
   }
   return kResultOk;

@@ -16,6 +16,7 @@
 #include "Meters.hpp"
 #include "Parameters.hpp"
 #include "unplug/Widgets.hpp"
+#include "unplug/Plot.hpp"
 
 namespace unplug::UserInterface {
 
@@ -43,6 +44,10 @@ void paint()
   differenceLevelMeterSettings.maxValue = static_cast<float>(parameters.getMaxValue(Param::gain));
   differenceLevelMeterSettings.minValue = static_cast<float>(parameters.getMinValue(Param::gain));
   DifferenceLevelMeterRaw(gain, "GainMeter", { width, 50.f }, differenceLevelMeterSettings);
+  auto sharedData = CustomSharedData::getCurrent();
+  if(sharedData){
+    PlotRingBuffer("Level",sharedData->levelRingBuffer);
+  }
 }
 
 std::array<int, 2> getDefaultSize()

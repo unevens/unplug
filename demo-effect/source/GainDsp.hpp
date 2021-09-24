@@ -79,7 +79,14 @@ void levelMetering(State& state, SampleType** outputs, Index numOutputChannels, 
                        static_cast<float>(state.metering.levels.size());
     state.pluginState.meters->set(Meter::level, level);
     auto& customData = state.pluginState.customSharedData->get();
-    unplug::sendToRingBuffer(customData.levelRingBuffer, outputs, numOutputChannels, startSample, endSample);
+    unplug::sendToRingBuffer(
+      customData.levelRingBuffer,
+      outputs,
+      numOutputChannels,
+      startSample,
+      endSample,
+      [](auto x) { return std::abs(x); },
+      [](auto x) { return x; });
   }
 }
 } // namespace detail

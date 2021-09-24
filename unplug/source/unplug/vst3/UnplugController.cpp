@@ -164,15 +164,17 @@ tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
   if (!streamer.readInt32Array(version.data(), version.size())) {
     return kResultFalse;
   }
-  for (int i = 0; i < NumParameters::value; ++i) {
+  for (Index paramIndex = 0; paramIndex < NumParameters::value; ++paramIndex) {
     double value;
     if (!streamer.readDouble(value))
       return kResultFalse;
-    auto parameter = parameters.getParameterByIndex(i);
+    auto parameter = parameters.getParameter(paramIndex);
     bool const isProgramChange = (parameter->getInfo().flags & ParameterInfo::kIsProgramChange) != 0;
     assert(!isProgramChange);
-    if (!isProgramChange)
-      setParamNormalized(parameter->getInfo().id, parameter->toNormalized(value));
+    if (!isProgramChange){
+      auto const normalizedValue = parameter->toNormalized(value);
+      setParamNormalized(paramIndex, normalizedValue);
+    }
   }
   return kResultOk;
 }
@@ -256,9 +258,9 @@ tresult UnplugController::getMidiControllerAssignment(int32 busIndex,
   return kResultFalse;
 }
 
-tresult UnplugController::setParamNormalized(ParamID index, ParamValue value)
+tresult UnplugController::setParamNormalized(ParamID tag, ParamValue value)
 {
-  if (Parameter* parameter = getParameterObject(index)) {
+  if (Parameter* parameter = getParameterObject(tag)) {
     parameter->setNormalized(value);
     bool const isProgramChange = (parameter->getInfo().flags & ParameterInfo::kIsProgramChange) != 0;
     if (isProgramChange) {

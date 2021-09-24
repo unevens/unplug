@@ -80,6 +80,7 @@ ParameterDescription ParameterDescription::MidiMapping(int control, int channel)
 
 ParameterDescription ParameterDescription::ControlledByDecibels(bool mapMinToLinearZero)
 {
+  measureUnit = "dB";
   auto dBToLinear = [minInDB = min, mapMinToLinearZero](double db) {
     if (mapMinToLinearZero && db <= minInDB)
       return 0.0;

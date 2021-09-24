@@ -29,6 +29,7 @@ public:
                      ParamValue maxInNonlinearScale = 6.0,
                      ParamValue defaultValueInNonlinearScale = 0.0,
                      int32 flags = ParameterInfo::kCanAutomate,
+                     const TChar* units = nullptr,
                      UnitID unitID = kRootUnitId,
                      const TChar* shortTitle = nullptr);
 

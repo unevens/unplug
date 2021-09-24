@@ -73,6 +73,7 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
                                                   description.max,
                                                   description.defaultValue,
                                                   flags,
+                                                  pUnits,
                                                   kRootUnitId,
                                                   pShortTitle);
           parameters.addParameter(parameter);

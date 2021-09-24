@@ -31,7 +31,7 @@ static std::string makeLabel(ShowLabel showLabel, std::string const& parameterNa
 
 static std::string makeFormat(ParameterData const& parameter, const char* format)
 {
-  return !parameter.measureUnit.empty() ? format + parameter.measureUnit : format;
+  return !parameter.measureUnit.empty() ? format + (" " + parameter.measureUnit) : format;
 }
 
 bool Combo(ParamIndex paramIndex, ShowLabel showLabel)

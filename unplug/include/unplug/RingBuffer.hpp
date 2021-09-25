@@ -162,8 +162,8 @@ private:
 };
 
 template<class SampleType,
-         class PreprocessValue,
-         class PostprocessValue,
+         class Accumulate,
+         class Scale,
          class ElementType = float,
          class Allocator = std::allocator<ElementType>>
 void sendToRingBuffer(unplug::RingBuffer<ElementType, Allocator>& circularBuffer,
@@ -171,8 +171,8 @@ void sendToRingBuffer(unplug::RingBuffer<ElementType, Allocator>& circularBuffer
                       Index numChannels,
                       Index startSample,
                       Index endSample,
-                      PreprocessValue preprocessValue,
-                      PostprocessValue postprocessValue)
+                      Accumulate accumulate,
+                      Scale scale)
 {
   auto const currentWritePosition = circularBuffer.getWritePosition();
   auto const samplesPerPoint = circularBuffer.getSamplesPerPoint();
@@ -185,8 +185,8 @@ void sendToRingBuffer(unplug::RingBuffer<ElementType, Allocator>& circularBuffer
     auto const lastSampleToAccumulate = FractionalIndex(std::min(static_cast<float>(endSample), lastSampleOfPoint));
     for (Index sample = fistSampleOfPoint; sample < lastSampleToAccumulate.integer; ++sample) {
       for (Index channel = 0; channel < numChannels; ++channel) {
-        auto const sampleValue = preprocessValue(buffers[channel][sample], channel);
-        circularBuffer.accumulator[channel] += sampleValue;
+        auto const sampleValue = buffers[channel][sample];
+        circularBuffer.accumulator[channel] = accumulate(circularBuffer.accumulator[channel], sampleValue, channel);
       }
     }
     bool const accumulationIsCompleted = lastSampleOfPoint == lastSampleToAccumulate.value;
@@ -194,17 +194,17 @@ void sendToRingBuffer(unplug::RingBuffer<ElementType, Allocator>& circularBuffer
       auto const nextSample = static_cast<Index>(std::ceil(lastSampleToAccumulate.value));
       if (nextSample < endSample && lastSampleToAccumulate.fractional > 0.f) {
         for (Index channel = 0; channel < numChannels; ++channel) {
-          auto const sampleValue = preprocessValue(buffers[channel][nextSample], channel);
+          auto const sampleValue = buffers[channel][nextSample];
           auto const accumulatedValue =
-            circularBuffer.accumulator[channel] + sampleValue * lastSampleToAccumulate.fractional;
-          auto pointValue = postprocessValue(pointsPerSample * accumulatedValue, channel);
+            accumulate(circularBuffer.accumulator[channel], sampleValue * lastSampleToAccumulate.fractional, channel);
+          auto pointValue = scale(pointsPerSample * accumulatedValue);
           circularBuffer.at(channel, pointIndex) = pointValue;
           circularBuffer.accumulator[channel] = sampleValue * (1.f - lastSampleToAccumulate.fractional);
         }
       }
       else {
         for (Index channel = 0; channel < numChannels; ++channel) {
-          auto pointValue = postprocessValue(pointsPerSample * circularBuffer.accumulator[channel], channel);
+          auto pointValue = scale(pointsPerSample * circularBuffer.accumulator[channel]);
           circularBuffer.at(channel, pointIndex) = pointValue;
           circularBuffer.accumulator[channel] = ElementType(0.f);
         }
@@ -235,8 +235,10 @@ void sendToRingBuffer(unplug::RingBuffer<ElementType, Allocator>& circularBuffer
     numChannels,
     startSample,
     endSample,
-    [](SampleType value, Index) { return static_cast<ElementType>(value); },
-    [](SampleType value, Index) { return static_cast<ElementType>(value); });
+    [](ElementType accumulatedValue, SampleType value, Index channel) {
+      return accumulatedValue + static_cast<ElementType>(value);
+    },
+    [](SampleType value) { static_cast<ElementType>(value); });
 }
 
 } // namespace unplug

@@ -76,12 +76,12 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
       numOutputChannels,
       0,
       numSamples,
-      [&](auto x, Index channel) {
+      [&](auto accumulatedValue, auto x, Index channel) {
         state.metering.levels[channel] +=
           state.metering.levelSmoothingAlpha * static_cast<float>(std::abs(x) - state.metering.levels[channel]);
-        return state.metering.levels[channel];
+        return accumulatedValue + state.metering.levels[channel];
       },
-      [](auto x, Index channel) { return std::max(-90.f, unplug::linearToDB(x)); });
+      [](auto x) { return std::max(-90.f, unplug::linearToDB(x)); });
   }
   auto const level = std::reduce(state.metering.levels.begin(), state.metering.levels.end()) /
                      static_cast<float>(state.metering.levels.size());

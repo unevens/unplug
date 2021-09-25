@@ -64,6 +64,8 @@ void GainProcessor::TProcess(ProcessData& data)
     staticProcessing<SampleType>(
       data, [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); });
   }
+  auto io = IO<SampleType>(ioCache);
+  GainDsp::levelMetering(dspState, io, data.numSamples);
 }
 
 } // namespace Steinberg::Vst

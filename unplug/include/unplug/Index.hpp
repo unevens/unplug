@@ -16,7 +16,7 @@
 
 namespace unplug {
 
-using Index = std::ptrdiff_t;
+using Index = int;
 using ParamIndex = Index;
 using MeterIndex = Index;
 

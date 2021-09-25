@@ -24,6 +24,7 @@ struct PluginCustomSharedData final
   void resize(float sampleRate, float refreshRate, int maxAudioBlockSize, unplug::NumIO numIO)
   {
     levelRingBuffer.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
+    levelRingBuffer.reset(0.f);
   }
 };
 

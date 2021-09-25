@@ -19,18 +19,28 @@ namespace unplug {
 
 template<class SampleType, class Allocator>
 void PlotRingBuffer(const char* name,
-                    RingBuffer<SampleType, Allocator>& circularBuffer,
-                    float xScale = 1.f,
+                    RingBuffer<SampleType, Allocator>& ringBuffer,
+                    float xScale = 100.f,
                     float x0 = 0.f)
 {
   ImPlot::BeginPlot(name);
-  auto buffer = circularBuffer.getBuffer().data();
-  auto const numChannels = circularBuffer.getNumChannels();
-  auto const offset = numChannels * circularBuffer.getReadPosition();
-  auto const stride = circularBuffer.getNumChannels() * sizeof(SampleType);
-  auto const size = circularBuffer.getReadBlockSize();
+  auto const numChannels = ringBuffer.getNumChannels();
+
+  auto const offset = numChannels * ringBuffer.getReadPosition();
+  auto const stride = ringBuffer.getNumChannels() * sizeof(SampleType);
+  auto const readBlockSize = numChannels * ringBuffer.getReadBlockSize();
+  auto const totalSize = static_cast<Index>(ringBuffer.getBuffer().size());
+  auto buffer = ringBuffer.getBuffer().data();
   for (Index channel = 0; channel < numChannels; ++channel) {
-    ImPlot::PlotLine(name, buffer + offset + channel, size, xScale, x0, 0, stride);
+    auto const start = offset + channel;
+    auto const end = start + readBlockSize;
+    auto contiguousEnd = std::min(end, totalSize);
+    auto contiguousSize = contiguousEnd - start;
+    ImPlot::PlotLine(name, buffer + start, contiguousSize / numChannels, xScale, x0, 0, stride);
+    if (contiguousEnd != end) {
+      auto const size = (end - totalSize) / numChannels;
+      ImPlot::PlotLine(name, buffer, size, xScale, x0 + contiguousSize / numChannels, 0, stride);
+    }
   }
   ImPlot::EndPlot();
 }

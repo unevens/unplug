@@ -22,9 +22,12 @@
 #include <numeric>
 
 namespace GainDsp {
+
 using Index = unplug::Index;
+
 template<class SampleType>
 using IO = unplug::IO<SampleType>;
+
 template<class SampleType>
 using Automation = unplug::LinearAutomation<SampleType>;
 
@@ -32,6 +35,7 @@ struct MeteringCache
 {
   std::vector<float> levels;
   float levelSmoothingAlpha = 0.0;
+  float invNumChannels = 1.f;
 
   void setSampleRate(double sampleRate)
   {
@@ -42,6 +46,7 @@ struct MeteringCache
   void setNumChannels(Index outputChannels)
   {
     levels.resize(outputChannels, 0.f);
+    invNumChannels = 1.f / static_cast<float>(outputChannels);
   }
 
   void reset()
@@ -55,7 +60,7 @@ struct State
   unplug::PluginState& pluginState;
   MeteringCache metering;
 
-  State(unplug::PluginState& pluginState)
+  explicit State(unplug::PluginState& pluginState)
     : pluginState{ pluginState }
   {}
 };
@@ -83,8 +88,8 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
       },
       [](auto x) { return std::max(-90.f, unplug::linearToDB(x)); });
   }
-  auto const level = std::reduce(state.metering.levels.begin(), state.metering.levels.end()) /
-                     static_cast<float>(state.metering.levels.size());
+  auto const level =
+    std::reduce(state.metering.levels.begin(), state.metering.levels.end()) * state.metering.invNumChannels;
   state.pluginState.meters->set(Meter::level, level);
 }
 

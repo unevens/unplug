@@ -17,32 +17,52 @@
 
 namespace unplug {
 
-template<class SampleType, class Allocator>
-void PlotRingBuffer(const char* name,
-                    RingBuffer<SampleType, Allocator>& ringBuffer,
-                    float xScale = 100.f,
-                    float x0 = 0.f)
+template<class ElementType, class Allocator, class Plotter>
+void TPlotRingBuffer(const char* name,
+                     RingBuffer<ElementType, Allocator>& ringBuffer,
+                     float xScale,
+                     float x0,
+                     Plotter plotter)
 {
   ImPlot::BeginPlot(name);
   auto const numChannels = ringBuffer.getNumChannels();
 
   auto const offset = numChannels * ringBuffer.getReadPosition();
-  auto const stride = ringBuffer.getNumChannels() * sizeof(SampleType);
+  auto const stride = ringBuffer.getNumChannels() * sizeof(ElementType);
   auto const readBlockSize = numChannels * ringBuffer.getReadBlockSize();
   auto const totalSize = static_cast<Index>(ringBuffer.getBuffer().size());
-  auto buffer = ringBuffer.getBuffer().data();
   for (Index channel = 0; channel < numChannels; ++channel) {
     auto const start = offset + channel;
     auto const end = start + readBlockSize;
     auto contiguousEnd = std::min(end, totalSize);
     auto contiguousSize = contiguousEnd - start;
-    ImPlot::PlotLine(name, buffer + start, contiguousSize / numChannels, xScale, x0, 0, stride);
+    plotter(name, ringBuffer, contiguousSize / numChannels, xScale, x0, start, stride);
     if (contiguousEnd != end) {
       auto const size = (end - totalSize) / numChannels;
-      ImPlot::PlotLine(name, buffer, size, xScale, x0 + contiguousSize / numChannels, 0, stride);
+      plotter(name, ringBuffer, size, xScale, x0 + contiguousSize / numChannels, 0, stride);
     }
   }
   ImPlot::EndPlot();
+}
+
+template<class ElementType, class Allocator>
+void PlotRingBuffer(const char* name,
+                    RingBuffer<ElementType, Allocator>& ringBuffer,
+                    float xScale = 100.f,
+                    float x0 = 0.f)
+{
+  TPlotRingBuffer(
+    name,
+    ringBuffer,
+    xScale,
+    x0,
+    [&](const char* name,
+        const RingBuffer<ElementType, Allocator>& buffer,
+        int count,
+        double xScale,
+        double x0,
+        int offset,
+        int stride) { ImPlot::PlotLine(name, ringBuffer.getBuffer().data() + offset, count, xScale, x0, 0, stride); });
 }
 
 } // namespace unplug

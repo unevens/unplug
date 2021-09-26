@@ -39,7 +39,7 @@ struct MeteringCache final
 
   void setSampleRate(double sampleRate)
   {
-    auto const levelSmoothingTime = 1000.0;
+    auto const levelSmoothingTime = 1.0;
     levelSmoothingAlpha = 1.f - static_cast<float>(std::exp(-2 * M_PI / (sampleRate * levelSmoothingTime)));
   }
 

@@ -91,8 +91,8 @@ void PlotWaveformRingBuffer(const char* name,
                     auto const rawData = &ringBuffer.getBuffer()[0].negative;
                     ImPlot::PushStyleColor(ImPlotCol_Line,
                                            channel == 0 ? ImVec4(0.f, 0.5f, 1.f, 1.f) : ImVec4(1.f, 0.5f, 0.f, 1.f));
-                    ImPlot::PlotLine(name, rawData + 2 * offset, 2 * count, xScale, x0, 0, 2 * stride);
-                    ImPlot::PlotLine(name, rawData + 2 * offset + 1, 2 * count, xScale, x0, 0, 2 * stride);
+                    ImPlot::PlotLine(name, rawData + 2 * offset, count, xScale, x0, 0, 2 * stride);
+                    ImPlot::PlotLine(name, rawData + 2 * offset + 1, count, xScale, x0, 0, 2 * stride);
                     ImPlot::PopStyleColor(ImPlotCol_Line);
                   });
 }

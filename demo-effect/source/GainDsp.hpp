@@ -39,8 +39,8 @@ struct MeteringCache final
 
   void setSampleRate(double sampleRate)
   {
-    auto const levelSmoothingTime = 1.0;
-    levelSmoothingAlpha = static_cast<float>(1.0 - std::exp(-2 * M_PI / (sampleRate * levelSmoothingTime)));
+    auto const levelSmoothingTime = 1000.0;
+    levelSmoothingAlpha = 1.f - static_cast<float>(std::exp(-2 * M_PI / (sampleRate * levelSmoothingTime)));
   }
 
   void setNumChannels(Index outputChannels)
@@ -81,19 +81,14 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
       numOutputChannels,
       0,
       numSamples,
-      [&](auto accumulatedValue, auto x, Index channel) {
+      [&](auto accumulatedValue, auto x, Index channel, float weight) {
         auto memory = state.metering.levels[channel];
         memory += state.metering.levelSmoothingAlpha * static_cast<float>(std::abs(x) - memory);
         state.metering.levels[channel] = memory;
-        return accumulatedValue + memory;
+        return accumulatedValue + memory * weight;
       },
-      [](auto x) { return std::max(-90.f, unplug::linearToDB(x)); });
-    unplug::sendToWaveformRingBuffer(
-      customData.waveformRingBuffer,
-      outputs,
-      numOutputChannels,
-      0,
-      numSamples);
+      [](auto x, float weight) { return std::max(-90.f, unplug::linearToDB(static_cast<float>(x) * weight)); });
+    unplug::sendToWaveformRingBuffer(customData.waveformRingBuffer, outputs, numOutputChannels, 0, numSamples);
   }
   auto const level =
     std::reduce(state.metering.levels.begin(), state.metering.levels.end()) * state.metering.invNumChannels;

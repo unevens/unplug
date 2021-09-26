@@ -36,10 +36,10 @@ void TPlotRingBuffer(const char* name,
     auto const end = start + readBlockSize;
     auto contiguousEnd = std::min(end, totalSize);
     auto contiguousSize = contiguousEnd - start;
-    plotter(name, ringBuffer, contiguousSize / numChannels, xScale, x0, start, stride);
+    plotter(name, ringBuffer, contiguousSize / numChannels, xScale, x0, start, stride, channel);
     if (contiguousEnd != end) {
       auto const size = (end - totalSize) / numChannels;
-      plotter(name, ringBuffer, size, xScale, x0 + contiguousSize / numChannels, 0, stride);
+      plotter(name, ringBuffer, size, xScale, x0 + contiguousSize / numChannels, 0, stride, channel);
     }
   }
   ImPlot::EndPlot();
@@ -51,42 +51,50 @@ void PlotRingBuffer(const char* name,
                     float xScale = 100.f,
                     float x0 = 0.f)
 {
-  TPlotRingBuffer(
-    name,
-    ringBuffer,
-    xScale,
-    x0,
-    [&](const char* name,
-        const RingBuffer<ElementType, Allocator>& buffer,
-        int count,
-        double xScale,
-        double x0,
-        int offset,
-        int stride) { ImPlot::PlotLine(name, ringBuffer.getBuffer().data() + offset, count, xScale, x0, 0, stride); });
+  TPlotRingBuffer(name,
+                  ringBuffer,
+                  xScale,
+                  x0,
+                  [&](const char* name,
+                      const RingBuffer<ElementType, Allocator>& buffer,
+                      int count,
+                      double xScale,
+                      double x0,
+                      int offset,
+                      int stride,
+                      Index channel) {
+                    ImPlot::PushStyleColor(ImPlotCol_Line,
+                                           channel == 0 ? ImVec4(0.f, 0.5f, 1.f, 1.f) : ImVec4(1.f, 0.5f, 0.f, 1.f));
+                    ImPlot::PlotLine(name, ringBuffer.getBuffer().data() + offset, count, xScale, x0, 0, stride);
+                    ImPlot::PopStyleColor(ImPlotCol_Line);
+                  });
 }
 
 template<class ElementType, class Allocator>
 void PlotWaveformRingBuffer(const char* name,
-                    WaveformRingBuffer<ElementType, Allocator>& ringBuffer,
-                    float xScale = 100.f,
-                    float x0 = 0.f)
+                            WaveformRingBuffer<ElementType, Allocator>& ringBuffer,
+                            float xScale = 100.f,
+                            float x0 = 0.f)
 {
-  TPlotRingBuffer(
-    name,
-    ringBuffer,
-    xScale,
-    x0,
-    [&](const char* name,
-      const WaveformRingBuffer<ElementType, Allocator>& buffer,
-        int count,
-        double xScale,
-        double x0,
-        int offset,
-        int stride) {
-      auto const rawData = &ringBuffer.getBuffer()[0].negative;
-      ImPlot::PlotLine(name, rawData + offset, count, xScale, x0, 0, 2 * stride);
-      ImPlot::PlotLine(name, rawData + offset + 1, count, xScale, x0, 0, 2 * stride);
-    });
+  TPlotRingBuffer(name,
+                  ringBuffer,
+                  xScale,
+                  x0,
+                  [&](const char* name,
+                      const WaveformRingBuffer<ElementType, Allocator>& buffer,
+                      int count,
+                      double xScale,
+                      double x0,
+                      int offset,
+                      int stride,
+                      Index channel) {
+                    auto const rawData = &ringBuffer.getBuffer()[0].negative;
+                    ImPlot::PushStyleColor(ImPlotCol_Line,
+                                           channel == 0 ? ImVec4(0.f, 0.5f, 1.f, 1.f) : ImVec4(1.f, 0.5f, 0.f, 1.f));
+                    ImPlot::PlotLine(name, rawData + 2 * offset, 2 * count, xScale, x0, 0, 2 * stride);
+                    ImPlot::PlotLine(name, rawData + 2 * offset + 1, 2 * count, xScale, x0, 0, 2 * stride);
+                    ImPlot::PopStyleColor(ImPlotCol_Line);
+                  });
 }
 
 } // namespace unplug

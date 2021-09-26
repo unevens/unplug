@@ -124,7 +124,10 @@ void TParameterStorage<numParameters>::initializeDefaultValues(
   const std::vector<ParameterDescription>& parameterDescriptions)
 {
   for (int i = 0; i < parameterDescriptions.size(); ++i) {
-    parameters[i].value.store(parameterDescriptions[i].defaultValue);
+    auto const& parameter = parameterDescriptions[i];
+    auto const defaultValue =
+      parameter.isNonlinear() ? parameter.nonlinearToLinear(parameter.defaultValue) : parameter.defaultValue;
+    parameters[i].value.store(defaultValue);
   }
 }
 template<int numParameters>

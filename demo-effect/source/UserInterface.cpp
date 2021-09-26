@@ -26,34 +26,37 @@ void paint()
   auto const width = main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x;
   ImGui::PushItemWidth(width);
 
-  KnobWithLabels(Param::gain);
-  DragFloat(Param::gain);
-  SliderFloat(Param::gain);
-  MeterValueLabelCentered(Meter::level);
-
-  auto levelMeterSettings = LevelMeterSettings{};
-  LevelMeter(Meter::level, "LevelMeter", { width, 50.f }, levelMeterSettings);
+//  KnobWithLabels(Param::gain);
+//  DragFloat(Param::gain);
+//  SliderFloat(Param::gain);
+//  MeterValueLabelCentered(Meter::level);
+//
+//  LevelMeter(Meter::level, "LevelMeter", { width, 50.f }, levelMeterSettings);
 
   // just to show the DifferenceLevelMeter and to demonstrate how to use the *Raw level meters. Normally
   // the DifferencceLevelMeter would be used to show something like the gain reduction of a compressor using the
   // appropriate MeterIndex.
-  auto& parameters = getParameters();
-  auto const gain = static_cast<float>(parameters.getValue(Param::gain));
-  auto differenceLevelMeterSettings = DifferenceLevelMeterSettings{};
-  differenceLevelMeterSettings.scaling = [](float x) { return x; };
-  differenceLevelMeterSettings.maxValue = static_cast<float>(parameters.getMaxValue(Param::gain));
-  differenceLevelMeterSettings.minValue = static_cast<float>(parameters.getMinValue(Param::gain));
-  DifferenceLevelMeterRaw(gain, "GainMeter", { width, 50.f }, differenceLevelMeterSettings);
+//  auto& parameters = getParameters();
+//  auto const gain = static_cast<float>(parameters.getValue(Param::gain));
+//  auto differenceLevelMeterSettings = DifferenceLevelMeterSettings{};
+//  differenceLevelMeterSettings.scaling = [](float x) { return x; };
+//  differenceLevelMeterSettings.maxValue = static_cast<float>(parameters.getMaxValue(Param::gain));
+//  differenceLevelMeterSettings.minValue = static_cast<float>(parameters.getMinValue(Param::gain));
+//  DifferenceLevelMeterRaw(gain, "GainMeter", { width, 50.f }, differenceLevelMeterSettings);
   auto sharedData = CustomSharedData::getCurrent();
   if(sharedData){
-//    PlotRingBuffer("Level",sharedData->levelRingBuffer);
+    PlotRingBuffer("Level",sharedData->levelRingBuffer);
     PlotWaveformRingBuffer("Waveform",sharedData->waveformRingBuffer);
   }
+  SliderFloat(Param::gain);
+  MeterValueLabelCentered(Meter::level);
+  auto const levelMeterSettings = LevelMeterSettings{};
+  LevelMeter(Meter::level, "LevelMeter", { width, 20.f }, levelMeterSettings);
 }
 
 std::array<int, 2> getDefaultSize()
 {
-  return { { 300, 700 } };
+  return { { 800, 800 } };
 }
 
 bool isResizingAllowed()
@@ -68,7 +71,7 @@ float getMinZoom()
 
 bool keepDefaultRatio()
 {
-  return true;
+  return false;
 }
 
 const char* getWindowName()

@@ -31,7 +31,7 @@ using IO = unplug::IO<SampleType>;
 template<class SampleType>
 using Automation = unplug::LinearAutomation<SampleType>;
 
-struct MeteringCache
+struct MeteringCache final
 {
   std::vector<float> levels;
   float levelSmoothingAlpha = 0.0;
@@ -55,7 +55,7 @@ struct MeteringCache
   }
 };
 
-struct State
+struct State final
 {
   unplug::PluginState& pluginState;
   MeteringCache metering;
@@ -88,6 +88,12 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
         return accumulatedValue + memory;
       },
       [](auto x) { return std::max(-90.f, unplug::linearToDB(x)); });
+    unplug::sendToWaveformRingBuffer(
+      customData.waveformRingBuffer,
+      outputs,
+      numOutputChannels,
+      0,
+      numSamples);
   }
   auto const level =
     std::reduce(state.metering.levels.begin(), state.metering.levels.end()) * state.metering.invNumChannels;
@@ -160,5 +166,5 @@ template<class SampleType>
 unplug::LinearAutomation<SampleType> prepareAutomation(State& state)
 {
   return unplug::LinearAutomation<SampleType>(state.pluginState.parameters);
-};
-}; // namespace GainDsp
+}
+} // namespace GainDsp

@@ -20,11 +20,14 @@
 struct PluginCustomSharedData final
 {
   unplug::RingBuffer<float> levelRingBuffer;
+  unplug::WaveformRingBuffer<float> waveformRingBuffer;
 
   void resize(float sampleRate, float refreshRate, int maxAudioBlockSize, unplug::NumIO numIO)
   {
     levelRingBuffer.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
     levelRingBuffer.reset(0.f);
+    waveformRingBuffer.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
+    waveformRingBuffer.reset(unplug::WaveformElement<float>{ 0.f, 0.f });
   }
 };
 

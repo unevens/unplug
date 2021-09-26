@@ -46,7 +46,8 @@ void paint()
   DifferenceLevelMeterRaw(gain, "GainMeter", { width, 50.f }, differenceLevelMeterSettings);
   auto sharedData = CustomSharedData::getCurrent();
   if(sharedData){
-    PlotRingBuffer("Level",sharedData->levelRingBuffer);
+//    PlotRingBuffer("Level",sharedData->levelRingBuffer);
+    PlotWaveformRingBuffer("Waveform",sharedData->waveformRingBuffer);
   }
 }
 

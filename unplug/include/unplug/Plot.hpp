@@ -65,4 +65,28 @@ void PlotRingBuffer(const char* name,
         int stride) { ImPlot::PlotLine(name, ringBuffer.getBuffer().data() + offset, count, xScale, x0, 0, stride); });
 }
 
+template<class ElementType, class Allocator>
+void PlotWaveformRingBuffer(const char* name,
+                    WaveformRingBuffer<ElementType, Allocator>& ringBuffer,
+                    float xScale = 100.f,
+                    float x0 = 0.f)
+{
+  TPlotRingBuffer(
+    name,
+    ringBuffer,
+    xScale,
+    x0,
+    [&](const char* name,
+      const WaveformRingBuffer<ElementType, Allocator>& buffer,
+        int count,
+        double xScale,
+        double x0,
+        int offset,
+        int stride) {
+      auto const rawData = &ringBuffer.getBuffer()[0].negative;
+      ImPlot::PlotLine(name, rawData + offset, count, xScale, x0, 0, 2 * stride);
+      ImPlot::PlotLine(name, rawData + offset + 1, count, xScale, x0, 0, 2 * stride);
+    });
+}
+
 } // namespace unplug

@@ -144,7 +144,7 @@ TParameterStorage<numParameters>::ParameterNormalization::ParameterNormalization
 template<int numParameters>
 ParameterValueType TParameterStorage<numParameters>::ParameterNormalization::toNormalized(ParameterValueType x) const
 {
-  return (x - offset) * range;
+  return (x - offset) / range;
 }
 
 template<int numParameters>

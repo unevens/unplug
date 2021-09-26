@@ -82,9 +82,10 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
       0,
       numSamples,
       [&](auto accumulatedValue, auto x, Index channel) {
-        state.metering.levels[channel] +=
-          state.metering.levelSmoothingAlpha * static_cast<float>(std::abs(x) - state.metering.levels[channel]);
-        return accumulatedValue + state.metering.levels[channel];
+        auto memory = state.metering.levels[channel];
+        memory += state.metering.levelSmoothingAlpha * static_cast<float>(std::abs(x) - memory);
+        state.metering.levels[channel] = memory;
+        return accumulatedValue + memory;
       },
       [](auto x) { return std::max(-90.f, unplug::linearToDB(x)); });
   }
@@ -110,8 +111,8 @@ void staticProcessing(State& state, IO<SampleType> io, Index numSamples)
       std::copy(inputBuffer, inputBuffer + numSamples, outputBuffer);
     }
     else {
-      for (int s = 0; s < numSamples; ++s) {
-        outputBuffer[s] = gain * inputBuffer[s];
+      for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex) {
+        outputBuffer[sampleIndex] = gain * inputBuffer[sampleIndex];
       }
     }
   }
@@ -142,10 +143,10 @@ void automatedProcessing(State& state,
     }
   }
   else {
-    for (Index s = startSample; s < endSample; ++s) {
+    for (Index sampleIndex = startSample; sampleIndex < endSample; ++sampleIndex) {
       for (Index channelIndex = 0; channelIndex < sharedChannels; ++channelIndex) {
         auto const gain = automation.increment(Param::gain);
-        out.buffers[channelIndex][s] = gain * in.buffers[channelIndex][s];
+        out.buffers[channelIndex][sampleIndex] = gain * in.buffers[channelIndex][sampleIndex];
       }
     }
   }

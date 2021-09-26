@@ -26,7 +26,7 @@ void paint()
   auto const width = main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x;
   ImGui::PushItemWidth(width);
 
-//  KnobWithLabels(Param::gain);
+//   KnobWithLabels(Param::gain);
 //  DragFloat(Param::gain);
 //  SliderFloat(Param::gain);
 //  MeterValueLabelCentered(Meter::level);

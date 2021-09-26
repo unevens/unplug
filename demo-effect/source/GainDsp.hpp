@@ -81,13 +81,15 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
       numOutputChannels,
       0,
       numSamples,
-      [&](auto accumulatedValue, auto x, Index channel, float weight) {
+      [&](auto sampleValue, Index channel) {
         auto memory = state.metering.levels[channel];
-        memory += state.metering.levelSmoothingAlpha * static_cast<float>(std::abs(x) - memory);
+        memory += state.metering.levelSmoothingAlpha * static_cast<float>(std::abs(sampleValue) - memory);
         state.metering.levels[channel] = memory;
-        return accumulatedValue + memory * weight;
+        return memory;
       },
-      [](auto x, float weight) { return std::max(-90.f, unplug::linearToDB(static_cast<float>(x) * weight)); });
+      [](auto x, float weight) { return static_cast<float>(x) * weight; },
+      [&](auto accumulatedValue, auto elementValue) { return accumulatedValue + elementValue; },
+      [](auto weightedValue) { return std::max(-90.f, unplug::linearToDB(weightedValue)); });
     unplug::sendToWaveformRingBuffer(customData.waveformRingBuffer, outputs, numOutputChannels, 0, numSamples);
   }
   auto const level =

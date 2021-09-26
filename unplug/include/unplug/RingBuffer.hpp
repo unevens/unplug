@@ -173,8 +173,10 @@ struct WaveformElement final
 };
 
 template<class SampleType,
+         class Preprocess,
+         class Weight,
          class Accumulate,
-         class Scale,
+         class Postprocess,
          class ElementType = float,
          class Allocator = std::allocator<ElementType>>
 void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
@@ -182,8 +184,10 @@ void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
                       Index numChannels,
                       Index startSample,
                       Index endSample,
+                      Preprocess preprocess,
+                      Weight weight,
                       Accumulate accumulate,
-                      Scale scale)
+                      Postprocess postprocess)
 {
   auto const currentWritePosition = ringBuffer.getWritePosition();
   auto const samplesPerPoint = ringBuffer.getSamplesPerPoint();
@@ -196,8 +200,8 @@ void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
     auto const lastSampleToAccumulate = FractionalIndex(std::min(static_cast<float>(endSample), lastSampleOfPoint));
     for (Index sample = fistSampleOfPoint; sample < lastSampleToAccumulate.integer; ++sample) {
       for (Index channel = 0; channel < numChannels; ++channel) {
-        auto const sampleValue = buffers[channel][sample];
-        ringBuffer.accumulator[channel] = accumulate(ringBuffer.accumulator[channel], sampleValue, channel, 1.f);
+        auto const sampleValue = preprocess(buffers[channel][sample], channel);
+        ringBuffer.accumulator[channel] = accumulate(ringBuffer.accumulator[channel], sampleValue);
       }
     }
     bool const accumulationIsCompleted = lastSampleOfPoint == lastSampleToAccumulate.value;
@@ -205,18 +209,20 @@ void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
       auto const nextSample = static_cast<Index>(std::ceil(lastSampleToAccumulate.value));
       if (nextSample < endSample && lastSampleToAccumulate.fractional > 0.f) {
         for (Index channel = 0; channel < numChannels; ++channel) {
-          auto const sampleValue = buffers[channel][nextSample];
-          auto const accumulatedValue =
-            accumulate(ringBuffer.accumulator[channel], sampleValue, channel, lastSampleToAccumulate.fractional);
-          auto pointValue = scale(accumulatedValue, pointsPerSample);
+          auto const sampleValue = preprocess(buffers[channel][nextSample], channel);
+          auto const sampleValueWeighted = weight(buffers[channel][nextSample], lastSampleToAccumulate.fractional);
+          auto const accumulatedValue = accumulate(ringBuffer.accumulator[channel], sampleValueWeighted);
+          auto const accumulatedValueWeighted = weight(accumulatedValue, pointsPerSample);
+          auto pointValue = postprocess(accumulatedValueWeighted);
           ringBuffer.at(channel, pointIndex) = pointValue;
-          auto const firstValue = scale(ElementType(sampleValue), 1.f - lastSampleToAccumulate.fractional);
+          auto const firstValue = weight(ElementType(sampleValue), 1.f - lastSampleToAccumulate.fractional);
           ringBuffer.accumulator[channel] = firstValue;
         }
       }
       else {
         for (Index channel = 0; channel < numChannels; ++channel) {
-          auto const pointValue = scale(ringBuffer.accumulator[channel], pointsPerSample);
+          auto const pointValueWeighted = weight(ringBuffer.accumulator[channel], pointsPerSample);
+          auto const pointValue = postprocess(pointValueWeighted);
           ringBuffer.at(channel, pointIndex) = pointValue;
           ringBuffer.accumulator[channel] = ElementType(0.f);
         }
@@ -247,10 +253,10 @@ void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
     numChannels,
     startSample,
     endSample,
-    [](ElementType accumulatedValue, SampleType value, Index channel, float weight) {
-      return accumulatedValue + weight * static_cast<ElementType>(value);
-    },
-    [](ElementType value, float weight) { return value * weight; });
+    [](ElementType value, Index channel) { return value; },
+    [](ElementType value, float weight) { return value * weight; },
+    [](ElementType accumulatedValue, SampleType value) { return accumulatedValue + static_cast<ElementType>(value); },
+    [](ElementType value) { return value; });
 }
 
 template<class SampleType, class Allocator = std::allocator<WaveformElement<SampleType>>>
@@ -271,12 +277,14 @@ void sendToWaveformRingBuffer(WaveformRingBuffer<WaveformSampleType, Allocator>&
     numChannels,
     startSample,
     endSample,
-    [](WaveformElement<WaveformSampleType> accumulatedValue, SampleType value, Index channel, float weight) {
+    [](SampleType value, Index channel) { return value; },
+    [](auto value, float weight) { return value; },
+    [](WaveformElement<WaveformSampleType> accumulatedValue, SampleType value) {
       accumulatedValue.positive = std::max(accumulatedValue.positive, static_cast<WaveformSampleType>(value));
       accumulatedValue.negative = std::min(accumulatedValue.negative, static_cast<WaveformSampleType>(value));
       return accumulatedValue;
     },
-    [](WaveformElement<WaveformSampleType> value, float weight) { return value; });
+    [](WaveformElement<WaveformSampleType> value) { return value; });
 }
 
 } // namespace unplug

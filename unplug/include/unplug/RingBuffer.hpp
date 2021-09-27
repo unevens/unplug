@@ -14,6 +14,7 @@
 #pragma once
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
+#include <atomic>
 #include <vector>
 
 namespace unplug {
@@ -137,8 +138,7 @@ private:
 
   void resize(Index newSize)
   {
-    assert(newSize <= std::numeric_limits<unsigned int>::max());
-    auto const currentWritePosition = writePosition.load(std::memory_order_acquire);
+    auto const currentWritePosition = getWritePosition();
     if (newSize <= currentWritePosition) {
       writePosition.store(0, std::memory_order_release);
       auto const delta = currentWritePosition - newSize;
@@ -154,7 +154,7 @@ private:
 
   Index numChannels = 1;
   Index bufferCapacity = 0;
-  std::atomic<unsigned int> writePosition{ 0 };
+  std::atomic<int> writePosition{ 0 };
   Index readBlockSize = 0;
   float pointsPerSample = 1.f;
   float samplesPerPoint = 1;

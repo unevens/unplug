@@ -14,8 +14,9 @@
 #pragma once
 
 #include "unplug/Index.hpp"
-#include <vector>
+#include <cassert>
 #include <type_traits>
+#include <vector>
 
 namespace unplug::detail {
 

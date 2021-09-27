@@ -22,6 +22,7 @@
 #include "unplug/detail/ModifierKeys.hpp"
 #include <array>
 #include <chrono>
+#include <memory>
 
 namespace unplug::detail {
 

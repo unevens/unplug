@@ -291,11 +291,11 @@ bool Knob(ParamIndex paramIndex, float power, float angleOffset, std::function<v
   return Control(paramIndex, [&](ParameterData const& parameter) {
     auto controlName = parameter.name + "##KNOB";
     auto const scaledInput =
-      std::powf((parameter.value - parameter.minValue) / (parameter.maxValue - parameter.minValue), 1.f / power);
+      std::pow((parameter.value - parameter.minValue) / (parameter.maxValue - parameter.minValue), 1.f / power);
     auto const knobOutput = Knob(controlName.c_str(), scaledInput, angleOffset);
     drawer(knobOutput.drawData);
     auto const outputValue =
-      parameter.minValue + (parameter.maxValue - parameter.minValue) * std::powf(knobOutput.value, power);
+      parameter.minValue + (parameter.maxValue - parameter.minValue) * std::pow(static_cast<float>(knobOutput.value), power);
     return ControlOutput{ controlName, outputValue, knobOutput.isActive };
   });
 }

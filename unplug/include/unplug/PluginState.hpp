@@ -15,6 +15,7 @@
 #include "CustomSharedData.hpp"
 #include "unplug/MeterStorage.hpp"
 #include "unplug/ParameterStorage.hpp"
+#include <memory>
 
 namespace unplug {
 

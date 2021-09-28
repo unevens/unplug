@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "CustomSharedData.hpp"
+#include "CustomData.hpp"
 #include "GetParameterDescriptions.hpp"
 #include "Meters.hpp"
 #include "public.sdk/source/vst/vsteditcontroller.h"

@@ -12,11 +12,11 @@
 //------------------------------------------------------------------------
 
 #include "unplug/UserInterface.hpp"
-#include "CustomSharedData.hpp"
+#include "CustomData.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
-#include "unplug/Widgets.hpp"
 #include "unplug/Plot.hpp"
+#include "unplug/Widgets.hpp"
 
 namespace unplug::UserInterface {
 
@@ -26,27 +26,33 @@ void paint()
   auto const width = main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x;
   ImGui::PushItemWidth(width);
 
-//   KnobWithLabels(Param::gain);
-//  DragFloat(Param::gain);
-//  SliderFloat(Param::gain);
-//  MeterValueLabelCentered(Meter::level);
-//
-//  LevelMeter(Meter::level, "LevelMeter", { width, 50.f }, levelMeterSettings);
+  //   KnobWithLabels(Param::gain);
+  //  DragFloat(Param::gain);
+  //  SliderFloat(Param::gain);
+  //  MeterValueLabelCentered(Meter::level);
+  //
+  //  LevelMeter(Meter::level, "LevelMeter", { width, 50.f }, levelMeterSettings);
 
   // just to show the DifferenceLevelMeter and to demonstrate how to use the *Raw level meters. Normally
   // the DifferencceLevelMeter would be used to show something like the gain reduction of a compressor using the
   // appropriate MeterIndex.
-//  auto& parameters = getParameters();
-//  auto const gain = static_cast<float>(parameters.getValue(Param::gain));
-//  auto differenceLevelMeterSettings = DifferenceLevelMeterSettings{};
-//  differenceLevelMeterSettings.scaling = [](float x) { return x; };
-//  differenceLevelMeterSettings.maxValue = static_cast<float>(parameters.getMaxValue(Param::gain));
-//  differenceLevelMeterSettings.minValue = static_cast<float>(parameters.getMinValue(Param::gain));
-//  DifferenceLevelMeterRaw(gain, "GainMeter", { width, 50.f }, differenceLevelMeterSettings);
+  //  auto& parameters = getParameters();
+  //  auto const gain = static_cast<float>(parameters.getValue(Param::gain));
+  //  auto differenceLevelMeterSettings = DifferenceLevelMeterSettings{};
+  //  differenceLevelMeterSettings.scaling = [](float x) { return x; };
+  //  differenceLevelMeterSettings.maxValue = static_cast<float>(parameters.getMaxValue(Param::gain));
+  //  differenceLevelMeterSettings.minValue = static_cast<float>(parameters.getMinValue(Param::gain));
+  //  DifferenceLevelMeterRaw(gain, "GainMeter", { width, 50.f }, differenceLevelMeterSettings);
   auto customData = CustomData::getCurrent();
-  if(customData){
-    PlotRingBuffer("Level", customData->levelRingBuffer);
-    PlotWaveformRingBuffer("Waveform", customData->waveformRingBuffer);
+  if (customData) {
+    auto levelRingBuffer = customData->levelRingBuffer.getFromUiThread();
+    if (levelRingBuffer) {
+      PlotRingBuffer("Level", *levelRingBuffer);
+    }
+    auto waveformRingBuffer = customData->waveformRingBuffer.getFromUiThread();
+    if (waveformRingBuffer) {
+      PlotWaveformRingBuffer("Waveform", *waveformRingBuffer);
+    }
   }
   SliderFloat(Param::gain);
   MeterValueLabelCentered(Meter::level);

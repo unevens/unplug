@@ -12,7 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "CustomSharedData.hpp"
+#include "CustomData.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
 #include "unplug/Automation.hpp"
@@ -75,22 +75,28 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
     assert(state.metering.levels.size() == numOutputChannels);
     state.metering.levels.resize(numOutputChannels);
     auto& customData = state.pluginState.customData->get();
-    unplug::sendToRingBuffer(
-      customData.levelRingBuffer,
-      outputs,
-      numOutputChannels,
-      0,
-      numSamples,
-      [&](auto sampleValue, Index channel) {
-        auto memory = state.metering.levels[channel];
-        memory += state.metering.levelSmoothingAlpha * static_cast<float>(std::abs(sampleValue) - memory);
-        state.metering.levels[channel] = memory;
-        return memory;
-      },
-      [](auto x, float weight) { return static_cast<float>(x) * weight; },
-      [&](auto accumulatedValue, auto elementValue) { return accumulatedValue + elementValue; },
-      [](auto weightedValue) { return std::max(-90.f, unplug::linearToDB(weightedValue)); });
-    unplug::sendToWaveformRingBuffer(customData.waveformRingBuffer, outputs, numOutputChannels, 0, numSamples);
+    auto levelRingBuffer = customData.levelRingBuffer.getFromAudioThread();
+    if (levelRingBuffer) {
+      unplug::sendToRingBuffer(
+        *levelRingBuffer,
+        outputs,
+        numOutputChannels,
+        0,
+        numSamples,
+        [&](auto sampleValue, Index channel) {
+          auto memory = state.metering.levels[channel];
+          memory += state.metering.levelSmoothingAlpha * static_cast<float>(std::abs(sampleValue) - memory);
+          state.metering.levels[channel] = memory;
+          return memory;
+        },
+        [](auto x, float weight) { return static_cast<float>(x) * weight; },
+        [&](auto accumulatedValue, auto elementValue) { return accumulatedValue + elementValue; },
+        [](auto weightedValue) { return std::max(-90.f, unplug::linearToDB(weightedValue)); });
+    }
+    auto waveformRingBuffer = customData.waveformRingBuffer.getFromAudioThread();
+    if (waveformRingBuffer) {
+      unplug::sendToWaveformRingBuffer(*waveformRingBuffer, outputs, numOutputChannels, 0, numSamples);
+    }
   }
   auto const level =
     std::reduce(state.metering.levels.begin(), state.metering.levels.end()) * state.metering.invNumChannels;

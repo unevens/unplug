@@ -25,9 +25,9 @@ public:
   {
     auto newObject = messengerForNewObjects.receiveLastMessage();
     if (newObject) {
-      messengerForOldObjects.send(currentObjectStorage.release());
-      currentObjectStorage = newObject.value();
-      currentObjectPtr.store(std::memory_order_release);
+      messengerForOldObjects.send(std::move(currentObjectStorage));
+      currentObjectStorage = std::move(newObject.value());
+      currentObjectPtr.store(currentObjectStorage.get(), std::memory_order_release);
     }
     return currentObjectStorage.get();
   }
@@ -40,7 +40,7 @@ public:
   void set(std::unique_ptr<Object> newObject)
   {
     lockfree::receiveAndHandleMessageStack(messengerForOldObjects, [](auto& object) { object.reset(); });
-    messengerForNewObjects.send(newObject.release());
+    messengerForNewObjects.send(std::move(newObject));
   }
 
   void preallocateMessageNodes(int numNodesToPreallocate)
@@ -57,7 +57,7 @@ public:
 private:
   lockfree::Messenger<std::unique_ptr<Object>> messengerForNewObjects;
   lockfree::Messenger<std::unique_ptr<Object>> messengerForOldObjects;
-  std::unique_ptr<Object*> currentObjectStorage;
+  std::unique_ptr<Object> currentObjectStorage;
   std::atomic<Object*> currentObjectPtr{ nullptr };
 };
 

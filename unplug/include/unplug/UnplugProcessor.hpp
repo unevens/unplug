@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "CustomSharedData.hpp"
+#include "CustomData.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
 #include "PluginState.hpp"

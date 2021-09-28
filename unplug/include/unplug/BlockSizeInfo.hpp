@@ -13,6 +13,7 @@
 
 #pragma once
 #include "unplug/NumIO.hpp"
+#include <cstring>
 
 namespace unplug {
 
@@ -22,6 +23,15 @@ struct BlockSizeInfo final
   float refreshRate = 30;
   Index maxAudioBlockSize = 128;
   NumIO numIO;
+
+  bool operator==(BlockSizeInfo const& other) const noexcept
+  {
+    return std::memcmp(this, &other, sizeof(BlockSizeInfo)) == 0;
+  }
+  bool operator!=(BlockSizeInfo const& other) const noexcept
+  {
+    return !(*this == other);
+  }
 };
 
 } // namespace unplug

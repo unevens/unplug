@@ -16,20 +16,25 @@
 #include "unplug/CustomDataWrapper.hpp"
 #include "unplug/IO.hpp"
 #include "unplug/NumIO.hpp"
-#include "unplug/RingBuffer.hpp"
 #include "unplug/PreAllocated.hpp"
+#include "unplug/RingBuffer.hpp"
 
 struct PluginCustomData final
 {
-  unplug::RingBuffer<float> levelRingBuffer;
-  unplug::WaveformRingBuffer<float> waveformRingBuffer;
+  unplug::PreAllocated<unplug::RingBuffer<float>> levelRingBuffer;
+  unplug::PreAllocated<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
+
+  PluginCustomData(){
+    levelRingBuffer.set(std::make_unique<unplug::RingBuffer<float>>());
+    waveformRingBuffer.set(std::make_unique<unplug::WaveformRingBuffer<float>>());
+  }
 
   void setBlockSizeInfo(unplug::BlockSizeInfo const& blockSizeInfo)
   {
-    levelRingBuffer.setBlockSizeInfo(blockSizeInfo);
-    levelRingBuffer.reset(0.f);
-    waveformRingBuffer.setBlockSizeInfo(blockSizeInfo);
-    waveformRingBuffer.reset(unplug::WaveformElement<float>{ 0.f, 0.f });
+    unplug::setBlockSizeInfo(levelRingBuffer, blockSizeInfo, [](unplug::RingBuffer<float>& ringBuffer) { ringBuffer.reset(0.f); });
+    unplug::setBlockSizeInfo(waveformRingBuffer, blockSizeInfo, [](unplug::WaveformRingBuffer<float>& ringBuffer) {
+      ringBuffer.reset(unplug::WaveformElement<float>{ 0.f, 0.f });
+    });
   }
 };
 

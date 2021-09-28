@@ -15,12 +15,13 @@
 #include "unplug/BlockSizeInfo.hpp"
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
+#include "unplug/PreAllocated.hpp"
 #include <atomic>
 #include <vector>
 
 namespace unplug {
 template<class ElementType, class Allocator = std::allocator<ElementType>>
-class RingBuffer
+class RingBuffer final
 {
 public:
   using Buffer = std::vector<ElementType, Allocator>;
@@ -100,6 +101,26 @@ public:
     durationInSeconds = durationInSeconds_;
     resize();
   }
+
+  BlockSizeInfo const& getSizeInfo()
+  {
+    return sizeInfo;
+  }
+
+  RingBuffer() = default;
+
+  RingBuffer(RingBuffer const& other)
+    : numChannels(other.numChannels)
+    , bufferCapacity(other.bufferCapacity)
+    , writePosition{ other.writePosition.load() }
+    , readBlockSize(other.readBlockSize)
+    , pointsPerSample(other.pointsPerSample)
+    , samplesPerPoint(other.samplesPerPoint)
+    , pointsPerSecond(other.pointsPerSecond)
+    , durationInSeconds(other.durationInSeconds)
+    , sizeInfo(other.sizeInfo)
+    , buffer(buffer)
+  {}
 
   std::vector<ElementType, Allocator> accumulator;
   float accumulatedSamples = 0.f;
@@ -299,4 +320,30 @@ void sendToWaveformRingBuffer(WaveformRingBuffer<WaveformSampleType, Allocator>&
     [](WaveformElement<WaveformSampleType> value) { return value; });
 }
 
+template<class RingBufferClass, class OnSizeChanged>
+bool setBlockSizeInfo(PreAllocated<RingBufferClass>& preAllocatedRingBuffer,
+                      unplug::BlockSizeInfo const& blockSizeInfo,
+                      OnSizeChanged onSizeChanged = nullptr)
+{
+  auto ringBuffer = preAllocatedRingBuffer.getFromUiThread();
+  if (ringBuffer) {
+    auto const& prevSizeInfo = ringBuffer->getSizeInfo();
+    bool const sizeInfoChanged = prevSizeInfo != blockSizeInfo;
+    if (sizeInfoChanged) {
+      auto newRingBuffer = std::make_unique<RingBufferClass>(*ringBuffer);
+      newRingBuffer->setBlockSizeInfo(blockSizeInfo);
+      if (onSizeChanged) {
+        onSizeChanged(*newRingBuffer);
+      }
+      preAllocatedRingBuffer.set(std::move(newRingBuffer));
+    }
+    return sizeInfoChanged;
+  }
+  else {
+    auto newRingBuffer = std::make_unique<RingBufferClass>();
+    newRingBuffer->setBlockSizeInfo(blockSizeInfo);
+    preAllocatedRingBuffer.set(std::move(newRingBuffer));
+    return false;
+  }
+}
 } // namespace unplug

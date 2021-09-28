@@ -311,7 +311,7 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
       return address;
     };
     meters = *reinterpret_cast<std::shared_ptr<MeterStorage>*>(getAddress(meterStorageId));
-    customData = *reinterpret_cast<std::shared_ptr<CustomSharedData>*>(getAddress(customStorageId));
+    customData = *reinterpret_cast<std::shared_ptr<CustomData>*>(getAddress(customStorageId));
     return kResultOk;
   }
   else

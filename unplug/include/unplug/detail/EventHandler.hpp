@@ -42,7 +42,7 @@ public:
   EventHandler(pugl::View& view,
                ParameterAccess& parameters,
                std::shared_ptr<MeterStorage>& meters,
-               std::shared_ptr<CustomSharedData>& custom);
+               std::shared_ptr<CustomData>& custom);
 
   void handleScroll(float dx, float dy);
 
@@ -107,7 +107,7 @@ private:
 private:
   ParameterAccess& parameters;
   std::shared_ptr<MeterStorage>& meters;
-  std::shared_ptr<CustomSharedData>& custom;
+  std::shared_ptr<CustomData>& custom;
   pugl::View& view;
   ImGuiContext* imguiContext = nullptr;
   ImPlotContext* implotContext = nullptr;

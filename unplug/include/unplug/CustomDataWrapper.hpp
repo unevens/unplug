@@ -12,19 +12,37 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "CustomSharedData.hpp"
-#include "unplug/MeterStorage.hpp"
-#include "unplug/ParameterStorage.hpp"
-#include <memory>
 
 namespace unplug {
 
-struct PluginState
+template<class Data>
+class CustomDataWrapper final
 {
-  ParameterStorage parameters;
-  std::shared_ptr<MeterStorage> meters;
-  std::shared_ptr<CustomData> customData;
-  std::atomic<bool> isUserInterfaceOpen{ false };
+public:
+  void setCurrent()
+  {
+    currentInstance = &data;
+  }
+
+  static Data* getCurrent()
+  {
+    return currentInstance;
+  }
+
+  Data& get()
+  {
+    return data;
+  }
+
+  CustomDataWrapper() = default;
+
+  CustomDataWrapper(CustomDataWrapper const&) = delete;
+
+  CustomDataWrapper& operator=(CustomDataWrapper const&) = delete;
+
+private:
+  Data data;
+  static inline thread_local Data* currentInstance = nullptr;
 };
 
 } // namespace unplug

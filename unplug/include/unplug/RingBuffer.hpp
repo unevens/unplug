@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/BlockSizeInfo.hpp"
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
 #include <atomic>
@@ -65,11 +66,6 @@ public:
     return samplesPerPoint;
   }
 
-  float getSecondsPerPoint() const
-  {
-    return 1.f / getPointsPerSecond();
-  }
-
   Index getNumChannels() const
   {
     return numChannels;
@@ -92,35 +88,31 @@ public:
     std::fill(std::begin(accumulator), std::end(accumulator), valueToResetTo);
   }
 
-  void resize(float sampleRate, float refreshRate, Index maxAudioBlockSize, NumIO numIO)
+  void setBlockSizeInfo(BlockSizeInfo const& info)
   {
-    numChannels = choseNumChannels(numIO);
-    accumulator.resize(numChannels);
-    auto const pointsPerSecond = getPointsPerSecond();
-    auto const durationInSeconds = getDurationInSeconds();
-    samplesPerPoint = sampleRate / pointsPerSecond;
-    pointsPerSample = 1.f / samplesPerPoint;
-    auto const maxWriteIncrementPerAudioBlock = pointsPerSample * static_cast<float>(maxAudioBlockSize);
-    readBlockSize = static_cast<int>(std::ceil(durationInSeconds * pointsPerSecond));
-    auto const audioBlockDuration = static_cast<float>(maxAudioBlockSize) / sampleRate;
-    auto const refreshTime = 1.f / refreshRate;
-    auto const audioBlocksPerUserInterfaceRefreshTime = refreshTime / audioBlockDuration;
-    resize(static_cast<int>(std::ceil(maxWriteIncrementPerAudioBlock)), audioBlocksPerUserInterfaceRefreshTime);
+    sizeInfo = info;
+    resize();
+  }
+
+  void setResolution(float pointsPerSecond_, float durationInSeconds_)
+  {
+    pointsPerSecond = pointsPerSecond_;
+    durationInSeconds = durationInSeconds_;
+    resize();
   }
 
   std::vector<ElementType, Allocator> accumulator;
   float accumulatedSamples = 0.f;
 
 private:
-  // todo: make these editable at runtime (allocating and deallocating on ui and sending buffer to audio thread)
-  virtual float getPointsPerSecond() const
+  float getPointsPerSecond() const
   {
-    return 128;
+    return pointsPerSecond;
   }
 
-  virtual float getDurationInSeconds() const
+  float getDurationInSeconds() const
   {
-    return 2;
+    return durationInSeconds;
   }
 
   virtual Index choseNumChannels(NumIO numIO) const
@@ -128,10 +120,26 @@ private:
     return numIO.numOuts;
   }
 
+  void resize()
+  {
+    numChannels = choseNumChannels(sizeInfo.numIO);
+    accumulator.resize(numChannels);
+    auto const pointsPerSecond = getPointsPerSecond();
+    auto const durationInSeconds = getDurationInSeconds();
+    samplesPerPoint = sizeInfo.sampleRate / pointsPerSecond;
+    pointsPerSample = 1.f / samplesPerPoint;
+    auto const maxWriteIncrementPerAudioBlock = pointsPerSample * static_cast<float>(sizeInfo.maxAudioBlockSize);
+    readBlockSize = static_cast<int>(std::ceil(durationInSeconds * pointsPerSecond));
+    auto const audioBlockDuration = static_cast<float>(sizeInfo.maxAudioBlockSize) / sizeInfo.sampleRate;
+    auto const refreshTime = 1.f / sizeInfo.refreshRate;
+    auto const audioBlocksPerUserInterfaceRefreshTime = refreshTime / audioBlockDuration;
+    resize(static_cast<int>(std::ceil(maxWriteIncrementPerAudioBlock)), audioBlocksPerUserInterfaceRefreshTime);
+  }
+
   void resize(Index maxWriteIncrementPerAudioBlock, float audioBlocksPerUserInterfaceRefreshTime)
   {
-    auto const bufferForProduction =
-      static_cast<int>(std::ceil(maxWriteIncrementPerAudioBlock * audioBlocksPerUserInterfaceRefreshTime));
+    auto const bufferForProduction = static_cast<int>(
+      std::ceil(static_cast<float>(maxWriteIncrementPerAudioBlock) * audioBlocksPerUserInterfaceRefreshTime));
     auto const newSize = readBlockSize + bufferForProduction;
     resize(newSize);
   }
@@ -158,18 +166,11 @@ private:
   Index readBlockSize = 0;
   float pointsPerSample = 1.f;
   float samplesPerPoint = 1;
-  Buffer buffer;
-};
+  float pointsPerSecond = 128;
+  float durationInSeconds = 2;
+  BlockSizeInfo sizeInfo;
 
-template<class SampleType>
-struct WaveformElement final
-{
-  float negative;
-  float positive;
-  explicit WaveformElement(float negative = 0.f, float positive = 0.f)
-    : negative(negative)
-    , positive(positive)
-  {}
+  Buffer buffer;
 };
 
 template<class SampleType,
@@ -258,6 +259,17 @@ void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
     [](ElementType accumulatedValue, SampleType value) { return accumulatedValue + static_cast<ElementType>(value); },
     [](ElementType value) { return value; });
 }
+
+template<class SampleType>
+struct WaveformElement final
+{
+  float negative;
+  float positive;
+  explicit WaveformElement(float negative = 0.f, float positive = 0.f)
+    : negative(negative)
+    , positive(positive)
+  {}
+};
 
 template<class SampleType, class Allocator = std::allocator<WaveformElement<SampleType>>>
 using WaveformRingBuffer = RingBuffer<WaveformElement<SampleType>, Allocator>;

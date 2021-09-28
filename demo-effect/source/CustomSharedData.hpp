@@ -12,25 +12,27 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/BlockSizeInfo.hpp"
+#include "unplug/CustomDataWrapper.hpp"
 #include "unplug/IO.hpp"
 #include "unplug/NumIO.hpp"
 #include "unplug/RingBuffer.hpp"
-#include "unplug/SharedData.hpp"
+#include "unplug/PreAllocated.hpp"
 
-struct PluginCustomSharedData final
+struct PluginCustomData final
 {
   unplug::RingBuffer<float> levelRingBuffer;
   unplug::WaveformRingBuffer<float> waveformRingBuffer;
 
-  void resize(float sampleRate, float refreshRate, int maxAudioBlockSize, unplug::NumIO numIO)
+  void setBlockSizeInfo(unplug::BlockSizeInfo const& blockSizeInfo)
   {
-    levelRingBuffer.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
+    levelRingBuffer.setBlockSizeInfo(blockSizeInfo);
     levelRingBuffer.reset(0.f);
-    waveformRingBuffer.resize(sampleRate, refreshRate, maxAudioBlockSize, numIO);
+    waveformRingBuffer.setBlockSizeInfo(blockSizeInfo);
     waveformRingBuffer.reset(unplug::WaveformElement<float>{ 0.f, 0.f });
   }
 };
 
 namespace unplug {
-using CustomSharedData = SharedData<PluginCustomSharedData>;
+using CustomData = CustomDataWrapper<PluginCustomData>;
 }

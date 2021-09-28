@@ -43,10 +43,10 @@ void paint()
 //  differenceLevelMeterSettings.maxValue = static_cast<float>(parameters.getMaxValue(Param::gain));
 //  differenceLevelMeterSettings.minValue = static_cast<float>(parameters.getMinValue(Param::gain));
 //  DifferenceLevelMeterRaw(gain, "GainMeter", { width, 50.f }, differenceLevelMeterSettings);
-  auto sharedData = CustomSharedData::getCurrent();
-  if(sharedData){
-    PlotRingBuffer("Level",sharedData->levelRingBuffer);
-    PlotWaveformRingBuffer("Waveform",sharedData->waveformRingBuffer);
+  auto customData = CustomData::getCurrent();
+  if(customData){
+    PlotRingBuffer("Level", customData->levelRingBuffer);
+    PlotWaveformRingBuffer("Waveform", customData->waveformRingBuffer);
   }
   SliderFloat(Param::gain);
   MeterValueLabelCentered(Meter::level);

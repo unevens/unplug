@@ -164,3 +164,6 @@ if (${unplug_expose_vst3style_parameter_api} STREQUAL TRUE)
     target_compile_definitions(${PROJECT_NAME} PUBLIC UNPLUG_EXPOSE_VST3STYLE_PARAMETER_API=1)
 endif ()
 
+include_directories("${unplug_SOURCE_DIR}/libs/lockfree-async")
+
+

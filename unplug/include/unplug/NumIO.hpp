@@ -19,8 +19,8 @@ namespace unplug {
 
 struct NumIO final
 {
-  Index numIns;
-  Index numOuts;
+  Index numIns = 1;
+  Index numOuts = 1;
 };
 
 } // namespace unplug

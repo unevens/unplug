@@ -63,7 +63,7 @@ public:
   unplug::ViewPersistentData persistentData;
   std::array<int, 2> lastViewSize{ { -1, -1 } };
   std::shared_ptr<unplug::MeterStorage> meters;
-  std::shared_ptr<unplug::CustomSharedData> customData;
+  std::shared_ptr<unplug::CustomData> customData;
 
 private:
   void applyPreset(int presetIndex);

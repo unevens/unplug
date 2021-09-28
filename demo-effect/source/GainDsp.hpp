@@ -74,7 +74,7 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
   if (wantsLevelMetering) {
     assert(state.metering.levels.size() == numOutputChannels);
     state.metering.levels.resize(numOutputChannels);
-    auto& customData = state.pluginState.customSharedData->get();
+    auto& customData = state.pluginState.customData->get();
     unplug::sendToRingBuffer(
       customData.levelRingBuffer,
       outputs,

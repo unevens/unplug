@@ -28,7 +28,7 @@ namespace unplug::detail {
 EventHandler::EventHandler(pugl::View& view,
                            ParameterAccess& parameters,
                            std::shared_ptr<MeterStorage>& meters,
-                           std::shared_ptr<CustomSharedData>& custom)
+                           std::shared_ptr<CustomData>& custom)
   : view{ view }
   , parameters{ parameters }
   , meters{ meters }

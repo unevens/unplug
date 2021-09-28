@@ -12,36 +12,16 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/NumIO.hpp"
 
 namespace unplug {
 
-template<class Data>
-class SharedData
+struct BlockSizeInfo final
 {
-public:
-  void setCurrent()
-  {
-    currentInstance = &storage;
-  }
-
-  static Data* getCurrent()
-  {
-    return currentInstance;
-  }
-
-  Data& get()
-  {
-    return storage;
-  }
-
-  SharedData() = default;
-
-  SharedData(SharedData const&) = delete;
-
-  SharedData& operator=(SharedData const&) = delete;
-
-private:
-  Data storage;
-  static inline thread_local Data* currentInstance = nullptr;
+  float sampleRate = 44100;
+  float refreshRate = 30;
+  Index maxAudioBlockSize = 128;
+  NumIO numIO;
 };
+
 } // namespace unplug

@@ -37,8 +37,6 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
     return result;
   }
 
-  UserInterface::initializePersistentData(persistentData);
-
   UnitInfo unitInfo;
   unitInfo.id = kRootUnitId;
   unitInfo.parentUnitId = kNoParentUnitId;
@@ -172,7 +170,7 @@ tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
     auto parameter = parameters.getParameterByIndex(paramIndex);
     bool const isProgramChange = (parameter->getInfo().flags & ParameterInfo::kIsProgramChange) != 0;
     assert(!isProgramChange);
-    if (!isProgramChange){
+    if (!isProgramChange) {
       auto const parameterTag = parameter->getInfo().id;
       setParamNormalized(parameterTag, valueNormalized);
     }
@@ -198,17 +196,17 @@ tresult PLUGIN_API UnplugController::setState(IBStream* state)
       return true;
     }
   };
-  auto lastViewSizeInt32 = std::array<int32, 2> {lastViewSize[0],lastViewSize[1]};
+  auto lastViewSizeInt32 = std::array<int32, 2>{ lastViewSize[0], lastViewSize[1] };
   if (!streamer.readInt32Array(lastViewSizeInt32.data(), static_cast<Steinberg::int32>(lastViewSizeInt32.size()))) {
     return kResultFalse;
   }
-  lastViewSize[0]=lastViewSizeInt32[0];
-  lastViewSize[1]=lastViewSizeInt32[1];
+  lastViewSize[0] = lastViewSizeInt32[0];
+  lastViewSize[1] = lastViewSizeInt32[1];
   auto version = Version{ 0 };
   if (!streamer.readInt32Array(version.data(), static_cast<Steinberg::int32>(version.size()))) {
     return kResultFalse;
   }
-  return persistentData.load(loadInteger, loadIntegerArray, loadDoubleArray, loadBytes) ? kResultTrue : kResultFalse;
+  return kResultTrue;
 }
 
 tresult PLUGIN_API UnplugController::getState(IBStream* state)
@@ -223,7 +221,7 @@ tresult PLUGIN_API UnplugController::getState(IBStream* state)
     return streamer.writeDoubleArray(x, static_cast<int>(size));
   };
   auto const saveBytes = [&](void const* x, int64_t size) { return streamer.writeRaw(x, static_cast<int>(size)); };
-  auto const lastViewSizeInt32 = std::array<int32, 2> {lastViewSize[0],lastViewSize[1]};
+  auto const lastViewSizeInt32 = std::array<int32, 2>{ lastViewSize[0], lastViewSize[1] };
   if (!streamer.writeInt32Array(lastViewSizeInt32.data(), static_cast<Steinberg::int32>(lastViewSizeInt32.size()))) {
     return kResultFalse;
   }
@@ -231,7 +229,6 @@ tresult PLUGIN_API UnplugController::getState(IBStream* state)
   if (!streamer.writeInt32Array(version.data(), static_cast<Steinberg::int32>(version.size()))) {
     return kResultFalse;
   }
-  persistentData.save(saveInteger, saveIntegerArray, saveDoubleArray, saveBytes);
   return kResultTrue;
 }
 

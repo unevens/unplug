@@ -119,7 +119,7 @@ public:
     , pointsPerSecond(other.pointsPerSecond)
     , durationInSeconds(other.durationInSeconds)
     , sizeInfo(other.sizeInfo)
-    , buffer(buffer)
+    , buffer(other.buffer)
   {}
 
   std::vector<ElementType, Allocator> accumulator;

@@ -15,7 +15,7 @@
 #include "unplug/BlockSizeInfo.hpp"
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
-#include "unplug/PreAllocated.hpp"
+#include "lockfree/PreAllocated.hpp"
 #include <atomic>
 #include <vector>
 
@@ -321,11 +321,11 @@ void sendToWaveformRingBuffer(WaveformRingBuffer<WaveformSampleType, Allocator>&
 }
 
 template<class RingBufferClass, class OnSizeChanged>
-bool setBlockSizeInfo(PreAllocated<RingBufferClass>& preAllocatedRingBuffer,
+bool setBlockSizeInfo(lockfree::PreAllocated<RingBufferClass>& preAllocatedRingBuffer,
                       unplug::BlockSizeInfo const& blockSizeInfo,
                       OnSizeChanged onSizeChanged = nullptr)
 {
-  auto ringBuffer = preAllocatedRingBuffer.getFromUiThread();
+  auto ringBuffer = preAllocatedRingBuffer.getFromNonRealtimeThread();
   if (ringBuffer) {
     auto const& prevSizeInfo = ringBuffer->getSizeInfo();
     bool const sizeInfoChanged = prevSizeInfo != blockSizeInfo;

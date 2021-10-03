@@ -16,13 +16,13 @@
 #include "unplug/CustomDataWrapper.hpp"
 #include "unplug/IO.hpp"
 #include "unplug/NumIO.hpp"
-#include "unplug/PreAllocated.hpp"
+#include "lockfree/PreAllocated.hpp"
 #include "unplug/RingBuffer.hpp"
 
 struct PluginCustomData final
 {
-  unplug::PreAllocated<unplug::RingBuffer<float>> levelRingBuffer;
-  unplug::PreAllocated<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
+  lockfree::PreAllocated<unplug::RingBuffer<float>> levelRingBuffer;
+  lockfree::PreAllocated<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
 
   PluginCustomData(){
     levelRingBuffer.set(std::make_unique<unplug::RingBuffer<float>>());

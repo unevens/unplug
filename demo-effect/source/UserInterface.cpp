@@ -45,11 +45,11 @@ void paint()
   //  DifferenceLevelMeterRaw(gain, "GainMeter", { width, 50.f }, differenceLevelMeterSettings);
   auto customData = CustomData::getCurrent();
   if (customData) {
-    auto levelRingBuffer = customData->levelRingBuffer.getFromUiThread();
+    auto levelRingBuffer = customData->levelRingBuffer.getFromNonRealtimeThread();
     if (levelRingBuffer) {
       PlotRingBuffer("Level", *levelRingBuffer);
     }
-    auto waveformRingBuffer = customData->waveformRingBuffer.getFromUiThread();
+    auto waveformRingBuffer = customData->waveformRingBuffer.getFromNonRealtimeThread();
     if (waveformRingBuffer) {
       PlotWaveformRingBuffer("Waveform", *waveformRingBuffer);
     }

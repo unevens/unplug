@@ -75,7 +75,7 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
     assert(state.metering.levels.size() == numOutputChannels);
     state.metering.levels.resize(numOutputChannels);
     auto& customData = state.pluginState.customData->get();
-    auto levelRingBuffer = customData.levelRingBuffer.getFromAudioThread();
+    auto levelRingBuffer = customData.levelRingBuffer.getFromRealtimeThread();
     if (levelRingBuffer) {
       unplug::sendToRingBuffer(
         *levelRingBuffer,
@@ -93,7 +93,7 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
         [&](auto accumulatedValue, auto elementValue) { return accumulatedValue + elementValue; },
         [](auto weightedValue) { return std::max(-90.f, unplug::linearToDB(weightedValue)); });
     }
-    auto waveformRingBuffer = customData.waveformRingBuffer.getFromAudioThread();
+    auto waveformRingBuffer = customData.waveformRingBuffer.getFromRealtimeThread();
     if (waveformRingBuffer) {
       unplug::sendToWaveformRingBuffer(*waveformRingBuffer, outputs, numOutputChannels, 0, numSamples);
     }

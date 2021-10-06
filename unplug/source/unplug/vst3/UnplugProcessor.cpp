@@ -12,7 +12,6 @@
 //------------------------------------------------------------------------
 
 #include "unplug/UnplugProcessor.hpp"
-#include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "unplug/GetVersion.hpp"
 #include "unplug/Presets.hpp"
 #include "unplug/UserInterface.hpp"
@@ -67,43 +66,57 @@ void UnplugProcessor::updateParametersToLastPoint(ProcessData& data)
           int32 sampleOffset;
           paramQueue->getPoint(numPoints - 1, sampleOffset, value);
           auto const parameterTag = paramQueue->getParameterId();
-          pluginState.parameters.setNormalized(parameterTag, value);
+          pluginState.parameters.setNormalized(static_cast<ParamIndex>(parameterTag), value);
         }
       }
     }
   }
 }
 
-tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
+template<unplug::Serialization::Action action>
+bool UnplugProcessor::serialization(IBStreamer& ibStreamer)
 {
-  IBStreamer streamer(state, kLittleEndian);
+  using namespace unplug::Serialization;
+  auto streamer = Streamer<action>(ibStreamer);
   Version version;
-  if (!streamer.readInt32Array(version.data(), version.size())) {
-    return kResultFalse;
+  if (!streamer(version.data(), version.size())) {
+    return false;
   }
   for (int i = 0; i < NumParameters::value; ++i) {
-    double value;
-    if (!streamer.readDouble(value)) {
-      return kResultFalse;
+    if constexpr (action == write) {
+      double value = pluginState.parameters.getNormalized(i);
+      if (!streamer(value)) {
+        return false;
+      }
     }
-    pluginState.parameters.setNormalized(i, value);
+    else {
+      double value = 0;
+      if (!streamer(value)) {
+        return false;
+      }
+      pluginState.parameters.setNormalized(i, value);
+    }
   }
+  return true;
+}
+
+tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
+{
+  using namespace unplug::Serialization;
+  IBStreamer streamer(state, kLittleEndian);
+  auto const success = serialization<read>(streamer);
+  if (!success)
+    return kResultFalse;
   return onSetState(streamer) ? kResultOk : kResultFalse;
 }
 
 tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
 {
+  using namespace unplug::Serialization;
   IBStreamer streamer(state, kLittleEndian);
-  auto constexpr version = getVersion();
-  if (!streamer.writeInt32Array(version.data(), version.size())) {
+  auto const success = serialization<write>(streamer);
+  if (!success)
     return kResultFalse;
-  }
-  for (int i = 0; i < NumParameters::value; ++i) {
-    double const value = pluginState.parameters.getNormalized(i);
-    if (!streamer.writeDouble(value)) {
-      return kResultFalse;
-    }
-  }
   return onGetState(streamer) ? kResultOk : kResultFalse;
 }
 

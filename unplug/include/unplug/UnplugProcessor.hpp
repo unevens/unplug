@@ -25,6 +25,7 @@
 #include "unplug/IO.hpp"
 #include "unplug/MeterStorage.hpp"
 #include "unplug/ParameterStorage.hpp"
+#include "unplug/Serialization.hpp"
 #include "unplug/detail/SetupIOFromVst3ProcessData.hpp"
 #include <atomic>
 #include <memory>
@@ -108,6 +109,10 @@ protected:
   unplug::PluginState pluginState;
   unplug::detail::CachedIO ioCache;
   std::array<int32, unplug::NumParameters::value> automationPointsHandled;
+
+private:
+  template<unplug::Serialization::Action>
+  bool serialization(IBStreamer& streamer);
 
 public:
   tresult PLUGIN_API initialize(FUnknown* context) final;

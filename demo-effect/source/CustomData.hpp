@@ -12,29 +12,40 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "lockfree/PreAllocated.hpp"
 #include "unplug/BlockSizeInfo.hpp"
 #include "unplug/CustomDataWrapper.hpp"
 #include "unplug/IO.hpp"
 #include "unplug/NumIO.hpp"
-#include "lockfree/PreAllocated.hpp"
 #include "unplug/RingBuffer.hpp"
+#include "unplug/Serialization.hpp"
 
 struct PluginCustomData final
 {
   lockfree::PreAllocated<unplug::RingBuffer<float>> levelRingBuffer;
   lockfree::PreAllocated<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
 
-  PluginCustomData(){
+  PluginCustomData()
+  {
     levelRingBuffer.set(std::make_unique<unplug::RingBuffer<float>>());
     waveformRingBuffer.set(std::make_unique<unplug::WaveformRingBuffer<float>>());
   }
 
   void setBlockSizeInfo(unplug::BlockSizeInfo const& blockSizeInfo)
   {
-    unplug::setBlockSizeInfo(levelRingBuffer, blockSizeInfo, [](unplug::RingBuffer<float>& ringBuffer) { ringBuffer.reset(0.f); });
+    unplug::setBlockSizeInfo(
+      levelRingBuffer, blockSizeInfo, [](unplug::RingBuffer<float>& ringBuffer) { ringBuffer.reset(0.f); });
     unplug::setBlockSizeInfo(waveformRingBuffer, blockSizeInfo, [](unplug::WaveformRingBuffer<float>& ringBuffer) {
       ringBuffer.reset(unplug::WaveformElement<float>{ 0.f, 0.f });
     });
+  }
+
+  template<unplug::Serialization::Action action>
+  bool serialization(unplug::Serialization::Streamer<action>& streamer)
+  {
+    levelRingBuffer.getFromNonRealtimeThread()->settingsSerialization(streamer);
+    levelRingBuffer.getFromNonRealtimeThread()->settingsSerialization(streamer);
+    return true;
   }
 };
 

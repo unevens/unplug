@@ -16,6 +16,7 @@
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
 #include "lockfree/PreAllocated.hpp"
+#include "unplug/Serialization.hpp"
 #include <atomic>
 #include <vector>
 
@@ -105,6 +106,13 @@ public:
   BlockSizeInfo const& getSizeInfo()
   {
     return sizeInfo;
+  }
+
+  template<unplug::Serialization::Action action>
+  bool settingsSerialization(unplug::Serialization::Streamer<action>& streamer){
+    streamer(pointsPerSecond);
+    streamer(durationInSeconds);
+    return true;
   }
 
   RingBuffer() = default;

@@ -97,7 +97,8 @@ bool UnplugProcessor::serialization(IBStreamer& ibStreamer)
       pluginState.parameters.setNormalized(i, value);
     }
   }
-  return true;
+  auto const ok = pluginState.customData->get().template serialization(streamer);
+  return ok;
 }
 
 tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)

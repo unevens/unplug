@@ -45,7 +45,8 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
 
   ioCache.resize(1, 1);
 
-  pluginState.customData = std::make_shared<CustomData>();
+  customDataWrapped = std::make_shared<CustomData>();
+  pluginState.customData = &(customDataWrapped->get());
   pluginState.meters = std::make_shared<MeterStorage>();
 
   onInitialization();
@@ -55,8 +56,6 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
 
 tresult PLUGIN_API UnplugProcessor::terminate()
 {
-  pluginState.customData.reset();
-  pluginState.meters.reset();
   onTermination();
   return AudioEffect::terminate();
 }
@@ -104,7 +103,7 @@ bool UnplugProcessor::serialization(IBStreamer& ibStreamer)
       pluginState.parameters.setNormalized(i, value);
     }
   }
-  auto const ok = pluginState.customData->get().template serialization(streamer);
+  auto const ok = pluginState.customData->template serialization(streamer);
   return ok;
 }
 
@@ -183,16 +182,16 @@ tresult UnplugProcessor::setActive(TBool state)
   auto blockSizeInfo = BlockSizeInfo{
     static_cast<float>(processSetup.sampleRate), UserInterface::getRefreshRate(), processSetup.maxSamplesPerBlock, numIO
   };
-  pluginState.customData->get().setBlockSizeInfo(blockSizeInfo);
+  pluginState.customData->setBlockSizeInfo(blockSizeInfo);
 
   auto message = owned(allocateMessage());
   message->setMessageID(vst3::messaageIds::meterSharingId);
   auto const meterStorageAddress = reinterpret_cast<uintptr_t>(&pluginState.meters);
   message->getAttributes()->setBinary(
     vst3::messaageIds::meterStorageId, &meterStorageAddress, sizeof(meterStorageAddress));
-  auto const circularBufferStorageAddress = reinterpret_cast<uintptr_t>(&pluginState.customData);
+  auto const customDataAddress = reinterpret_cast<uintptr_t>(&customDataWrapped);
   message->getAttributes()->setBinary(
-    vst3::messaageIds::customStorageId, &circularBufferStorageAddress, sizeof(circularBufferStorageAddress));
+    vst3::messaageIds::customStorageId, &customDataAddress, sizeof(customDataAddress));
   sendMessage(message);
 
   onSetActive(state);

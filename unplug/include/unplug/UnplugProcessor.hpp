@@ -106,6 +106,7 @@ protected:
   }
 
 protected:
+  std::shared_ptr<unplug::CustomData> customDataWrapped;
   unplug::PluginState pluginState;
   unplug::detail::CachedIO ioCache;
   std::array<int32, unplug::NumParameters::value> automationPointsHandled;

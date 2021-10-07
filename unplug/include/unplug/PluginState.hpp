@@ -23,7 +23,7 @@ struct PluginState
 {
   ParameterStorage parameters;
   std::shared_ptr<MeterStorage> meters;
-  std::shared_ptr<CustomData> customData;
+  CustomData::Data* customData{ nullptr };
   std::atomic<bool> isUserInterfaceOpen{ false };
 };
 

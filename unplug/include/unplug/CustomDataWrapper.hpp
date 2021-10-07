@@ -15,10 +15,12 @@
 
 namespace unplug {
 
-template<class Data>
+template<class TData>
 class CustomDataWrapper final
 {
 public:
+  using Data = TData;
+
   void setCurrent()
   {
     currentInstance = &data;

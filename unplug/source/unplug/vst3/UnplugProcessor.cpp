@@ -43,6 +43,8 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
   auto const parameterDescriptions = detail::getSortedParameterDescriptions();
   pluginState.parameters.initialize(parameterDescriptions);
 
+  ioCache.resize(1, 1);
+
   onInitialization();
 
   return kResultOk;
@@ -127,7 +129,7 @@ tresult PLUGIN_API UnplugProcessor::canProcessSampleSize(int32 symbolicSampleSiz
     return kResultTrue;
 
   if (symbolicSampleSize == Vst::kSample64)
-    return supportsDoublePrecision();
+    return supportsDoublePrecision() ? kResultTrue : kResultFalse;
 
   return kResultFalse;
 }

@@ -65,7 +65,7 @@ public:
 
   void resize(Index numIns, Index numOuts)
   {
-    assert(numIns >= 0 && numOuts >= -1);
+    assert(numIns >= 0 && numOuts >= 0);
     ins.resize(std::max(numIns, Index(0)));
     outs.resize(std::max(numOuts, Index(0)));
   }

@@ -19,7 +19,6 @@
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "unplug/MeterStorage.hpp"
 #include "unplug/MidiMapping.hpp"
-#include "unplug/ViewPersistentData.hpp"
 #include "unplug/detail/Vst3View.hpp"
 #include <memory>
 

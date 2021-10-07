@@ -26,10 +26,9 @@ struct PluginCustomData final
   lockfree::PreAllocated<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
 
   PluginCustomData()
-  {
-    levelRingBuffer.set(std::make_unique<unplug::RingBuffer<float>>());
-    waveformRingBuffer.set(std::make_unique<unplug::WaveformRingBuffer<float>>());
-  }
+    : levelRingBuffer{ std::make_unique<unplug::RingBuffer<float>>() }
+    , waveformRingBuffer{ std::make_unique<unplug::WaveformRingBuffer<float>>() }
+  {}
 
   void setBlockSizeInfo(unplug::BlockSizeInfo const& blockSizeInfo)
   {
@@ -44,7 +43,7 @@ struct PluginCustomData final
   bool serialization(unplug::Serialization::Streamer<action>& streamer)
   {
     levelRingBuffer.getFromNonRealtimeThread()->settingsSerialization(streamer);
-    levelRingBuffer.getFromNonRealtimeThread()->settingsSerialization(streamer);
+    waveformRingBuffer.getFromNonRealtimeThread()->settingsSerialization(streamer);
     return true;
   }
 };

@@ -18,7 +18,6 @@
 #include "pugl/pugl.hpp"
 #include "unplug/MeterStorage.hpp"
 #include "unplug/MidiMapping.hpp"
-#include "unplug/ViewPersistentData.hpp"
 #include "unplug/detail/EventHandler.hpp"
 #include "unplug/detail/Vst3Keycodes.hpp"
 #include "unplug/detail/Vst3ParameterAccess.hpp"

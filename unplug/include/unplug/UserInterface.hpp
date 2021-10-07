@@ -12,7 +12,6 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/ViewPersistentData.hpp"
 #include <array>
 #include <string_view>
 
@@ -31,8 +30,6 @@ bool keepDefaultRatio();
 std::array<int, 2> getDefaultSize();
 
 float getMinZoom();
-
-void initializePersistentData(unplug::ViewPersistentData& persistentData);
 
 const char* getWindowName();
 

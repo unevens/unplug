@@ -35,8 +35,13 @@ template<class SampleType>
 void setupIO(CachedIO& io, Steinberg::Vst::ProcessData& data)
 {
   using namespace detail;
+  auto const isFlushing = data.numInputs == 0 && data.numOutputs == 0;
+  if (isFlushing)
+    return;
   assert(data.numInputs == io.ins.size());
   assert(data.numOutputs == io.outs.size());
+  io.ins.resize(data.numInputs);
+  io.outs.resize(data.numOutputs);
   for (Index in = 0; in < data.numInputs; ++in) {
     io.ins[in].setChannels(getBuffer<SampleType>(data.inputs[in]));
     io.ins[in].numChannels = data.inputs[in].numChannels;

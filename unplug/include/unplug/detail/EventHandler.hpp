@@ -18,7 +18,6 @@
 #include "pugl/pugl.hpp"
 #include "unplug/MeterStorage.hpp"
 #include "unplug/ParameterAccess.hpp"
-#include "unplug/ViewPersistentData.hpp"
 #include "unplug/detail/ModifierKeys.hpp"
 #include <array>
 #include <chrono>

@@ -45,6 +45,9 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
 
   ioCache.resize(1, 1);
 
+  pluginState.customData = std::make_shared<CustomData>();
+  pluginState.meters = std::make_shared<MeterStorage>();
+
   onInitialization();
 
   return kResultOk;
@@ -52,6 +55,8 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
 
 tresult PLUGIN_API UnplugProcessor::terminate()
 {
+  pluginState.customData.reset();
+  pluginState.meters.reset();
   onTermination();
   return AudioEffect::terminate();
 }
@@ -174,18 +179,6 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
 
 tresult UnplugProcessor::setActive(TBool state)
 {
-  if (state) {
-    if (!pluginState.meters) {
-      pluginState.meters = std::make_shared<MeterStorage>();
-    }
-  }
-  else {
-    pluginState.meters = nullptr;
-  }
-
-  if (!pluginState.customData) {
-    pluginState.customData = std::make_shared<CustomData>();
-  }
   auto const numIO = getNumIO();
   auto blockSizeInfo = BlockSizeInfo{
     static_cast<float>(processSetup.sampleRate), UserInterface::getRefreshRate(), processSetup.maxSamplesPerBlock, numIO

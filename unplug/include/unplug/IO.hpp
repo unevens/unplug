@@ -43,6 +43,11 @@ public:
     return { out.template getChannels<SampleType>(), out.numChannels };
   }
 
+  bool isFlushing() const
+  {
+    return io.isFlushing;
+  }
+
   explicit IO(detail::CachedIO& io)
     : io{ io }
   {}

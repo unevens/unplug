@@ -144,7 +144,10 @@ void UnplugProcessor::staticProcessing(ProcessData& data, StaticProcessing stati
   unplug::detail::setupIO<SampleType>(ioCache, data);
   auto io = IO<SampleType>(ioCache);
   updateParametersToLastPoint(data);
-  staticProcessing(io, data.numSamples);
+  bool const isNotFlushing = !io.isFlushing();
+  if (isNotFlushing) {
+    staticProcessing(io, data.numSamples);
+  }
 }
 
 template<class SampleType,
@@ -161,110 +164,113 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
   using AutomationEvent = unplug::AutomationEvent<SampleType>;
   unplug::detail::setupIO<SampleType>(ioCache, data);
   auto io = IO<SampleType>(ioCache);
-  auto automation = prepareAutomation();
-  if (data.inputParameterChanges) {
-    int32 const numParamsChanged = data.inputParameterChanges->getParameterCount();
-    if (numParamsChanged == 0) {
-      staticProcessing(io, data.numSamples);
-    }
-    else {
-      // reset cache of handled points
-      std::fill(automationPointsHandled.begin(), automationPointsHandled.begin() + numParamsChanged, 0);
-      // handle first changes if not on zero
-      int32 numChangesToHandle = 0;
-      for (int32 index = 0; index < numParamsChanged; index++) {
-        if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
-          int32 const numPoints = paramQueue->getPointCount();
-          numChangesToHandle += numPoints;
-          if (numPoints > 0) {
-            ParamValue value;
-            int32 sampleOffset;
-            paramQueue->getPoint(0, sampleOffset, value);
-            if (sampleOffset > 0) {
-              auto const parameterId = paramQueue->getParameterId();
-              value = pluginState.parameters.valueFromNormalized(parameterId, value);
-              auto const prevValue = pluginState.parameters.get(parameterId);
-              setParameterAutomation(automation, AutomationEvent(parameterId, -1, prevValue, sampleOffset, value));
-              automationPointsHandled[index] = 1;
-              --numChangesToHandle;
-            }
-          }
-        }
+  bool const isNotFlushing = !io.isFlushing();
+  if (isNotFlushing) {
+    auto automation = prepareAutomation();
+    if (data.inputParameterChanges) {
+      int32 const numParamsChanged = data.inputParameterChanges->getParameterCount();
+      if (numParamsChanged == 0) {
+        staticProcessing(io, data.numSamples);
       }
-      // handle other changes until the end
-      int32 currentSample = 0;
-      while (numChangesToHandle > 0) {
-        int32 nextSample = data.numSamples;
+      else {
+        // reset cache of handled points
+        std::fill(automationPointsHandled.begin(), automationPointsHandled.begin() + numParamsChanged, 0);
+        // handle first changes if not on zero
+        int32 numChangesToHandle = 0;
         for (int32 index = 0; index < numParamsChanged; index++) {
           if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
             int32 const numPoints = paramQueue->getPointCount();
-            auto const parameterId = paramQueue->getParameterId();
-            for (int32 point = automationPointsHandled[index]; point < numPoints; ++point) {
+            numChangesToHandle += numPoints;
+            if (numPoints > 0) {
               ParamValue value;
               int32 sampleOffset;
-              paramQueue->getPoint(point, sampleOffset, value);
-              bool const onEnd = sampleOffset == data.numSamples;
-              if (onEnd) {
-                --numChangesToHandle;
-                ++automationPointsHandled[index];
-                break;
-              }
-              const bool startsAtCurrentSample = sampleOffset == currentSample;
-              if (startsAtCurrentSample) {
+              paramQueue->getPoint(0, sampleOffset, value);
+              if (sampleOffset > 0) {
+                auto const parameterId = paramQueue->getParameterId();
                 value = pluginState.parameters.valueFromNormalized(parameterId, value);
-                ParamValue nextValue;
-                int32 nextSampleOffset;
-                // get the end
-                auto const endPoint = point + 1;
-                if (endPoint < numPoints) {
-                  paramQueue->getPoint(endPoint, nextSampleOffset, nextValue);
-                  nextValue = pluginState.parameters.valueFromNormalized(parameterId, nextValue);
-                }
-                else {
-                  nextSampleOffset = data.numSamples;
-                  nextValue = value;
-                }
-                bool const isJump = sampleOffset == nextSampleOffset;
-                if (isJump) {
-                  ParamValue nextValueAfterJump;
-                  int32 nextSampleOffsetAfterJump;
-                  // get the end
-                  auto const endPointAfterJump = endPoint + 1;
-                  if (endPointAfterJump < numPoints) {
-                    paramQueue->getPoint(endPointAfterJump, nextSampleOffsetAfterJump, nextValueAfterJump);
-                    nextValueAfterJump = pluginState.parameters.valueFromNormalized(parameterId, nextValueAfterJump);
-                  }
-                  else {
-                    nextSampleOffsetAfterJump = data.numSamples;
-                    nextValueAfterJump = nextValue;
-                  }
-                  setParameterAutomation(
-                    automation,
-                    AutomationEvent(
-                      parameterId, sampleOffset, nextValue, nextSampleOffsetAfterJump, nextValueAfterJump));
-                  nextSample = std::min(nextSample, nextSampleOffsetAfterJump);
-                }
-                else {
-                  setParameterAutomation(
-                    automation, AutomationEvent(parameterId, sampleOffset, value, nextSampleOffset, nextValue));
-                  nextSample = std::min(nextSample, nextSampleOffset);
-                }
+                auto const prevValue = pluginState.parameters.get(parameterId);
+                setParameterAutomation(automation, AutomationEvent(parameterId, -1, prevValue, sampleOffset, value));
+                automationPointsHandled[index] = 1;
                 --numChangesToHandle;
-                ++automationPointsHandled[index];
-              }
-              else {
-                nextSample = std::min(nextSample, sampleOffset);
               }
             }
           }
         }
-        automatedProcessing(automation, io, currentSample, nextSample);
-        currentSample = nextSample;
+        // handle other changes until the end
+        int32 currentSample = 0;
+        while (numChangesToHandle > 0) {
+          int32 nextSample = data.numSamples;
+          for (int32 index = 0; index < numParamsChanged; index++) {
+            if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
+              int32 const numPoints = paramQueue->getPointCount();
+              auto const parameterId = paramQueue->getParameterId();
+              for (int32 point = automationPointsHandled[index]; point < numPoints; ++point) {
+                ParamValue value;
+                int32 sampleOffset;
+                paramQueue->getPoint(point, sampleOffset, value);
+                bool const onEnd = sampleOffset == data.numSamples;
+                if (onEnd) {
+                  --numChangesToHandle;
+                  ++automationPointsHandled[index];
+                  break;
+                }
+                const bool startsAtCurrentSample = sampleOffset == currentSample;
+                if (startsAtCurrentSample) {
+                  value = pluginState.parameters.valueFromNormalized(parameterId, value);
+                  ParamValue nextValue;
+                  int32 nextSampleOffset;
+                  // get the end
+                  auto const endPoint = point + 1;
+                  if (endPoint < numPoints) {
+                    paramQueue->getPoint(endPoint, nextSampleOffset, nextValue);
+                    nextValue = pluginState.parameters.valueFromNormalized(parameterId, nextValue);
+                  }
+                  else {
+                    nextSampleOffset = data.numSamples;
+                    nextValue = value;
+                  }
+                  bool const isJump = sampleOffset == nextSampleOffset;
+                  if (isJump) {
+                    ParamValue nextValueAfterJump;
+                    int32 nextSampleOffsetAfterJump;
+                    // get the end
+                    auto const endPointAfterJump = endPoint + 1;
+                    if (endPointAfterJump < numPoints) {
+                      paramQueue->getPoint(endPointAfterJump, nextSampleOffsetAfterJump, nextValueAfterJump);
+                      nextValueAfterJump = pluginState.parameters.valueFromNormalized(parameterId, nextValueAfterJump);
+                    }
+                    else {
+                      nextSampleOffsetAfterJump = data.numSamples;
+                      nextValueAfterJump = nextValue;
+                    }
+                    setParameterAutomation(
+                      automation,
+                      AutomationEvent(
+                        parameterId, sampleOffset, nextValue, nextSampleOffsetAfterJump, nextValueAfterJump));
+                    nextSample = std::min(nextSample, nextSampleOffsetAfterJump);
+                  }
+                  else {
+                    setParameterAutomation(
+                      automation, AutomationEvent(parameterId, sampleOffset, value, nextSampleOffset, nextValue));
+                    nextSample = std::min(nextSample, nextSampleOffset);
+                  }
+                  --numChangesToHandle;
+                  ++automationPointsHandled[index];
+                }
+                else {
+                  nextSample = std::min(nextSample, sampleOffset);
+                }
+              }
+            }
+          }
+          automatedProcessing(automation, io, currentSample, nextSample);
+          currentSample = nextSample;
+        }
       }
     }
-  }
-  else {
-    staticProcessing(io, data.numSamples);
+    else {
+      staticProcessing(io, data.numSamples);
+    }
   }
   updateParametersToLastPoint(data);
 }

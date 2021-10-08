@@ -24,11 +24,20 @@ set(unplug_override_macos_arch "")
 # set this to TRUE to make public some function to query the parameters that return false on failure. See Vst3ParameterAccess.hpp
 set(unplug_expose_vst3style_parameter_api FALSE)
 
+#set this to TRUE to build with the address sanitizer enabled - it can be a good idea to enable it for running the validator or other testing suites.
+set(unplug_use_asan FALSE)
+
+
 # C++ global config
 if (WIN32)
     add_compile_options("/EHsc")
     ADD_DEFINITIONS(-DUNICODE)
     ADD_DEFINITIONS(-D_UNICODE)
+else ()
+    if (${unplug_use_asan} STREQUAL TRUE)
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+        set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+    endif ()
 endif (WIN32)
 
 #universal binary if building on arm64
@@ -156,6 +165,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
 
 # Unplug
 include_directories("${unplug_SOURCE_DIR}/unplug/include")
+include_directories("${unplug_SOURCE_DIR}/libs/lockfree-async")
 add_library(unplug-opaque-gl STATIC)
 target_sources(unplug-opaque-gl PRIVATE "${unplug_SOURCE_DIR}/unplug/source/gl/OpaqueGl.cpp")
 target_link_libraries(${PROJECT_NAME} PRIVATE unplug-opaque-gl)
@@ -164,6 +174,5 @@ if (${unplug_expose_vst3style_parameter_api} STREQUAL TRUE)
     target_compile_definitions(${PROJECT_NAME} PUBLIC UNPLUG_EXPOSE_VST3STYLE_PARAMETER_API=1)
 endif ()
 
-include_directories("${unplug_SOURCE_DIR}/libs/lockfree-async")
 
 

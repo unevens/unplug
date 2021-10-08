@@ -62,6 +62,7 @@ public:
 
   std::vector<Channels> ins;
   std::vector<Channels> outs;
+  bool isFlushing{false};
 
   void resize(Index numIns, Index numOuts)
   {

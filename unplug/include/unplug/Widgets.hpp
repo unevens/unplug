@@ -219,7 +219,7 @@ bool VSliderInt(ParamIndex paramIndex,
  * */
 struct KnobDrawData
 {
-  float angleOffset = pi / 4;
+  float angleOffset = pi<float> / 4;
   ImVec2 center;
   ImVec2 pointerPosition;
   bool isActive = false;
@@ -236,7 +236,7 @@ void DrawSimpleKnob(KnobDrawData const& knob);
  * */
 bool Knob(ParamIndex paramIndex,
           float power = 1.f,
-          float angleOffset = pi / 4,
+          float angleOffset = pi<float> / 4,
           std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
 
 /**
@@ -244,7 +244,7 @@ bool Knob(ParamIndex paramIndex,
  * */
 bool KnobWithLabels(ParamIndex paramIndex,
                     float power = 1.f,
-                    float angleOffset = pi / 4,
+                    float angleOffset = pi<float> / 4,
                     std::function<void(KnobDrawData const&)> const& drawer = DrawSimpleKnob);
 
 struct ParameterData
@@ -320,7 +320,7 @@ struct KnobOutput
 /**
  * An ImGui Knob control
  * */
-KnobOutput Knob(const char* name, float inputValue, float angleOffset = pi / 4);
+KnobOutput Knob(const char* name, float inputValue, float angleOffset = pi<float> / 4);
 
 /**
  * An ImGui control that display a scalar value as text and allows for user input on double click

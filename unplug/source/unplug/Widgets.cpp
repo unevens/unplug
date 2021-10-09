@@ -552,7 +552,7 @@ KnobOutput Knob(const char* name, float const inputValue, float angleOffset)
   ImVec2 cursorPosition = ImGui::GetCursorScreenPos();
   ImVec2 center = ImVec2(cursorPosition.x + radius, cursorPosition.y + radius);
 
-  auto const currentAngle = (pi - angleOffset) * inputValue * 2.0f + angleOffset;
+  auto const currentAngle = (pi<float> - angleOffset) * inputValue * 2.0f + angleOffset;
 
   auto const x = -std::sin(currentAngle) * radius + center.x;
   auto const y = std::cos(currentAngle) * radius + center.y;
@@ -566,9 +566,9 @@ KnobOutput Knob(const char* name, float const inputValue, float angleOffset)
 
   if (isActive) {
     ImVec2 mp = ImGui::GetIO().MousePos;
-    float nextAngle = std::atan2(mp.x - center.x, center.y - mp.y) + pi;
-    nextAngle = std::max(angleOffset, std::min(2.0f * pi - angleOffset, nextAngle));
-    outputValue = 0.5f * (nextAngle - angleOffset) / (pi - angleOffset);
+    float nextAngle = std::atan2(mp.x - center.x, center.y - mp.y) + pi<float>;
+    nextAngle = std::max(angleOffset, std::min(2.0f * pi<float> - angleOffset, nextAngle));
+    outputValue = 0.5f * (nextAngle - angleOffset) / (pi<float> - angleOffset);
     bool const hasGoneBelowTheBottom = inputValue == 0.0 && outputValue > 0.5;
     bool const hasGoneOverTheTop = inputValue == 1.0 && outputValue < 0.5;
     bool const hasGoneOutsideTheRange = hasGoneBelowTheBottom || hasGoneOverTheTop;

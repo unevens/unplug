@@ -18,7 +18,9 @@
 
 namespace unplug {
 
-inline static constexpr auto pi = static_cast<float>(M_PI);
+
+template<class T>
+inline static constexpr T pi = static_cast<T>(M_PI);
 
 template<class T = double>
 T linearToDB(T linear)

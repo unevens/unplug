@@ -12,10 +12,10 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "lockfree/PreAllocated.hpp"
 #include "unplug/BlockSizeInfo.hpp"
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
-#include "lockfree/PreAllocated.hpp"
 #include "unplug/Serialization.hpp"
 #include <atomic>
 #include <vector>
@@ -109,7 +109,8 @@ public:
   }
 
   template<unplug::Serialization::Action action>
-  bool settingsSerialization(unplug::Serialization::Streamer<action>& streamer){
+  bool settingsSerialization(unplug::Serialization::Streamer<action>& streamer)
+  {
     streamer(pointsPerSecond);
     streamer(durationInSeconds);
     return true;
@@ -331,7 +332,7 @@ void sendToWaveformRingBuffer(WaveformRingBuffer<WaveformSampleType, Allocator>&
 template<class RingBufferClass, class OnSizeChanged>
 bool setBlockSizeInfo(lockfree::PreAllocated<RingBufferClass>& preAllocatedRingBuffer,
                       unplug::BlockSizeInfo const& blockSizeInfo,
-                      OnSizeChanged onSizeChanged = nullptr)
+                      OnSizeChanged onSizeChanged)
 {
   auto ringBuffer = preAllocatedRingBuffer.getFromNonRealtimeThread();
   if (ringBuffer) {
@@ -340,9 +341,7 @@ bool setBlockSizeInfo(lockfree::PreAllocated<RingBufferClass>& preAllocatedRingB
     if (sizeInfoChanged) {
       auto newRingBuffer = std::make_unique<RingBufferClass>(*ringBuffer);
       newRingBuffer->setBlockSizeInfo(blockSizeInfo);
-      if (onSizeChanged) {
-        onSizeChanged(*newRingBuffer);
-      }
+      onSizeChanged(*newRingBuffer);
       preAllocatedRingBuffer.set(std::move(newRingBuffer));
     }
     return sizeInfoChanged;

@@ -18,7 +18,7 @@
 
 namespace unplug {
 
-using Version = std::array<Steinberg::int32, 4>;
+using Version = std::array<int, 4>;
 
 static constexpr Version getVersion()
 {

@@ -17,6 +17,7 @@
 #include "GetParameterDescriptions.hpp"
 #include "Meters.hpp"
 #include "public.sdk/source/vst/vsteditcontroller.h"
+#include "unplug/GetVersion.hpp"
 #include "unplug/MeterStorage.hpp"
 #include "unplug/MidiMapping.hpp"
 #include "unplug/detail/Vst3View.hpp"
@@ -33,7 +34,7 @@ public:
   using IEditController = IEditController;
   using MidiMapping = unplug::MidiMapping;
   using View = unplug::vst3::detail::Vst3View;
-  using Version = std::array<int32, 4>;
+  using Version = unplug::Version;
 
   virtual bool onNotify(IMessage* message);
 
@@ -62,6 +63,10 @@ public:
   std::array<int, 2> lastViewSize{ { -1, -1 } };
   std::shared_ptr<unplug::MeterStorage> meters;
   std::shared_ptr<unplug::CustomData> customData;
+
+protected:
+  template<unplug::Serialization::Action action>
+  bool serialization(IBStreamer& ibStreamer);
 
 private:
   void applyPreset(int presetIndex);

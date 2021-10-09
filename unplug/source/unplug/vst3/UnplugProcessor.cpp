@@ -103,12 +103,14 @@ bool UnplugProcessor::serialization(IBStreamer& ibStreamer)
       pluginState.parameters.setNormalized(i, value);
     }
   }
-  auto const ok = pluginState.customData->template serialization(streamer);
+  auto const ok = pluginState.customData->template serialization<action>(streamer);
   return ok;
 }
 
 tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
 {
+  if (!state)
+    return kResultFalse;
   using namespace unplug::Serialization;
   IBStreamer streamer(state, kLittleEndian);
   auto const success = serialization<read>(streamer);
@@ -119,6 +121,8 @@ tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
 
 tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
 {
+  if (!state)
+    return kResultFalse;
   using namespace unplug::Serialization;
   IBStreamer streamer(state, kLittleEndian);
   auto const success = serialization<write>(streamer);

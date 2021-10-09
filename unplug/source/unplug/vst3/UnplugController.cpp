@@ -158,15 +158,18 @@ tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
   // loads the dsp state
   if (!state)
     return kResultFalse;
-  IBStreamer streamer(state, kLittleEndian);
+  using namespace unplug::Serialization;
+  IBStreamer ibStreamer(state, kLittleEndian);
+  auto streamer = Streamer<read>(ibStreamer);
   Version version;
-  if (!streamer.readInt32Array(version.data(), static_cast<Steinberg::int32>(version.size()))) {
+  if (!streamer(version.data(), version.size())) {
     return kResultFalse;
   }
   for (Index paramIndex = 0; paramIndex < NumParameters::value; ++paramIndex) {
-    double valueNormalized;
-    if (!streamer.readDouble(valueNormalized))
+    double valueNormalized = 0;
+    if (!streamer(valueNormalized)) {
       return kResultFalse;
+    }
     auto parameter = parameters.getParameterByIndex(paramIndex);
     bool const isProgramChange = (parameter->getInfo().flags & ParameterInfo::kIsProgramChange) != 0;
     assert(!isProgramChange);
@@ -178,58 +181,34 @@ tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
   return kResultOk;
 }
 
+template<unplug::Serialization::Action action>
+bool UnplugController::serialization(IBStreamer& ibStreamer)
+{
+  auto streamer = unplug::Serialization::Streamer<action>(ibStreamer);
+  if (!streamer(lastViewSize.data(), lastViewSize.size())) {
+    return false;
+  }
+  auto version = Version{ 0 };
+  if (!streamer(version.data(), version.size())) {
+    return false;
+  }
+  return true;
+}
+
 tresult PLUGIN_API UnplugController::setState(IBStream* state)
 {
-  // used to load ui-only data
+  if (!state)
+    return kResultFalse;
   IBStreamer streamer(state, kLittleEndian);
-  auto const loadInteger = [&](int64_t& x) { return streamer.readInt64((int64&)x); };
-  auto const loadIntegerArray = [&](int64_t* x, int64_t size) { return streamer.readInt64Array((int64*)x, size); };
-  auto const loadDoubleArray = [&](double* x, int64_t size) {
-    return streamer.readDoubleArray(x, static_cast<int>(size));
-  };
-  auto const loadBytes = [&](void* x, int64_t size) {
-    if (size > 0) {
-      auto numBytesRead = streamer.readRaw(x, static_cast<int>(size));
-      return numBytesRead == size;
-    }
-    else {
-      return true;
-    }
-  };
-  auto lastViewSizeInt32 = std::array<int32, 2>{ lastViewSize[0], lastViewSize[1] };
-  if (!streamer.readInt32Array(lastViewSizeInt32.data(), static_cast<Steinberg::int32>(lastViewSizeInt32.size()))) {
-    return kResultFalse;
-  }
-  lastViewSize[0] = lastViewSizeInt32[0];
-  lastViewSize[1] = lastViewSizeInt32[1];
-  auto version = Version{ 0 };
-  if (!streamer.readInt32Array(version.data(), static_cast<Steinberg::int32>(version.size()))) {
-    return kResultFalse;
-  }
-  return kResultTrue;
+  return serialization<unplug::Serialization::read>(streamer) ? kResultTrue : kResultFalse;
 }
 
 tresult PLUGIN_API UnplugController::getState(IBStream* state)
 {
-  // used to save ui-only data
-  IBStreamer streamer(state, kLittleEndian);
-  auto const saveInteger = [&](int64_t const& x) { return streamer.writeInt64(x); };
-  auto const saveIntegerArray = [&](int64_t const* x, int64_t size) {
-    return streamer.writeInt64Array((int64*)x, static_cast<int32>(size));
-  };
-  auto const saveDoubleArray = [&](double const* x, int64_t size) {
-    return streamer.writeDoubleArray(x, static_cast<int>(size));
-  };
-  auto const saveBytes = [&](void const* x, int64_t size) { return streamer.writeRaw(x, static_cast<int>(size)); };
-  auto const lastViewSizeInt32 = std::array<int32, 2>{ lastViewSize[0], lastViewSize[1] };
-  if (!streamer.writeInt32Array(lastViewSizeInt32.data(), static_cast<Steinberg::int32>(lastViewSizeInt32.size()))) {
+  if (!state)
     return kResultFalse;
-  }
-  auto constexpr version = getVersion();
-  if (!streamer.writeInt32Array(version.data(), static_cast<Steinberg::int32>(version.size()))) {
-    return kResultFalse;
-  }
-  return kResultTrue;
+  IBStreamer ibStreamer(state, kLittleEndian);
+  return serialization<unplug::Serialization::write>(ibStreamer) ? kResultTrue : kResultFalse;
 }
 
 IPlugView* PLUGIN_API UnplugController::createView(FIDString name)

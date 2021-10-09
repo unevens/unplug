@@ -137,6 +137,7 @@ public:
     }
   }
 
+
   bool operator()(int32_t* data, std::size_t numElements)
   {
     auto numElements32 = static_cast<Steinberg::int32>(numElements);

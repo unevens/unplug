@@ -19,7 +19,9 @@
 #include <vector>
 
 namespace unplug {
-
+/**
+ * A struct holding a plugin preset
+ * */
 struct Preset
 {
   std::string name;
@@ -27,6 +29,10 @@ struct Preset
   std::map<ParamIndex, double> parameterValues;
 };
 
+/**
+ * This function has to be implemented by the plugin
+ * @return the plugin presets
+ * */
 std::vector<Preset> getPresets();
 
 namespace detail {

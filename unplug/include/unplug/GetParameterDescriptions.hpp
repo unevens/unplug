@@ -16,6 +16,10 @@
 
 namespace unplug {
 
+/**
+ * This function should be implemented by the plugin. It is supposed to return the information to create the plugin
+ * parameters. @see ParameterDescription
+ * */
 std::vector<ParameterDescription> getParameterDescriptions();
 
 } // namespace unplug

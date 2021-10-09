@@ -18,7 +18,9 @@
 #include "unplug/PluginState.hpp"
 
 namespace unplug {
-
+/**
+ * LinearAutomation provides the logic and the buffer to automate the plugin parameters using linear interpolation
+ * */
 template<class SampleType>
 struct LinearAutomation
 {
@@ -27,14 +29,25 @@ struct LinearAutomation
     SampleType currentValue = 0.f;
     SampleType delta = 0.f;
   };
+
   std::array<ParameterCache, unplug::NumParameters::value> parameters;
-  SampleType increment(ParamIndex paramIndex)
+
+  /**
+   * Computes the next value of the parameter. Call this one per frame.
+   * @paramIndex the index of the parameter
+   * @return the next value of the parameter
+   * */
+  SampleType next(ParamIndex paramIndex)
   {
     auto& parameter = parameters[paramIndex];
     parameter.currentValue += parameter.delta;
     return parameter.currentValue;
   }
 
+  /**
+   * Constructor
+   * @parameterStorage a reference to the parameter storage owned by the plugin processor
+   * */
   explicit LinearAutomation(ParameterStorage const& parameterStorage)
   {
     for (ParamIndex paramIndex = 0; paramIndex < unplug::NumParameters::value; ++paramIndex) {
@@ -43,6 +56,11 @@ struct LinearAutomation
   }
 };
 
+/**
+ * Apply an automation event (received from the host), to the corresponding parameter in the LinearAutomation object.
+ * @automation the LinearAutomation object to apply the AutomationEvent to
+ * @automationEvent, the AutomationEvent to apply
+ * */
 template<class SampleType>
 void setParameterAutomation(LinearAutomation<SampleType>& automation,
                             AutomationEvent<SampleType> const& automationEvent)

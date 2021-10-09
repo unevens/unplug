@@ -22,9 +22,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace unplug {
-
-namespace Serialization {
+namespace unplug::Serialization {
 enum Action
 {
   read,
@@ -196,7 +194,5 @@ public:
     }
   }
 };
-
-} // namespace Serialization
 
 } // namespace unplug

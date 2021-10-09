@@ -25,7 +25,9 @@ namespace unplug {
 using ParameterValueType = std::conditional<std::atomic<double>::is_always_lock_free, double, float>::type;
 
 static_assert(std::atomic<float>::is_always_lock_free, "At least atomic<float> should be lockfree");
-
+/**
+ * A struct that describes a parameter. It is used to create the parameter.
+ * */
 struct ParameterDescription
 {
   enum class Type
@@ -47,6 +49,7 @@ struct ParameterDescription
   bool isBypass = false;
   std::function<double(double)> linearToNonlinear;
   std::function<double(double)> nonlinearToLinear;
+
   struct
   {
     int control = -1;
@@ -61,8 +64,14 @@ struct ParameterDescription
     }
   } defaultMidiMapping;
 
+  /**
+   * Constructor for a list parameter
+   * */
   ParameterDescription(ParamIndex index, std::string name_, std::vector<std::string> labels_, int defaultValue = 0);
 
+  /**
+   * Constructor for a numeric parameter
+   * */
   ParameterDescription(ParamIndex index,
                        std::string name_,
                        ParameterValueType min,
@@ -70,23 +79,51 @@ struct ParameterDescription
                        ParameterValueType defaultValue = 0,
                        int numSteps = 0);
 
+  /**
+   * Makes the parameter automatable
+   * */
   ParameterDescription Automatable(bool isAutomatable);
 
+  /**
+   * Sets the parameter short name. May be used by the host where there is not much space to show the name of the
+   * parameter.
+   * */
   ParameterDescription ShortName(std::string shortName_);
 
+  /**
+   * Sets the parameter measure unit
+   * */
   ParameterDescription MeasureUnit(std::string measureUnit_);
 
+  /**
+   * Gives the parameter a midi mapping (listening to all channels)
+   * */
   ParameterDescription MidiMapping(int control);
 
+  /**
+   * Gives the parameter a midi mapping (listening to a specific channel)
+   * */
   ParameterDescription MidiMapping(int control, int channel);
 
+  /**
+   * Makes the parameter controlled by decibels (but keeps it linear in the dsp)
+   * */
   ParameterDescription ControlledByDecibels(bool mapMinToLinearZero = true);
 
+  /**
+   * Makes the parameter controlled with a nonlinear scaling (but keeps it linear in the dsp)
+   * */
   ParameterDescription Nonlinear(std::function<double(double)> linearToNonlinear_,
                                  std::function<double(double)> nonlinearToLinear_);
 
+  /**
+   * Makes the parameter the bypass parameter of the plugin
+   * */
   static ParameterDescription makeBypassParameter(ParamIndex index);
 
+  /**
+   * @return true if the parameter has a nonlinear scaling
+   * */
   bool isNonlinear() const;
 };
 

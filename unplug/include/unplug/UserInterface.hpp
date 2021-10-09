@@ -15,26 +15,60 @@
 #include <array>
 #include <string_view>
 
+/**
+ * The functions in the namespace unplug::UserInterface have to be implemented by the plugin.
+ * */
+
 namespace unplug::UserInterface {
 
+/**
+ * This function implements the user interface of the plugin.
+ * */
 void paint();
 
+/**
+ * This function is used to define any custom ImGui style. It is called before the function "paint"
+ * */
 void setupStyle();
 
+/**
+ * This function is used to adjust the size of the plugin.
+ * */
 void adjustSize(int& width, int& height, int prevWidth, int prevHeight);
 
+/**
+ * This function is used to tell the host if the plugin user interface can be resized.
+ * */
 bool isResizingAllowed();
 
+/**
+ * If this function returns true, then any resizing will keep the original ratio.
+ * */
 bool keepDefaultRatio();
 
+/**
+ * @return the default resolution of the plugin user interface
+ * */
 std::array<int, 2> getDefaultSize();
 
+/**
+ * @return the minimum zoom factor of the plugin
+ * */
 float getMinZoom();
 
+/**
+ * @return the window name of the plugin user interface
+ * */
 const char* getWindowName();
 
+/**
+ * @return the color of the plugin background
+ * */
 std::array<float, 3> getBackgroundColor();
 
+/**
+ * @return the desired refresh rate for the plugin user interface
+ * */
 float getRefreshRate();
 
 } // namespace unplug::UserInterface

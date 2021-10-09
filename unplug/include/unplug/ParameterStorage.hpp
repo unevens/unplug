@@ -18,11 +18,24 @@
 #include <array>
 #include <atomic>
 
+#ifdef UNPLUG_VST3
+namespace Steinberg::Vst {
+class UnplugProcessor;
+}
+#endif
+
 namespace unplug {
 
+/**
+ * This class holds the values of the parameters used by the dsp code
+ * */
 template<int numParameters>
 class TParameterStorage final
 {
+#ifdef UNPLUG_VST3
+  friend class Steinberg::Vst::UnplugProcessor;
+#endif
+
   class ParameterNormalization final
   {
   public:
@@ -42,17 +55,41 @@ class TParameterStorage final
   };
 
 public:
+  /**
+   * Sets the value of a parameter
+   * @paramIndex the index of the parameter to set
+   * @value the value to set the parameter to
+   * */
   void set(ParamIndex paramIndex, ParameterValueType value);
 
+  /**
+   * Gets the value of a parameter
+   * @paramIndex the index of the parameter to get
+   * @return the value of the parameter
+   * */
   ParameterValueType get(ParamIndex paramIndex) const;
 
+  /**
+   * Sets the value of a parameter from a normalized value
+   * @paramIndex the index of the parameter to set
+   * @value the normalized value to set the parameter to
+   * */
   ParameterValueType setNormalized(ParamIndex paramIndex, ParameterValueType valueNormalized);
 
+  /**
+   * Gets the normalized value of a parameter
+   * @paramIndex the index of the parameter to get
+   * @return the normalized value of the parameter
+   * */
   ParameterValueType getNormalized(ParamIndex paramIndex) const;
 
+  /**
+   * Converts a normalized value of to plain value for a specific parameter
+   * @paramIndex the index of the parameter
+   * @valueNormalized the normalized value to convert
+   * @return the plain value
+   * */
   ParameterValueType valueFromNormalized(ParamIndex paramIndex, ParameterValueType valueNormalized);
-
-  void initialize(std::vector<ParameterDescription> const& parameterDescriptions);
 
   TParameterStorage() = default;
 
@@ -61,6 +98,8 @@ public:
   TParameterStorage& operator=(TParameterStorage const&) = delete;
 
 private:
+  void initialize(std::vector<ParameterDescription> const& parameterDescriptions);
+
   void initializeConversions(std::vector<ParameterDescription> const& parameterDescriptions);
 
   void initializeDefaultValues(std::vector<ParameterDescription> const& parameterDescriptions);

@@ -24,7 +24,7 @@ double ParameterAccess::getValue(ParamIndex index)
   return valuePlain;
 }
 
-ParameterAccess::ParameterAccess(EditControllerEx1& controller, MidiMapping& midiMapping)
+ParameterAccess::ParameterAccess(EditControllerEx1& controller, unplug::detail::MidiMapping& midiMapping)
   : controller(controller)
   , midiMapping(midiMapping)
 {
@@ -299,7 +299,7 @@ bool ParameterAccess::canBeAutomated(ParamIndex index, bool& result)
   }
 }
 
-int ParameterAccess::canBeAutomated(ParamIndex index)
+bool ParameterAccess::canBeAutomated(ParamIndex index)
 {
   bool value = false;
   bool const ok = canBeAutomated(index, value);
@@ -319,7 +319,7 @@ bool ParameterAccess::isList(ParamIndex index, bool& result)
   }
 }
 
-int ParameterAccess::isList(ParamIndex index)
+bool ParameterAccess::isList(ParamIndex index)
 {
   bool value = false;
   bool const ok = isList(index, value);
@@ -339,7 +339,7 @@ bool ParameterAccess::isProgramChange(ParamIndex index, bool& result)
   }
 }
 
-int ParameterAccess::isProgramChange(ParamIndex index)
+bool ParameterAccess::isProgramChange(ParamIndex index)
 {
   bool value = false;
   bool const ok = isProgramChange(index, value);
@@ -359,7 +359,7 @@ bool ParameterAccess::isBypass(ParamIndex index, bool& result)
   }
 }
 
-int ParameterAccess::isBypass(ParamIndex index)
+bool ParameterAccess::isBypass(ParamIndex index)
 {
   bool value = false;
   bool const ok = isBypass(index, value);

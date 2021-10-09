@@ -21,6 +21,10 @@
 #include <vector>
 
 namespace unplug {
+
+/**
+ * A ring buffer to send continuous data from the dsp to the user interface.
+ * */
 template<class ElementType, class Allocator = std::allocator<ElementType>>
 class RingBuffer final
 {
@@ -203,6 +207,9 @@ private:
   Buffer buffer;
 };
 
+/**
+ * Sends data to a ring buffer, with custom logic to average it
+ * */
 template<class SampleType,
          class Preprocess,
          class Weight,
@@ -271,6 +278,9 @@ void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
   ringBuffer.setWritePosition(pointIndex);
 }
 
+/**
+ * Sends data to a ring buffer, using simple averaging
+ * */
 template<class SampleType, class ElementType = float, class Allocator = std::allocator<ElementType>>
 void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
                       SampleType** buffers,
@@ -290,6 +300,10 @@ void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
     [](ElementType value) { return value; });
 }
 
+/**
+ * A struct to hold the elements of a waveform ring buffer, used to pass the averaged waveform profile to the user
+ * interface.
+ * */
 template<class SampleType>
 struct WaveformElement final
 {
@@ -301,9 +315,15 @@ struct WaveformElement final
   {}
 };
 
+/**
+ * A ring buffer to send the waveform profile to the user interface.
+ * */
 template<class SampleType, class Allocator = std::allocator<WaveformElement<SampleType>>>
 using WaveformRingBuffer = RingBuffer<WaveformElement<SampleType>, Allocator>;
 
+/**
+ * Sends the waveform profile to a ring buffer.
+ * */
 template<class SampleType,
          class WaveformSampleType = float,
          class Allocator = std::allocator<WaveformElement<WaveformSampleType>>>
@@ -329,6 +349,9 @@ void sendToWaveformRingBuffer(WaveformRingBuffer<WaveformSampleType, Allocator>&
     [](WaveformElement<WaveformSampleType> value) { return value; });
 }
 
+/**
+ * Sets the audio block information and the user interface framerate for a ring buffer, resizing it accordingly.
+ * */
 template<class RingBufferClass, class OnSizeChanged>
 bool setBlockSizeInfo(lockfree::PreAllocated<RingBufferClass>& preAllocatedRingBuffer,
                       unplug::BlockSizeInfo const& blockSizeInfo,

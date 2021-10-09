@@ -107,12 +107,11 @@ public:
 private:
   std::array<ParamIndex, 130> midiMapping;
 };
-} // namespace detail
 
 class MidiMapping final
 {
 public:
-  static constexpr auto unmapped = detail::MidiMappingSingleChannel::unmapped;
+  static constexpr auto unmapped = MidiMappingSingleChannel::unmapped;
 
   void mapParameter(ParamIndex paramIndex, int controller, int channel);
 
@@ -121,7 +120,8 @@ public:
   ParamIndex getParameter(int controller, int channel) const;
 
 private:
-  std::array<detail::MidiMappingSingleChannel, 16> midiMappingByChannel;
+  std::array<MidiMappingSingleChannel, 16> midiMappingByChannel;
 };
 
+} // namespace detail
 } // namespace unplug

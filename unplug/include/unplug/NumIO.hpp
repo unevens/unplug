@@ -16,7 +16,9 @@
 #include "unplug/Index.hpp"
 
 namespace unplug {
-
+/**
+ * A struct that holds the number of inputs and outputs of the plugin.
+ */
 struct NumIO final
 {
   Index numIns = 1;

@@ -154,7 +154,7 @@ void automatedProcessing(State& state,
   else {
     for (Index sampleIndex = startSample; sampleIndex < endSample; ++sampleIndex) {
       for (Index channelIndex = 0; channelIndex < sharedChannels; ++channelIndex) {
-        auto const gain = automation.increment(Param::gain);
+        auto const gain = automation.next(Param::gain);
         out.buffers[channelIndex][sampleIndex] = gain * in.buffers[channelIndex][sampleIndex];
       }
     }

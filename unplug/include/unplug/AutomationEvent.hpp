@@ -16,6 +16,9 @@
 
 namespace unplug {
 
+/**
+ * A struct holding the data that describes a sample precise parameter change received by the host
+ */
 template<class SampleType>
 struct AutomationEvent final
 {
@@ -25,6 +28,14 @@ struct AutomationEvent final
   SampleType lastSample;
   SampleType valueAtLastSample;
 
+  /**
+   * Constructor
+   * @paramIndex the index of the parameter,
+   * @firstSample  the sample at which the automation begins,
+   * @valueAtFirstSample the value of the parameter at the first sample (its initial value),
+   * @lastSample the sample at which the automation ends,
+   * @valueAtLastSample the value of the parameter at the last sample (its final value)
+   * */
   explicit AutomationEvent(ParamIndex paramIndex,
                            Index firstSample,
                            SampleType valueAtFirstSample,

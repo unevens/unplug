@@ -19,6 +19,10 @@
 
 namespace unplug {
 
+/**
+ * A struct that holds the state of the plugin. The plugin processor owns an instance of this, which can be passed by
+ * reference to the dsp code.
+ * */
 struct PluginState
 {
   ParameterStorage parameters;

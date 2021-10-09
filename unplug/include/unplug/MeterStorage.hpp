@@ -19,12 +19,25 @@
 
 namespace unplug {
 
+/**
+ * A class to store the value of the plugin meters (such as level meters, gain reduction meters, and so on).
+ */
 template<int numValues>
 class TMeterStorage final
 {
 public:
+  /**
+   * Sets a the value of a meter
+   * @index the index of the meter to set
+   * @value the value to set the meter to
+   */
   void set(MeterIndex index, float value);
 
+  /**
+ * Gets the value of a meter
+ * @index the index of the meter to get
+ * @return the value of the meter
+ */
   float get(MeterIndex index) const;
 
   TMeterStorage();
@@ -39,6 +52,9 @@ private:
 
 using MeterStorage = TMeterStorage<NumMeters::value>;
 
+/**
+ * @return the meter storage to be used by the user interface code
+ */
 MeterStorage* getMeters();
 
 namespace detail {

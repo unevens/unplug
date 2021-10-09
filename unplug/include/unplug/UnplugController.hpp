@@ -32,7 +32,7 @@ class UnplugController
 public:
   using FUnknown = FUnknown;
   using IEditController = IEditController;
-  using MidiMapping = unplug::MidiMapping;
+  using MidiMapping = unplug::detail::MidiMapping;
   using View = unplug::vst3::detail::Vst3View;
   using Version = unplug::Version;
 
@@ -59,7 +59,7 @@ public:
 
   void onViewClosed();
 
-  unplug::MidiMapping midiMapping;
+  MidiMapping midiMapping;
   std::array<int, 2> lastViewSize{ { -1, -1 } };
   std::shared_ptr<unplug::MeterStorage> meters;
   std::shared_ptr<unplug::CustomData> customData;

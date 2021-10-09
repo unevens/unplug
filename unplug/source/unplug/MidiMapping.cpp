@@ -32,8 +32,6 @@ ParamIndex MidiMappingSingleChannel::getParameter(int controller) const
   return midiMapping[static_cast<std::size_t>(controller)];
 }
 
-} // namespace detail
-
 void MidiMapping::mapParameter(ParamIndex paramIndex, int controller, int channel)
 {
   assert(channel < midiMappingByChannel.size());
@@ -59,4 +57,5 @@ ParamIndex MidiMapping::getParameter(int controller, int channel) const
     return unmapped;
 }
 
+} // namespace detail
 } // namespace unplug

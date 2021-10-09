@@ -16,7 +16,10 @@
 #include <cstring>
 
 namespace unplug {
-
+/**
+ * A struct holding the information about the audio block size and the user interface framerate - which can be useful to
+ * resize ring buffers.
+ */
 struct BlockSizeInfo final
 {
   float sampleRate = 44100;
@@ -28,6 +31,7 @@ struct BlockSizeInfo final
   {
     return std::memcmp(this, &other, sizeof(BlockSizeInfo)) == 0;
   }
+
   bool operator!=(BlockSizeInfo const& other) const noexcept
   {
     return !(*this == other);

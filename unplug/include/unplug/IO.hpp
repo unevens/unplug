@@ -21,28 +21,47 @@ namespace detail {
 struct CachedIO;
 }
 
+/**
+ * A class that represents the plugin inputs and outputs
+ * */
 template<class SampleType>
 class IO final
 {
 public:
+  /**
+   * A struct that holds the audio channels of an input or an output
+   * */
   struct Channels
   {
     SampleType** buffers{ nullptr };
     Index numChannels = 0;
   };
 
+  /**
+   * Getter for the inputs
+   * @inIndex the index of the desired input
+   * @return the channels for the specified input
+   * */
   Channels getIn(Index inIndex)
   {
     auto const& in = io.ins[inIndex];
     return { in.template getChannels<SampleType>(), in.numChannels };
   }
 
+  /**
+   * Getter for the outputs
+   * @inIndex the index of the desired output
+   * @return the channels for the specified output
+   * */
   Channels getOut(Index outIndex)
   {
     auto const& out = io.outs[outIndex];
     return { out.template getChannels<SampleType>(), out.numChannels };
   }
 
+  /**
+   * @return true if the host is "flushing" the plugin (calling the process with no inputs and no outputs)
+   * */
   bool isFlushing() const
   {
     return io.isFlushing;

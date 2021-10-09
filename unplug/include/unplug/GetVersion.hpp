@@ -18,8 +18,14 @@
 
 namespace unplug {
 
+/**
+ * A simple struct used to hold the version of the plugin
+ * */
 using Version = std::array<int, 4>;
 
+/**
+ * @return the version of the plugin
+ * */
 static constexpr Version getVersion()
 {
   return { MAJOR_VERSION_INT, SUB_VERSION_INT, RELEASE_NUMBER_INT, BUILD_NUMBER_INT };

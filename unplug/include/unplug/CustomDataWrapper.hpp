@@ -15,22 +15,31 @@
 
 namespace unplug {
 
+namespace detail {
+class EventHandler;
+}
+
+/**
+ * A class that wraps the plugin custom data that will be available to both the user interface and the processor.
+ * */
 template<class TData>
 class CustomDataWrapper final
 {
 public:
   using Data = TData;
 
-  void setCurrent()
-  {
-    currentInstance = &data;
-  }
-
+  friend class detail::EventHandler;
+  /**
+   * Gets the plugin custom data from the user interface code
+   * */
   static Data* getCurrent()
   {
     return currentInstance;
   }
 
+  /**
+   * Gets the plugin custom data from the dsp code
+   * */
   Data& get()
   {
     return data;
@@ -43,6 +52,11 @@ public:
   CustomDataWrapper& operator=(CustomDataWrapper const&) = delete;
 
 private:
+  void setCurrent()
+  {
+    currentInstance = &data;
+  }
+
   Data data;
   static inline thread_local Data* currentInstance = nullptr;
 };

@@ -13,8 +13,9 @@
 
 #pragma once
 #include "implot.h"
+#include "unplug/Color.hpp"
 #include "unplug/RingBuffer.hpp"
-#include <sstream>
+
 namespace unplug {
 
 struct PlotChannelLegend
@@ -23,9 +24,9 @@ struct PlotChannelLegend
   ImVec4 color{ 0.f, 1.f, 1.f, 1.f };
 };
 
-inline PlotChannelLegend getStereoPlotChannelLegend(Index channel)
+inline PlotChannelLegend getStereoPlotChannelLegend(Index channel, Index numChannels)
 {
-  assert(channel > -1 && channel < 2);
+  assert(channel > -1 && channel < 2 && numChannels == 2);
   if (channel == 0)
     return { "Left", { 0.f, 0.5f, 1.f, 1.f } };
   if (channel == 1)
@@ -33,9 +34,9 @@ inline PlotChannelLegend getStereoPlotChannelLegend(Index channel)
   return { "invalid channel", { 1.f, 0.f, 1.f, 1.f } };
 }
 
-inline PlotChannelLegend getMidSidePlotChannelLegend(Index channel)
+inline PlotChannelLegend getMidSidePlotChannelLegend(Index channel, Index numChannels)
 {
-  assert(channel > -1 && channel < 2);
+  assert(channel > -1 && channel < 2 && numChannels == 2);
   if (channel == 0)
     return { "Mid", { 0.f, 0.5f, 1.f, 1.f } };
   if (channel == 1)
@@ -43,10 +44,56 @@ inline PlotChannelLegend getMidSidePlotChannelLegend(Index channel)
   return { "invalid channel", { 1.f, 0.f, 1.f, 1.f } };
 }
 
+inline std::function<PlotChannelLegend(Index channel, Index numChannels)> makeGenericPlotChannelLegend(
+  float colorSaturation = 0.75,
+  float colorIntensity = 1.f,
+  float hueRotation = 3.5f / 6.f,
+  float colorAlpha = 1.f)
+{
+  return [=](Index channel, Index numChannels) -> PlotChannelLegend {
+    auto label = std::string("Channel ") + std::to_string(channel + 1);
+    auto color = hsvToRgb({ hueRotation + static_cast<float>(channel) / static_cast<float>(numChannels),
+                            colorSaturation,
+                            colorIntensity,
+                            colorAlpha });
+    return { std::move(label), color };
+  };
+}
+
+inline std::function<PlotChannelLegend(Index channel, Index numChannels)> makeStereoOrGenericPlotChannelLegend(
+  float colorSaturation = 0.75,
+  float colorIntensity = 1.f,
+  float hueRotation = 3.5f / 6.f,
+  float colorAlpha = 1.f)
+{
+  auto genericLegend = makeGenericPlotChannelLegend(colorSaturation, colorIntensity, hueRotation, colorAlpha);
+  return [genericLegend = std::move(genericLegend)](Index channel, Index numChannels) -> PlotChannelLegend {
+    if (numChannels == 2) {
+      return getStereoPlotChannelLegend(channel, numChannels);
+    }
+    return genericLegend(channel, numChannels);
+  };
+}
+
+inline std::function<PlotChannelLegend(Index channel, Index numChannels)> makeMidSideOrGenericPlotChannelLegend(
+  float colorSaturation = 0.75,
+  float colorIntensity = 1.f,
+  float hueRotation = 3.5f / 6.f,
+  float colorAlpha = 1.f)
+{
+  auto genericLegend = makeGenericPlotChannelLegend(colorSaturation, colorIntensity, hueRotation, colorAlpha);
+  return [genericLegend = std::move(genericLegend)](Index channel, Index numChannels) -> PlotChannelLegend {
+    if (numChannels == 2) {
+      return getMidSidePlotChannelLegend(channel, numChannels);
+    }
+    return genericLegend(channel, numChannels);
+  };
+}
+
 template<class ElementType, class Allocator, class Plotter>
 bool TPlotRingBuffer(const char* name,
                      RingBuffer<ElementType, Allocator>& ringBuffer,
-                     std::function<PlotChannelLegend(Index)> const& getChannelLegend,
+                     std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend,
                      float x0,
                      Plotter plotter)
 {
@@ -62,7 +109,7 @@ bool TPlotRingBuffer(const char* name,
       auto const end = start + readBlockSize;
       auto contiguousEnd = std::min(end, totalSize);
       auto contiguousSize = contiguousEnd - start;
-      auto const channelLegend = getChannelLegend(channel);
+      auto const channelLegend = getChannelLegend(channel, numChannels);
       auto const elementCount = contiguousSize / numChannels;
       plotter(channelLegend, ringBuffer, elementCount, xScale, x0, start, stride, channel);
       if (contiguousEnd != end) {
@@ -79,7 +126,8 @@ bool TPlotRingBuffer(const char* name,
 template<class ElementType, class Allocator>
 bool PlotRingBuffer(const char* name,
                     RingBuffer<ElementType, Allocator>& ringBuffer,
-                    std::function<PlotChannelLegend(Index)> const& getChannelLegend = getStereoPlotChannelLegend,
+                    std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
+                      makeStereoOrGenericPlotChannelLegend(),
                     float x0 = 0.f)
 {
   return TPlotRingBuffer(
@@ -103,11 +151,11 @@ bool PlotRingBuffer(const char* name,
 }
 
 template<class ElementType, class Allocator>
-bool PlotWaveformRingBuffer(
-  const char* name,
-  WaveformRingBuffer<ElementType, Allocator>& ringBuffer,
-  std::function<PlotChannelLegend(Index)> const& getChannelLegend = getStereoPlotChannelLegend,
-  float x0 = 0.f)
+bool PlotWaveformRingBuffer(const char* name,
+                            WaveformRingBuffer<ElementType, Allocator>& ringBuffer,
+                            std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
+                              makeStereoOrGenericPlotChannelLegend(),
+                            float x0 = 0.f)
 {
   return TPlotRingBuffer(
     name,

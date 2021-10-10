@@ -172,7 +172,7 @@ bool ValueAsText(ParamIndex paramIndex,
 
 bool DragFloat(ParamIndex paramIndex,
                ShowLabel showLabel = ShowLabel::no,
-               float speed = 0.01f,
+               float speedCoef = 1.f,
                const char* format = "%.1f",
                ImGuiSliderFlags flags = ImGuiSliderFlags_AlwaysClamp);
 

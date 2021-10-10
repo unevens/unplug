@@ -260,14 +260,21 @@ bool VSliderInt(ParamIndex paramIndex, ImVec2 size, ShowLabel showLabel, const c
   });
 }
 
-bool DragFloat(ParamIndex paramIndex, ShowLabel showLabel, float speed, const char* format, ImGuiSliderFlags flags)
+bool DragFloat(ParamIndex paramIndex, ShowLabel showLabel, float speedCoef, const char* format, ImGuiSliderFlags flags)
 {
   return Control(paramIndex, [=](ParameterData const& parameter) {
     auto outputValue = static_cast<float>(parameter.value);
     auto const controlName = makeLabel(showLabel, parameter.name, "DRAGFLOAT");
     auto const formatWithUnit = makeFormat(parameter, format);
-    bool const isActive = ImGui::DragFloat(
-      controlName.c_str(), &outputValue, speed, parameter.minValue, parameter.maxValue, formatWithUnit.c_str(), flags);
+    auto const itemWidth = ImGui::CalcItemWidth();
+    auto const baseSpeed = (parameter.maxValue - parameter.minValue) / itemWidth;
+    bool const isActive = ImGui::DragFloat(controlName.c_str(),
+                                           &outputValue,
+                                           speedCoef * baseSpeed,
+                                           parameter.minValue,
+                                           parameter.maxValue,
+                                           formatWithUnit.c_str(),
+                                           flags);
     return ControlOutput{ controlName, outputValue, isActive };
   });
 }
@@ -294,8 +301,8 @@ bool Knob(ParamIndex paramIndex, float power, float angleOffset, std::function<v
       std::pow((parameter.value - parameter.minValue) / (parameter.maxValue - parameter.minValue), 1.f / power);
     auto const knobOutput = Knob(controlName.c_str(), scaledInput, angleOffset);
     drawer(knobOutput.drawData);
-    auto const outputValue =
-      parameter.minValue + (parameter.maxValue - parameter.minValue) * std::pow(static_cast<float>(knobOutput.value), power);
+    auto const outputValue = parameter.minValue + (parameter.maxValue - parameter.minValue) *
+                                                    std::pow(static_cast<float>(knobOutput.value), power);
     return ControlOutput{ controlName, outputValue, knobOutput.isActive };
   });
 }

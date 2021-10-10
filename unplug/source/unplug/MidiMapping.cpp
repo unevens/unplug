@@ -24,12 +24,20 @@ MidiMappingSingleChannel::MidiMappingSingleChannel()
 
 void MidiMappingSingleChannel::mapParameter(ParamIndex paramIndex, int controller)
 {
+  if (static_cast<std::size_t>(controller) >= midiMapping.size()) {
+    return;
+  }
   midiMapping[static_cast<std::size_t>(controller)] = paramIndex;
 }
 
 ParamIndex MidiMappingSingleChannel::getParameter(int controller) const
 {
-  return midiMapping[static_cast<std::size_t>(controller)];
+  if (static_cast<std::size_t>(controller) < midiMapping.size()) {
+    return midiMapping[static_cast<std::size_t>(controller)];
+  }
+  else {
+    return unmapped;
+  }
 }
 
 void MidiMapping::mapParameter(ParamIndex paramIndex, int controller, int channel)

@@ -107,6 +107,16 @@ public:
     resize();
   }
 
+  float getPointsPerSecond() const
+  {
+    return pointsPerSecond;
+  }
+
+  float getDurationInSeconds() const
+  {
+    return durationInSeconds;
+  }
+
   BlockSizeInfo const& getSizeInfo()
   {
     return sizeInfo;
@@ -139,16 +149,6 @@ public:
   float accumulatedSamples = 0.f;
 
 private:
-  float getPointsPerSecond() const
-  {
-    return pointsPerSecond;
-  }
-
-  float getDurationInSeconds() const
-  {
-    return durationInSeconds;
-  }
-
   virtual Index choseNumChannels(NumIO numIO) const
   {
     return numIO.numOuts;
@@ -158,8 +158,6 @@ private:
   {
     numChannels = choseNumChannels(sizeInfo.numIO);
     accumulator.resize(numChannels);
-    auto const pointsPerSecond = getPointsPerSecond();
-    auto const durationInSeconds = getDurationInSeconds();
     samplesPerPoint = sizeInfo.sampleRate / pointsPerSecond;
     pointsPerSample = 1.f / samplesPerPoint;
     auto const maxWriteIncrementPerAudioBlock = pointsPerSample * static_cast<float>(sizeInfo.maxAudioBlockSize);

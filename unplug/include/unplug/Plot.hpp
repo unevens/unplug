@@ -14,12 +14,39 @@
 #pragma once
 #include "implot.h"
 #include "unplug/RingBuffer.hpp"
-
+#include <sstream>
 namespace unplug {
+
+struct PlotChannelLegend
+{
+  std::string name;
+  ImVec4 color{ 0.f, 1.f, 1.f, 1.f };
+};
+
+inline PlotChannelLegend getStereoPlotChannelLegend(Index channel)
+{
+  assert(channel > -1 && channel < 2);
+  if (channel == 0)
+    return { "Left", { 0.f, 0.5f, 1.f, 1.f } };
+  if (channel == 1)
+    return { "Right", { 1.f, 0.5f, 0.f, 1.f } };
+  return { "invalid channel", { 1.f, 0.f, 1.f, 1.f } };
+}
+
+inline PlotChannelLegend getMidSidePlotChannelLegend(Index channel)
+{
+  assert(channel > -1 && channel < 2);
+  if (channel == 0)
+    return { "Mid", { 0.f, 0.5f, 1.f, 1.f } };
+  if (channel == 1)
+    return { "Side", { 1.f, 0.5f, 0.f, 1.f } };
+  return { "invalid channel", { 1.f, 0.f, 1.f, 1.f } };
+}
 
 template<class ElementType, class Allocator, class Plotter>
 void TPlotRingBuffer(const char* name,
                      RingBuffer<ElementType, Allocator>& ringBuffer,
+                     std::function<PlotChannelLegend(Index)> getChannelLegend,
                      float xScale,
                      float x0,
                      Plotter plotter)
@@ -36,10 +63,11 @@ void TPlotRingBuffer(const char* name,
     auto const end = start + readBlockSize;
     auto contiguousEnd = std::min(end, totalSize);
     auto contiguousSize = contiguousEnd - start;
-    plotter(name, ringBuffer, contiguousSize / numChannels, xScale, x0, start, stride, channel);
+    auto const channelLegend = getChannelLegend(channel);
+    plotter(channelLegend, ringBuffer, contiguousSize / numChannels, xScale, x0, start, stride, channel);
     if (contiguousEnd != end) {
       auto const size = (end - totalSize) / numChannels;
-      plotter(name, ringBuffer, size, xScale, x0 + contiguousSize / numChannels, 0, stride, channel);
+      plotter(channelLegend, ringBuffer, size, xScale, x0 + contiguousSize / numChannels, 0, stride, channel);
     }
   }
   ImPlot::EndPlot();
@@ -48,14 +76,16 @@ void TPlotRingBuffer(const char* name,
 template<class ElementType, class Allocator>
 void PlotRingBuffer(const char* name,
                     RingBuffer<ElementType, Allocator>& ringBuffer,
+                    std::function<PlotChannelLegend(Index)> getChannelLegend = getStereoPlotChannelLegend,
                     float xScale = 100.f,
                     float x0 = 0.f)
 {
   TPlotRingBuffer(name,
                   ringBuffer,
+                  getChannelLegend,
                   xScale,
                   x0,
-                  [&](const char* name,
+                  [&](PlotChannelLegend const& channelLegend,
                       const RingBuffer<ElementType, Allocator>& buffer,
                       int count,
                       double xScale,
@@ -63,9 +93,9 @@ void PlotRingBuffer(const char* name,
                       int offset,
                       int stride,
                       Index channel) {
-                    ImPlot::PushStyleColor(ImPlotCol_Line,
-                                           channel == 0 ? ImVec4(0.f, 0.5f, 1.f, 1.f) : ImVec4(1.f, 0.5f, 0.f, 1.f));
-                    ImPlot::PlotLine(name, ringBuffer.getBuffer().data() + offset, count, xScale, x0, 0, stride);
+                    ImPlot::PushStyleColor(ImPlotCol_Line, channelLegend.color);
+                    ImPlot::PlotLine(
+                      channelLegend.name.c_str(), ringBuffer.getBuffer().data() + offset, count, xScale, x0, 0, stride);
                     ImPlot::PopStyleColor(ImPlotCol_Line);
                   });
 }
@@ -73,14 +103,16 @@ void PlotRingBuffer(const char* name,
 template<class ElementType, class Allocator>
 void PlotWaveformRingBuffer(const char* name,
                             WaveformRingBuffer<ElementType, Allocator>& ringBuffer,
+                            std::function<PlotChannelLegend(Index)> getChannelLegend = getStereoPlotChannelLegend,
                             float xScale = 100.f,
                             float x0 = 0.f)
 {
   TPlotRingBuffer(name,
                   ringBuffer,
+                  getChannelLegend,
                   xScale,
                   x0,
-                  [&](const char* name,
+                  [&](PlotChannelLegend const& channelLegend,
                       const WaveformRingBuffer<ElementType, Allocator>& buffer,
                       int count,
                       double xScale,
@@ -89,10 +121,9 @@ void PlotWaveformRingBuffer(const char* name,
                       int stride,
                       Index channel) {
                     auto const rawData = &ringBuffer.getBuffer()[0].negative;
-                    ImPlot::PushStyleColor(ImPlotCol_Line,
-                                           channel == 0 ? ImVec4(0.f, 0.5f, 1.f, 1.f) : ImVec4(1.f, 0.5f, 0.f, 1.f));
-                    ImPlot::PlotLine(name, rawData + 2 * offset, count, xScale, x0, 0, stride);
-                    ImPlot::PlotLine(name, rawData + 2 * offset + 1, count, xScale, x0, 0, stride);
+                    ImPlot::PushStyleColor(ImPlotCol_Line, channelLegend.color);
+                    ImPlot::PlotLine(channelLegend.name.c_str(), rawData + 2 * offset, count, xScale, x0, 0, stride);
+                    ImPlot::PlotLine(channelLegend.name.c_str(), rawData + 2 * offset + 1, count, xScale, x0, 0, stride);
                     ImPlot::PopStyleColor(ImPlotCol_Line);
                   });
 }

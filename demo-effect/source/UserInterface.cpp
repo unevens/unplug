@@ -26,6 +26,8 @@ void paint()
   auto const width = main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x;
   ImGui::PushItemWidth(width);
 
+  //todo: improve the plotting and then finalize this
+
   //   KnobWithLabels(Param::gain);
   //  DragFloat(Param::gain);
   //  SliderFloat(Param::gain);

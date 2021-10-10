@@ -12,7 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "lockfree/PreAllocated.hpp"
+#include "lockfree/RealtimeObject.hpp"
 #include "unplug/BlockSizeInfo.hpp"
 #include "unplug/CustomDataWrapper.hpp"
 #include "unplug/IO.hpp"
@@ -22,8 +22,8 @@
 
 struct PluginCustomData final
 {
-  lockfree::PreAllocated<unplug::RingBuffer<float>> levelRingBuffer;
-  lockfree::PreAllocated<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
+  lockfree::RealtimeObject<unplug::RingBuffer<float>> levelRingBuffer;
+  lockfree::RealtimeObject<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
 
   PluginCustomData()
     : levelRingBuffer{ std::make_unique<unplug::RingBuffer<float>>() }

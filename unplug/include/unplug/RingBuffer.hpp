@@ -12,7 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "lockfree/PreAllocated.hpp"
+#include "lockfree/RealtimeObject.hpp"
 #include "unplug/BlockSizeInfo.hpp"
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
@@ -353,7 +353,7 @@ void sendToWaveformRingBuffer(WaveformRingBuffer<WaveformSampleType, Allocator>&
  * Sets the audio block information and the user interface framerate for a ring buffer, resizing it accordingly.
  * */
 template<class RingBufferClass, class OnSizeChanged>
-bool setBlockSizeInfo(lockfree::PreAllocated<RingBufferClass>& preAllocatedRingBuffer,
+bool setBlockSizeInfo(lockfree::RealtimeObject<RingBufferClass>& preAllocatedRingBuffer,
                       unplug::BlockSizeInfo const& blockSizeInfo,
                       OnSizeChanged onSizeChanged)
 {

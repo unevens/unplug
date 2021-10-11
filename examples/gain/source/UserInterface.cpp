@@ -42,8 +42,7 @@ void paint()
     }
     ImGui::EndTable();
   }
-  auto const levelMeterSettings = LevelMeterSettings{};
-  LevelMeter(Meter::level, "LevelMeter", { viewWidth, 50.f }, levelMeterSettings);
+  LevelMeter(Meter::level, "LevelMeter", { viewWidth, 50.f });
 }
 
 std::array<int, 2> getDefaultSize()
@@ -56,19 +55,19 @@ bool isResizingAllowed()
   return true;
 }
 
-float getMinZoom()
+float getMinZoomWithFixedRatio()
 {
   return 1.f;
 }
 
-bool keepDefaultRatio()
+bool hasFixedRatio()
 {
   return false;
 }
 
 const char* getWindowName()
 {
-  return "Unplug Demo Gain";
+  return "Unplug Gain Example";
 }
 
 std::array<float, 3> getBackgroundColor()

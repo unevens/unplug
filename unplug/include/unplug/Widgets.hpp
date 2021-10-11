@@ -129,7 +129,7 @@ struct DifferenceLevelMeterSettings : LevelMeterSettings
 void LevelMeter(MeterIndex meterIndex,
                 std::string const& name,
                 ImVec2 size,
-                LevelMeterSettings const& settings,
+                LevelMeterSettings const& settings = {},
                 LevelMeterAlign alignment = LevelMeterAlign::toMinValue);
 
 /**
@@ -138,7 +138,7 @@ void LevelMeter(MeterIndex meterIndex,
 void LevelMeterRaw(float value,
                    std::string const& name,
                    ImVec2 size,
-                   LevelMeterSettings const& settings,
+                   LevelMeterSettings const& settings = {},
                    LevelMeterAlign alignment = LevelMeterAlign::toMinValue);
 
 /**

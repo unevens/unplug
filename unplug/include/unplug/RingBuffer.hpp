@@ -203,8 +203,8 @@ private:
   Index readBlockSize = 0;
   float pointsPerSample = 1.f;
   float samplesPerPoint = 1;
-  float pointsPerSecond = 256;
-  float durationInSeconds = 2.f;
+  float pointsPerSecond = 128;
+  float durationInSeconds = 1.f;
   float secondsPerPoint;
   BlockSizeInfo sizeInfo;
   Buffer buffer;

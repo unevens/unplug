@@ -18,78 +18,60 @@
 
 namespace unplug {
 
+/**
+ * A struct that holds the data necessary to show an entry in the legend of a plot
+ * */
 struct PlotChannelLegend
 {
-  std::string name;
+  std::string label;
   ImVec4 color{ 0.f, 1.f, 1.f, 1.f };
 };
 
-inline PlotChannelLegend getStereoPlotChannelLegend(Index channel, Index numChannels)
-{
-  assert(channel > -1 && channel < 2 && numChannels == 2);
-  if (channel == 0)
-    return { "Left", { 0.f, 0.5f, 1.f, 1.f } };
-  if (channel == 1)
-    return { "Right", { 1.f, 0.5f, 0.f, 1.f } };
-  return { "invalid channel", { 1.f, 0.f, 1.f, 1.f } };
-}
+/**
+ * Creates a standard legend for a plot with a line for the left channel and a line for the right channel
+ * */
+PlotChannelLegend getStereoPlotChannelLegend(Index channel, Index numChannels);
 
-inline PlotChannelLegend getMidSidePlotChannelLegend(Index channel, Index numChannels)
-{
-  assert(channel > -1 && channel < 2 && numChannels == 2);
-  if (channel == 0)
-    return { "Mid", { 0.f, 0.5f, 1.f, 1.f } };
-  if (channel == 1)
-    return { "Side", { 1.f, 0.5f, 0.f, 1.f } };
-  return { "invalid channel", { 1.f, 0.f, 1.f, 1.f } };
-}
+/**
+ * Creates a standard legend for a plot with a line for the mid channel and a line for the side channel
+ * */
+PlotChannelLegend getMidSidePlotChannelLegend(Index channel, Index numChannels);
 
-inline std::function<PlotChannelLegend(Index channel, Index numChannels)> makeGenericPlotChannelLegend(
+/**
+ * Creates a standard legend for a generic plot with an arbitrary amount of lines, using a different hue for each
+ * channel
+ * */
+std::function<PlotChannelLegend(Index channel, Index numChannels)> makeGenericPlotChannelLegend(
   float colorSaturation = 0.75,
   float colorIntensity = 1.f,
   float hueRotation = 3.5f / 6.f,
-  float colorAlpha = 1.f)
-{
-  return [=](Index channel, Index numChannels) -> PlotChannelLegend {
-    auto label = std::string("Channel ") + std::to_string(channel + 1);
-    auto color = hsvToRgb({ hueRotation + static_cast<float>(channel) / static_cast<float>(numChannels),
-                            colorSaturation,
-                            colorIntensity,
-                            colorAlpha });
-    return { std::move(label), color };
-  };
-}
+  float colorAlpha = 1.f);
 
-inline std::function<PlotChannelLegend(Index channel, Index numChannels)> makeStereoOrGenericPlotChannelLegend(
+/**
+ * Creates a standard legend for a plot with a line for the left channel and a line for the right channel if the number
+ * of channel is 2, otherwise it creates a standard legend for a generic plot with an arbitrary amount of lines, using a
+ * different hue for each channel
+ * */
+std::function<PlotChannelLegend(Index channel, Index numChannels)> makeStereoOrGenericPlotChannelLegend(
   float colorSaturation = 0.75,
   float colorIntensity = 1.f,
   float hueRotation = 3.5f / 6.f,
-  float colorAlpha = 1.f)
-{
-  auto genericLegend = makeGenericPlotChannelLegend(colorSaturation, colorIntensity, hueRotation, colorAlpha);
-  return [genericLegend = std::move(genericLegend)](Index channel, Index numChannels) -> PlotChannelLegend {
-    if (numChannels == 2) {
-      return getStereoPlotChannelLegend(channel, numChannels);
-    }
-    return genericLegend(channel, numChannels);
-  };
-}
+  float colorAlpha = 1.f);
 
-inline std::function<PlotChannelLegend(Index channel, Index numChannels)> makeMidSideOrGenericPlotChannelLegend(
+/**
+ * Creates a standard legend for a plot with a line for the mid channel and a line for the side channel if the number
+ * of channel is 2, otherwise it creates a standard legend for a generic plot with an arbitrary amount of lines, using a
+ * different hue for each channel
+ * */
+std::function<PlotChannelLegend(Index channel, Index numChannels)> makeMidSideOrGenericPlotChannelLegend(
   float colorSaturation = 0.75,
   float colorIntensity = 1.f,
   float hueRotation = 3.5f / 6.f,
-  float colorAlpha = 1.f)
-{
-  auto genericLegend = makeGenericPlotChannelLegend(colorSaturation, colorIntensity, hueRotation, colorAlpha);
-  return [genericLegend = std::move(genericLegend)](Index channel, Index numChannels) -> PlotChannelLegend {
-    if (numChannels == 2) {
-      return getMidSidePlotChannelLegend(channel, numChannels);
-    }
-    return genericLegend(channel, numChannels);
-  };
-}
+  float colorAlpha = 1.f);
 
+/**
+ * Plots a ring buffer using a custom plotting function
+ * */
 template<class ElementType, class Allocator, class Plotter>
 bool TPlotRingBuffer(const char* name,
                      RingBuffer<ElementType, Allocator>& ringBuffer,
@@ -110,10 +92,12 @@ bool TPlotRingBuffer(const char* name,
       auto contiguousSize = contiguousEnd - start;
       auto const channelLegend = getChannelLegend(channel, numChannels);
       auto const pointsCount = contiguousSize / numChannels;
-      plotter(channelLegend, ringBuffer, pointsCount, xScale, 0, start, stride, channel);
+      if (pointsCount > 0)
+        plotter(channelLegend, ringBuffer, pointsCount, xScale, 0, start, stride, channel);
       if (contiguousEnd != end) {
         auto const size = (end - totalSize) / numChannels;
-        plotter(channelLegend, ringBuffer, size, xScale, pointsCount * xScale, channel, stride, channel);
+        if (size > 0)
+          plotter(channelLegend, ringBuffer, size, xScale, pointsCount * xScale, channel, stride, channel);
       }
     }
     ImPlot::EndPlot();
@@ -122,6 +106,9 @@ bool TPlotRingBuffer(const char* name,
   return false;
 }
 
+/**
+ * Plots a simple ring buffer, suitable for ring buffers holding continuous numeric data
+ * */
 template<class ElementType, class Allocator>
 bool PlotRingBuffer(const char* name,
                     RingBuffer<ElementType, Allocator>& ringBuffer,
@@ -142,11 +129,14 @@ bool PlotRingBuffer(const char* name,
         Index channel) {
       ImPlot::PushStyleColor(ImPlotCol_Line, channelLegend.color);
       ImPlot::PlotLine(
-        channelLegend.name.c_str(), ringBuffer.getBuffer().data() + offset, count, xScale, x0, 0, stride);
+        channelLegend.label.c_str(), ringBuffer.getBuffer().data() + offset, count, xScale, x0, 0, stride);
       ImPlot::PopStyleColor(ImPlotCol_Line);
     });
 }
 
+/**
+ * Plots a simple ring buffer, suitable for ring buffers holding continuous numeric data.
+ * */
 template<class ElementType, class Allocator>
 bool PlotRingBuffer(const char* name,
                     lockfree::RealtimeObject<RingBuffer<ElementType, Allocator>>& rtRingBuffer,
@@ -155,13 +145,18 @@ bool PlotRingBuffer(const char* name,
 {
   auto ringBuffer = rtRingBuffer.getFromNonRealtimeThread();
   if (ringBuffer) {
-    PlotRingBuffer(name, *ringBuffer, getChannelLegend);
+    return PlotRingBuffer(name, *ringBuffer, getChannelLegend);
   }
+  return false;
 }
 
+/**
+ * Plots a waveform ring buffer.
+ * */
 template<class ElementType, class Allocator>
 bool PlotWaveformRingBuffer(const char* name,
                             WaveformRingBuffer<ElementType, Allocator>& ringBuffer,
+                            float alpha = 0.5f,
                             std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
                               makeStereoOrGenericPlotChannelLegend())
 {
@@ -179,22 +174,34 @@ bool PlotWaveformRingBuffer(const char* name,
         Index channel) {
       auto const rawData = &ringBuffer.getBuffer()[0].negative;
       ImPlot::PushStyleColor(ImPlotCol_Line, channelLegend.color);
-      ImPlot::PlotLine(channelLegend.name.c_str(), rawData + 2 * offset, count, xScale, x0, 0, stride);
-      ImPlot::PlotLine(channelLegend.name.c_str(), rawData + 2 * offset + 1, count, xScale, x0, 0, stride);
+      if (alpha > 0.f) {
+        assert(alpha <= 1.f);
+        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, alpha);
+        ImPlot::PlotShaded(channelLegend.label.c_str(), rawData + 2 * offset, count, 0.f, xScale, x0, 0, stride);
+        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, alpha);
+        ImPlot::PlotShaded(channelLegend.label.c_str(), rawData + 2 * offset + 1, count, 0.f, xScale, x0, 0, stride);
+      }
+      ImPlot::PlotLine(channelLegend.label.c_str(), rawData + 2 * offset, count, xScale, x0, 0, stride);
+      ImPlot::PlotLine(channelLegend.label.c_str(), rawData + 2 * offset + 1, count, xScale, x0, 0, stride);
       ImPlot::PopStyleColor(ImPlotCol_Line);
     });
 }
 
+/**
+ * Plots a waveform ring buffer.
+ * */
 template<class ElementType, class Allocator>
 bool PlotWaveformRingBuffer(const char* name,
                             lockfree::RealtimeObject<WaveformRingBuffer<ElementType, Allocator>>& rtRingBuffer,
+                            float alpha = 0.5f,
                             std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
                               makeStereoOrGenericPlotChannelLegend())
 {
   auto ringBuffer = rtRingBuffer.getFromNonRealtimeThread();
   if (ringBuffer) {
-    PlotWaveformRingBuffer(name, *ringBuffer, getChannelLegend);
+    return PlotWaveformRingBuffer(name, *ringBuffer, alpha, getChannelLegend);
   }
+  return false;
 }
 
 } // namespace unplug

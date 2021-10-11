@@ -142,7 +142,7 @@ static void adjustSizeToDefaultRatio(int& width, int& height)
   auto const referenceHeight = static_cast<float>(referenceSize[1]);
   auto const widthRatio = static_cast<float>(width) / referenceWidth;
   auto const heightRatio = static_cast<float>(height) / referenceHeight;
-  auto const ratio = std::max(UserInterface::getMinZoom(), std::min(widthRatio, heightRatio));
+  auto const ratio = std::max(UserInterface::getMinZoomWithFixedRatio(), std::min(widthRatio, heightRatio));
   width = static_cast<int>(ratio * referenceWidth);
   height = static_cast<int>(ratio * referenceHeight);
 }
@@ -152,7 +152,7 @@ tresult Vst3View::checkSizeConstraint(ViewRect* rect)
   int requestedWidth = rect->getWidth();
   int requestedHeight = rect->getHeight();
   UserInterface::adjustSize(requestedWidth, requestedHeight, controller.lastViewSize[0], controller.lastViewSize[1]);
-  if (UserInterface::keepDefaultRatio()) {
+  if (UserInterface::hasFixedRatio()) {
     adjustSizeToDefaultRatio(requestedWidth, requestedHeight);
   }
   rect->right = rect->left + requestedWidth;

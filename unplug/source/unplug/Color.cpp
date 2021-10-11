@@ -11,11 +11,51 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#pragma once
-#include "imgui.h"
+#include "unplug/Color.hpp"
+#include "unplug/Math.hpp"
 
 namespace unplug {
 
-ImVec4 hsvToRgb(ImVec4 hsv);
+ImVec4 hsvToRgb(ImVec4 hsv)
+{
+  auto rgb = hsv;
+  auto const fi = FractionalIndex(6.f * hsv.x);
+  auto const p = hsv.z * (1 - hsv.y);
+  auto const q = hsv.z * (1 - fi.fractional * hsv.y);
+  auto const t = hsv.z * (1 - (1 - fi.fractional) * hsv.y);
+  switch (fi.integer % 6) {
+    case 0:
+      rgb.x = hsv.z;
+      rgb.y = t;
+      rgb.z = p;
+      break;
+    case 1:
+      rgb.x = q;
+      rgb.y = hsv.z;
+      rgb.z = p;
+      break;
+    case 2:
+      rgb.x = p;
+      rgb.y = hsv.z;
+      rgb.z = t;
+      break;
+    case 3:
+      rgb.x = p;
+      rgb.y = q;
+      rgb.z = hsv.z;
+      break;
+    case 4:
+      rgb.x = t;
+      rgb.y = p;
+      rgb.z = hsv.z;
+      break;
+    case 5:
+      rgb.x = hsv.z;
+      rgb.y = p;
+      rgb.z = q;
+      break;
+  }
+  return rgb;
+}
 
 } // namespace unplug

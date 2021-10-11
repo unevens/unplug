@@ -44,7 +44,7 @@ bool isResizingAllowed();
 /**
  * If this function returns true, then any resizing will keep the original ratio.
  * */
-bool keepDefaultRatio();
+bool hasFixedRatio();
 
 /**
  * @return the default resolution of the plugin user interface
@@ -52,9 +52,9 @@ bool keepDefaultRatio();
 std::array<int, 2> getDefaultSize();
 
 /**
- * @return the minimum zoom factor of the plugin
+ * @return the minimum zoom factor of the plugin. Only used if hasFixedRatio returns true
  * */
-float getMinZoom();
+float getMinZoomWithFixedRatio();
 
 /**
  * @return the window name of the plugin user interface

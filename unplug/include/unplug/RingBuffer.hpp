@@ -126,24 +126,15 @@ public:
     return durationInSeconds;
   }
 
-  BlockSizeInfo const& getSizeInfo()
+  BlockSizeInfo const& getSizeInfo() const
   {
     return sizeInfo;
   }
 
-  template<unplug::Serialization::Action action>
-  bool settingsSerialization(unplug::Serialization::Streamer<action>& streamer)
+  RingBuffer()
   {
-    streamer(pointsPerSecond);
-    streamer(durationInSeconds);
-    //todo thread-safe
-//    if constexpr (action == unplug::Serialization::Action::read) {
-//      setResolution(pointsPerSecond, durationInSeconds);
-//    }
-    return true;
+    secondsPerPoint = 1.f / pointsPerSecond;
   }
-
-  RingBuffer() = default;
 
   RingBuffer(RingBuffer const& other)
     : numChannels(other.numChannels)
@@ -212,11 +203,10 @@ private:
   Index readBlockSize = 0;
   float pointsPerSample = 1.f;
   float samplesPerPoint = 1;
-  float pointsPerSecond = 1024;
-  float secondsPerPoint = 1.f / 1024;
-  float durationInSeconds = 1.f;
+  float pointsPerSecond = 256;
+  float durationInSeconds = 2.f;
+  float secondsPerPoint;
   BlockSizeInfo sizeInfo;
-
   Buffer buffer;
 };
 
@@ -366,27 +356,53 @@ void sendToWaveformRingBuffer(WaveformRingBuffer<WaveformSampleType, Allocator>&
  * Sets the audio block information and the user interface framerate for a ring buffer, resizing it accordingly.
  * */
 template<class RingBufferClass, class OnSizeChanged>
-bool setBlockSizeInfo(lockfree::RealtimeObject<RingBufferClass>& preAllocatedRingBuffer,
+bool setBlockSizeInfo(lockfree::RealtimeObject<RingBufferClass>& rtRingBuffer,
                       unplug::BlockSizeInfo const& blockSizeInfo,
                       OnSizeChanged onSizeChanged)
 {
-  auto ringBuffer = preAllocatedRingBuffer.getFromNonRealtimeThread();
-  if (ringBuffer) {
-    auto const& prevSizeInfo = ringBuffer->getSizeInfo();
+  auto const isSizeInfoChanged = [&](RingBufferClass const& ringBuffer) {
+    auto const& prevSizeInfo = ringBuffer.getSizeInfo();
     bool const sizeInfoChanged = prevSizeInfo != blockSizeInfo;
-    if (sizeInfoChanged) {
-      auto newRingBuffer = std::make_unique<RingBufferClass>(*ringBuffer);
-      newRingBuffer->setBlockSizeInfo(blockSizeInfo);
-      onSizeChanged(*newRingBuffer);
-      preAllocatedRingBuffer.set(std::move(newRingBuffer));
-    }
     return sizeInfoChanged;
-  }
-  else {
-    auto newRingBuffer = std::make_unique<RingBufferClass>();
-    newRingBuffer->setBlockSizeInfo(blockSizeInfo);
-    preAllocatedRingBuffer.set(std::move(newRingBuffer));
-    return false;
-  }
+  };
+  auto const resizeRingBuffer = [&](RingBufferClass& ringBuffer) {
+    ringBuffer.setBlockSizeInfo(blockSizeInfo);
+    onSizeChanged(ringBuffer);
+  };
+  bool const hasChanged = rtRingBuffer.changeFromNonRealtimeThreadIf(resizeRingBuffer, isSizeInfoChanged);
+  return hasChanged;
 }
+
+template<class RingBufferClass, Serialization::Action action>
+bool ringBufferSettingsSerialization(lockfree::RealtimeObject<RingBufferClass>& rtRingBuffer,
+                                     Serialization::Streamer<action>& streamer)
+{
+  if constexpr (action == Serialization::Action::save) {
+    auto ringBuffer = rtRingBuffer.getFromNonRealtimeThread();
+    auto pointsPerSecond = ringBuffer->getPointsPerSecond();
+    if (!streamer(pointsPerSecond))
+      return false;
+    auto durationInSeconds = ringBuffer->getPointsPerSecond();
+    if (!streamer(durationInSeconds))
+      return false;
+  }
+  if constexpr (action == Serialization::Action::load) {
+    float pointsPerSecond = 0.f;
+    float durationInSeconds = 0.f;
+    if (!streamer(pointsPerSecond))
+      return false;
+    if (!streamer(durationInSeconds))
+      return false;
+    auto const haveSettingsChanged = [=](RingBufferClass const& ringBuffer) {
+      return pointsPerSecond != ringBuffer.getPointsPerSecond() ||
+             durationInSeconds != ringBuffer.getDurationInSeconds();
+    };
+    auto const applySettings = [=](RingBufferClass& ringBuffer) {
+      ringBuffer.setResolution(pointsPerSecond, durationInSeconds);
+    };
+    rtRingBuffer.changeFromNonRealtimeThreadIf(applySettings, haveSettingsChanged);
+  }
+  return true;
+}
+
 } // namespace unplug

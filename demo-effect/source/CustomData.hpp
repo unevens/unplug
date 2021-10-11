@@ -42,8 +42,8 @@ struct PluginCustomData final
   template<unplug::Serialization::Action action>
   bool serialization(unplug::Serialization::Streamer<action>& streamer)
   {
-    levelRingBuffer.getFromNonRealtimeThread()->settingsSerialization(streamer);
-    waveformRingBuffer.getFromNonRealtimeThread()->settingsSerialization(streamer);
+    ringBufferSettingsSerialization(levelRingBuffer, streamer);
+    ringBufferSettingsSerialization(waveformRingBuffer, streamer);
     return true;
   }
 };

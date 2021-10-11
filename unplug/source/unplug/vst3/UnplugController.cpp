@@ -160,7 +160,7 @@ tresult PLUGIN_API UnplugController::setComponentState(IBStream* state)
     return kResultFalse;
   using namespace unplug::Serialization;
   IBStreamer ibStreamer(state, kLittleEndian);
-  auto streamer = Streamer<read>(ibStreamer);
+  auto streamer = Streamer<load>(ibStreamer);
   Version version;
   if (!streamer(version.data(), version.size())) {
     return kResultFalse;
@@ -200,7 +200,7 @@ tresult PLUGIN_API UnplugController::setState(IBStream* state)
   if (!state)
     return kResultFalse;
   IBStreamer streamer(state, kLittleEndian);
-  return serialization<unplug::Serialization::read>(streamer) ? kResultTrue : kResultFalse;
+  return serialization<unplug::Serialization::load>(streamer) ? kResultTrue : kResultFalse;
 }
 
 tresult PLUGIN_API UnplugController::getState(IBStream* state)
@@ -208,7 +208,7 @@ tresult PLUGIN_API UnplugController::getState(IBStream* state)
   if (!state)
     return kResultFalse;
   IBStreamer ibStreamer(state, kLittleEndian);
-  return serialization<unplug::Serialization::write>(ibStreamer) ? kResultTrue : kResultFalse;
+  return serialization<unplug::Serialization::save>(ibStreamer) ? kResultTrue : kResultFalse;
 }
 
 IPlugView* PLUGIN_API UnplugController::createView(FIDString name)

@@ -25,8 +25,8 @@
 namespace unplug::Serialization {
 enum Action
 {
-  read,
-  write
+  load,
+  save
 };
 
 template<Action action>
@@ -41,40 +41,40 @@ public:
 
   bool operator()(float& value)
   {
-    if constexpr (action == read) {
+    if constexpr (action == load) {
       return stream.readFloat(value);
     }
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       return stream.writeFloat(value);
     }
   }
 
   bool operator()(double& value)
   {
-    if constexpr (action == read) {
+    if constexpr (action == load) {
       return stream.readDouble(value);
     }
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       return stream.writeDouble(value);
     }
   }
 
   bool operator()(float* data, std::size_t numElements)
   {
-    if constexpr (action == read) {
+    if constexpr (action == load) {
       return stream.readFloatArray(data, numElements);
     }
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       return stream.writeFloatArray(data, numElements);
     }
   }
 
   bool operator()(double* data, std::size_t numElements)
   {
-    if constexpr (action == read) {
+    if constexpr (action == load) {
       return stream.readDoubleArray(data, numElements);
     }
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       return stream.writeDoubleArray(data, numElements);
     }
   }
@@ -82,13 +82,13 @@ public:
   bool operator()(int32_t& value)
   {
     auto as32 = static_cast<Steinberg::int32>(value);
-    if constexpr (action == read) {
+    if constexpr (action == load) {
       auto const success = stream.readInt32(as32);
       if (success)
         value = as32;
       return success;
     }
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       return stream.writeInt32(as32);
     }
   }
@@ -96,13 +96,13 @@ public:
   bool operator()(int64_t& value)
   {
     auto as64 = static_cast<Steinberg::int64>(value);
-    if constexpr (action == read) {
+    if constexpr (action == load) {
       auto const success = stream.readInt64(as64);
       if (success)
         value = as64;
       return success;
     }
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       return stream.writeInt64(as64);
     }
   }
@@ -110,13 +110,13 @@ public:
   bool operator()(uint32_t& value)
   {
     auto as32 = static_cast<Steinberg::uint32>(value);
-    if constexpr (action == read) {
+    if constexpr (action == load) {
       auto const success = stream.readInt32u(as32);
       if (success)
         value = as32;
       return success;
     }
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       return stream.writeInt32u(as32);
     }
   }
@@ -124,13 +124,13 @@ public:
   bool operator()(uint64_t& value)
   {
     auto as64 = static_cast<Steinberg::uint64>(value);
-    if constexpr (action == read) {
+    if constexpr (action == load) {
       auto const success = stream.readInt64u(as64);
       if (success)
         value = as64;
       return success;
     }
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       return stream.writeInt64u(as64);
     }
   }
@@ -140,12 +140,12 @@ public:
   {
     auto numElements32 = static_cast<Steinberg::int32>(numElements);
     auto as32 = std::vector<Steinberg::int32>(data, data + numElements);
-    if constexpr (action == read) {
+    if constexpr (action == load) {
       auto const success = stream.readInt32Array(as32.data(), numElements32);
       std::copy(as32.begin(), as32.end(), data);
       return success;
     }
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       return stream.writeInt32Array(as32.data(), numElements32);
     }
   }
@@ -154,12 +154,12 @@ public:
   {
     auto numElements64 = static_cast<Steinberg::int64>(numElements);
     auto as64 = std::vector<Steinberg::int64>(data, data + numElements);
-    if constexpr (action == read) {
+    if constexpr (action == load) {
       auto const success = stream.readInt64Array(as64.data(), numElements64);
       std::copy(as64.begin(), as64.end(), data);
       return success;
     }
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       return stream.writeInt64Array(as64.data(), numElements64);
     }
   }
@@ -178,7 +178,7 @@ public:
 
   bool operator()(std::string& value)
   {
-    if constexpr (action == read) {
+    if constexpr (action == load) {
       auto ptr = stream.readStr8();
       if (ptr) {
         value = ptr;
@@ -189,7 +189,7 @@ public:
         return false;
       }
     }
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       return stream.writeStr8(value.c_str());
     }
   }

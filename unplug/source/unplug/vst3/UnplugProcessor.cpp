@@ -89,7 +89,7 @@ bool UnplugProcessor::serialization(IBStreamer& ibStreamer)
     return false;
   }
   for (int i = 0; i < NumParameters::value; ++i) {
-    if constexpr (action == write) {
+    if constexpr (action == save) {
       double value = pluginState.parameters.getNormalized(i);
       if (!streamer(value)) {
         return false;
@@ -113,7 +113,7 @@ tresult PLUGIN_API UnplugProcessor::setState(IBStream* state)
     return kResultFalse;
   using namespace unplug::Serialization;
   IBStreamer streamer(state, kLittleEndian);
-  auto const success = serialization<read>(streamer);
+  auto const success = serialization<load>(streamer);
   if (!success)
     return kResultFalse;
   return onSetState(streamer) ? kResultOk : kResultFalse;
@@ -125,7 +125,7 @@ tresult PLUGIN_API UnplugProcessor::getState(IBStream* state)
     return kResultFalse;
   using namespace unplug::Serialization;
   IBStreamer streamer(state, kLittleEndian);
-  auto const success = serialization<write>(streamer);
+  auto const success = serialization<save>(streamer);
   if (!success)
     return kResultFalse;
   return onGetState(streamer) ? kResultOk : kResultFalse;

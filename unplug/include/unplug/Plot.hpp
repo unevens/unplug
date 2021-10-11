@@ -148,6 +148,18 @@ bool PlotRingBuffer(const char* name,
 }
 
 template<class ElementType, class Allocator>
+bool PlotRingBuffer(const char* name,
+                    lockfree::RealtimeObject<RingBuffer<ElementType, Allocator>>& rtRingBuffer,
+                    std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
+                      makeStereoOrGenericPlotChannelLegend())
+{
+  auto ringBuffer = rtRingBuffer.getFromNonRealtimeThread();
+  if (ringBuffer) {
+    PlotRingBuffer(name, *ringBuffer, getChannelLegend);
+  }
+}
+
+template<class ElementType, class Allocator>
 bool PlotWaveformRingBuffer(const char* name,
                             WaveformRingBuffer<ElementType, Allocator>& ringBuffer,
                             std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
@@ -171,6 +183,18 @@ bool PlotWaveformRingBuffer(const char* name,
       ImPlot::PlotLine(channelLegend.name.c_str(), rawData + 2 * offset + 1, count, xScale, x0, 0, stride);
       ImPlot::PopStyleColor(ImPlotCol_Line);
     });
+}
+
+template<class ElementType, class Allocator>
+bool PlotWaveformRingBuffer(const char* name,
+                            lockfree::RealtimeObject<WaveformRingBuffer<ElementType, Allocator>>& rtRingBuffer,
+                            std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
+                              makeStereoOrGenericPlotChannelLegend())
+{
+  auto ringBuffer = rtRingBuffer.getFromNonRealtimeThread();
+  if (ringBuffer) {
+    PlotWaveformRingBuffer(name, *ringBuffer, getChannelLegend);
+  }
 }
 
 } // namespace unplug

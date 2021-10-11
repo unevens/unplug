@@ -94,7 +94,6 @@ template<class ElementType, class Allocator, class Plotter>
 bool TPlotRingBuffer(const char* name,
                      RingBuffer<ElementType, Allocator>& ringBuffer,
                      std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend,
-                     float x0,
                      Plotter plotter)
 {
   if (ImPlot::BeginPlot(name)) {
@@ -103,18 +102,18 @@ bool TPlotRingBuffer(const char* name,
     auto const stride = ringBuffer.getNumChannels() * sizeof(ElementType);
     auto const readBlockSize = numChannels * ringBuffer.getReadBlockSize();
     auto const totalSize = static_cast<Index>(ringBuffer.getBuffer().size());
-    auto const xScale = 1.f / ringBuffer.getPointsPerSecond();
+    auto const xScale = ringBuffer.getSecondsPerPoint();
     for (Index channel = 0; channel < numChannels; ++channel) {
       auto const start = offset + channel;
       auto const end = start + readBlockSize;
       auto contiguousEnd = std::min(end, totalSize);
       auto contiguousSize = contiguousEnd - start;
       auto const channelLegend = getChannelLegend(channel, numChannels);
-      auto const elementCount = contiguousSize / numChannels;
-      plotter(channelLegend, ringBuffer, elementCount, xScale, x0, start, stride, channel);
+      auto const pointsCount = contiguousSize / numChannels;
+      plotter(channelLegend, ringBuffer, pointsCount, xScale, 0, start, stride, channel);
       if (contiguousEnd != end) {
         auto const size = (end - totalSize) / numChannels;
-        plotter(channelLegend, ringBuffer, size, xScale, x0, 0, stride, channel);
+        plotter(channelLegend, ringBuffer, size, xScale, pointsCount * xScale, channel, stride, channel);
       }
     }
     ImPlot::EndPlot();
@@ -127,14 +126,12 @@ template<class ElementType, class Allocator>
 bool PlotRingBuffer(const char* name,
                     RingBuffer<ElementType, Allocator>& ringBuffer,
                     std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
-                      makeStereoOrGenericPlotChannelLegend(),
-                    float x0 = 0.f)
+                      makeStereoOrGenericPlotChannelLegend())
 {
   return TPlotRingBuffer(
     name,
     ringBuffer,
     getChannelLegend,
-    x0,
     [&](PlotChannelLegend const& channelLegend,
         const RingBuffer<ElementType, Allocator>& buffer,
         int count,
@@ -154,14 +151,12 @@ template<class ElementType, class Allocator>
 bool PlotWaveformRingBuffer(const char* name,
                             WaveformRingBuffer<ElementType, Allocator>& ringBuffer,
                             std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
-                              makeStereoOrGenericPlotChannelLegend(),
-                            float x0 = 0.f)
+                              makeStereoOrGenericPlotChannelLegend())
 {
   return TPlotRingBuffer(
     name,
     ringBuffer,
     getChannelLegend,
-    x0,
     [&](PlotChannelLegend const& channelLegend,
         const WaveformRingBuffer<ElementType, Allocator>& buffer,
         int count,

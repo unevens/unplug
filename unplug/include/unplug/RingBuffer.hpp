@@ -44,7 +44,10 @@ public:
   Index wrapIndex(Index index) const
   {
     auto const bufferSize = static_cast<int>(bufferCapacity);
-    return (((index) % bufferSize) + bufferSize) % bufferSize;
+    auto const wrapped = (((index) % bufferSize) + bufferSize) % bufferSize;
+    assert(wrapped >= 0);
+    assert(wrapped < bufferSize);
+    return wrapped;
   }
 
   Index getWritePosition() const
@@ -104,12 +107,18 @@ public:
   {
     pointsPerSecond = pointsPerSecond_;
     durationInSeconds = durationInSeconds_;
+    secondsPerPoint = 1.f / pointsPerSecond;
     resize();
   }
 
   float getPointsPerSecond() const
   {
     return pointsPerSecond;
+  }
+
+  float getSecondsPerPoint() const
+  {
+    return secondsPerPoint;
   }
 
   float getDurationInSeconds() const
@@ -127,6 +136,10 @@ public:
   {
     streamer(pointsPerSecond);
     streamer(durationInSeconds);
+    //todo thread-safe
+//    if constexpr (action == unplug::Serialization::Action::read) {
+//      setResolution(pointsPerSecond, durationInSeconds);
+//    }
     return true;
   }
 
@@ -140,6 +153,7 @@ public:
     , pointsPerSample(other.pointsPerSample)
     , samplesPerPoint(other.samplesPerPoint)
     , pointsPerSecond(other.pointsPerSecond)
+    , secondsPerPoint(other.secondsPerPoint)
     , durationInSeconds(other.durationInSeconds)
     , sizeInfo(other.sizeInfo)
     , buffer(other.buffer)
@@ -198,8 +212,9 @@ private:
   Index readBlockSize = 0;
   float pointsPerSample = 1.f;
   float samplesPerPoint = 1;
-  float pointsPerSecond = 128;
-  float durationInSeconds = 2;
+  float pointsPerSecond = 1024;
+  float secondsPerPoint = 1.f / 1024;
+  float durationInSeconds = 1.f;
   BlockSizeInfo sizeInfo;
 
   Buffer buffer;

@@ -26,42 +26,42 @@ void paint()
   auto const width = main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x;
   ImGui::PushItemWidth(width);
 
-  KnobWithLabels(Param::gain);
-  DragFloat(Param::gain);
-  SliderFloat(Param::gain);
-  MeterValueLabelCentered(Meter::level);
-  auto const levelMeterSettings = LevelMeterSettings{};
-  LevelMeter(Meter::level, "LevelMeter", { width, 50.f }, levelMeterSettings);
-
-  auto& parameters = getParameters();
-  auto const gain = static_cast<float>(parameters.getValue(Param::gain));
-  auto differenceLevelMeterSettings = DifferenceLevelMeterSettings{};
-  differenceLevelMeterSettings.scaling = [](float x) { return x; };
-  differenceLevelMeterSettings.maxValue = static_cast<float>(parameters.getMaxValue(Param::gain));
-  differenceLevelMeterSettings.minValue = static_cast<float>(parameters.getMinValue(Param::gain));
-  DifferenceLevelMeterRaw(gain, "GainMeter", { width, 50.f }, differenceLevelMeterSettings);
-
-  // todo: wip on ring buffers
-//  auto customData = CustomData::getCurrent();
-//  if (customData) {
-//    auto levelRingBuffer = customData->levelRingBuffer.getFromNonRealtimeThread();
-//    if (levelRingBuffer) {
-//      PlotRingBuffer("Level", *levelRingBuffer);
-//    }
-//    auto waveformRingBuffer = customData->waveformRingBuffer.getFromNonRealtimeThread();
-//    if (waveformRingBuffer) {
-//      PlotWaveformRingBuffer("Waveform", *waveformRingBuffer);
-//    }
-//  }
+//  KnobWithLabels(Param::gain);
+//  DragFloat(Param::gain);
 //  SliderFloat(Param::gain);
 //  MeterValueLabelCentered(Meter::level);
 //  auto const levelMeterSettings = LevelMeterSettings{};
-//  LevelMeter(Meter::level, "LevelMeter", { width, 20.f }, levelMeterSettings);
+//  LevelMeter(Meter::level, "LevelMeter", { width, 50.f }, levelMeterSettings);
+//
+//  auto& parameters = getParameters();
+//  auto const gain = static_cast<float>(parameters.getValue(Param::gain));
+//  auto differenceLevelMeterSettings = DifferenceLevelMeterSettings{};
+//  differenceLevelMeterSettings.scaling = [](float x) { return x; };
+//  differenceLevelMeterSettings.maxValue = static_cast<float>(parameters.getMaxValue(Param::gain));
+//  differenceLevelMeterSettings.minValue = static_cast<float>(parameters.getMinValue(Param::gain));
+//  DifferenceLevelMeterRaw(gain, "GainMeter", { width, 50.f }, differenceLevelMeterSettings);
+
+  // todo: wip on ring buffers
+  auto customData = CustomData::getCurrent();
+  if (customData) {
+    auto levelRingBuffer = customData->levelRingBuffer.getFromNonRealtimeThread();
+    if (levelRingBuffer) {
+      PlotRingBuffer("Level", *levelRingBuffer);
+    }
+    auto waveformRingBuffer = customData->waveformRingBuffer.getFromNonRealtimeThread();
+    if (waveformRingBuffer) {
+      PlotWaveformRingBuffer("Waveform", *waveformRingBuffer);
+    }
+  }
+  SliderFloat(Param::gain);
+  MeterValueLabelCentered(Meter::level);
+  auto const levelMeterSettings = LevelMeterSettings{};
+  LevelMeter(Meter::level, "LevelMeter", { width, 20.f }, levelMeterSettings);
 }
 
 std::array<int, 2> getDefaultSize()
 {
-  return { { 800, 300 } };
+  return { { 800, 800 } };
 }
 
 bool isResizingAllowed()

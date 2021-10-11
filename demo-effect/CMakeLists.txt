@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14.0)
 set(unplug_SOURCE_DIR "${CMAKE_SOURCE_DIR}/..")
 
 # set the name and version of the plugin here
-set(unplug_plugin_name "UnPlugDemoEffect")
+set(unplug_plugin_name "UnPlugGainExample")
 set(unplug_plugin_version 1.0.0)
 
 #set the cpp standard you want to use for the plugin (must be at least c++17)

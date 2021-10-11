@@ -13,31 +13,17 @@
 
 #pragma once
 
-#include "GainDsp.hpp"
-#include "unplug/UnplugProcessor.hpp"
+#include "unplug/UnplugController.hpp"
 
 namespace Steinberg::Vst {
 
-class GainProcessor final : public UnplugProcessor
+class UnplugGainExampleController final : public UnplugController
 {
 public:
-  GainProcessor();
-
   static FUnknown* createInstance(void* /*context*/)
   {
-    return (IAudioProcessor*)new GainProcessor;
+    return (IEditController*)new UnplugGainExampleController;
   }
-
-  tresult PLUGIN_API process(ProcessData& data) override;
-
-  void onSetActive(bool isActive) override;
-
-  tresult PLUGIN_API setProcessing(TBool state) override;
-
-private:
-  template<class SampleType>
-  void TProcess(ProcessData& data);
-
-  GainDsp::State dspState;
 };
+
 } // namespace Steinberg::Vst

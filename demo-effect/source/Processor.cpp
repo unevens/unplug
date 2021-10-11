@@ -11,18 +11,18 @@
 // PERFORMANCE OF THIS SOFTWARE.
 //------------------------------------------------------------------------
 
-#include "GainProcessor.hpp"
+#include "Processor.hpp"
 #include "Id.hpp"
 
 namespace Steinberg::Vst {
 
-GainProcessor::GainProcessor()
+UnplugGainExampleProcessor::UnplugGainExampleProcessor()
   : dspState{ pluginState }
 {
-  setControllerClass(kUnplugDemoEffectControllerUID);
+  setControllerClass(kUnplugGainExampleControllerUID);
 }
 
-tresult PLUGIN_API GainProcessor::process(ProcessData& data)
+tresult PLUGIN_API UnplugGainExampleProcessor::process(ProcessData& data)
 {
   if (data.symbolicSampleSize == kSample64) {
     TProcess<double>(data);
@@ -33,21 +33,21 @@ tresult PLUGIN_API GainProcessor::process(ProcessData& data)
   return kResultOk;
 }
 
-void GainProcessor::onSetActive(bool isActive)
+void UnplugGainExampleProcessor::onSetActive(bool isActive)
 {
   auto const numIO = getNumIO();
   dspState.metering.setNumChannels(numIO.numOuts);
   dspState.metering.setSampleRate(processSetup.sampleRate);
 }
 
-tresult PLUGIN_API GainProcessor::setProcessing(TBool state)
+tresult PLUGIN_API UnplugGainExampleProcessor::setProcessing(TBool state)
 {
   dspState.metering.reset();
   return kResultOk;
 }
 
 template<class SampleType>
-void GainProcessor::TProcess(ProcessData& data)
+void UnplugGainExampleProcessor::TProcess(ProcessData& data)
 {
   constexpr auto useSamplePreciseAutomation = true;
   if constexpr (useSamplePreciseAutomation) {

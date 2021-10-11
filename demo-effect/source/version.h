@@ -34,9 +34,9 @@
 // Version without build number (example "1.0.3")
 #define VERSION_STR MAJOR_VERSION_STR "." SUB_VERSION_STR "." RELEASE_NUMBER_STR
 
-#define stringOriginalFilename "UnPlugDemoEffect.vst3"
+#define stringOriginalFilename "UnplugGainExample.vst3"
 #if SMTG_PLATFORM_64
-#define stringFileDescription "UnPlugDemoEffect VST3 (64Bit)"
+#define stringFileDescription "UnplugGainExample VST3 (64Bit)"
 #else
 #define stringFileDescription "UnPlugDemoEffect VST3"
 #endif

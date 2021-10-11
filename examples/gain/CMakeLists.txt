@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14.0)
 
 # unplug_SOURCE_DIR must be set to the path of your unplug local repo
-set(unplug_SOURCE_DIR "${CMAKE_SOURCE_DIR}/..")
+set(unplug_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../..")
 
 # set the name and version of the plugin here
 set(unplug_plugin_name "UnPlugGainExample")

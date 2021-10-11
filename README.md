@@ -5,7 +5,7 @@ Unplug is a work in progress experiment to make VST3 plugins using [Dear ImGui](
 Unplug tries to deal internally with all the complexity of VST3 and native user interfaces,
 exposing a simple api so that the user can just *unplug* from all the hassle typical of audio plugin development and just have fun.
 
-See the demo-effect folder for an example of what that's look like, especially the UserInterface.cpp and the GainDsp.hpp files. 
+Take a look at the `examples/gain` folder to see what that's look like, especially the files `UserInterface.cpp` and `GainDsp.hpp`. 
 
 ## Main features
 - ready to use immediate-mode widgets that interact with the plugin parameters, 
@@ -27,7 +27,6 @@ But there is no support for the user interface on Linux yet.
 If anyone who has some experience with X11 wants to contribute to this, I would be glad to assist.
 
 ## Coming soon
-- better plotting
 - complete demo-effect example
 - a script to create a new plugin
 - a template plugin with oversampling using [oversimple](https://github.com/unevens/oversimple)

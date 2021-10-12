@@ -27,7 +27,6 @@ But there is no support for the user interface on Linux yet.
 If anyone who has some experience with X11 wants to contribute to this, I would be glad to assist.
 
 ## Coming soon
-- complete demo-effect example
 - a script to create a new plugin
 - a template plugin with oversampling using [oversimple](https://github.com/unevens/oversimple)
 

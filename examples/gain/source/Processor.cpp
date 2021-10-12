@@ -22,17 +22,6 @@ Processor::Processor()
   setControllerClass(kControllerUID);
 }
 
-tresult PLUGIN_API Processor::process(ProcessData& data)
-{
-  if (data.symbolicSampleSize == kSample64) {
-    TProcess<double>(data);
-  }
-  else {
-    TProcess<float>(data);
-  }
-  return kResultOk;
-}
-
 void Processor::onSetActive(bool isActive)
 {
   auto const numIO = getNumIO();
@@ -44,28 +33,6 @@ tresult PLUGIN_API Processor::setProcessing(TBool state)
 {
   dspState.metering.reset();
   return kResultOk;
-}
-
-template<class SampleType>
-void Processor::TProcess(ProcessData& data)
-{
-  constexpr auto useSamplePreciseAutomation = true;
-  if constexpr (useSamplePreciseAutomation) {
-    processWithSamplePreciseAutomation<SampleType>(
-      data,
-      [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); },
-      [this]() { return GainDsp::prepareAutomation<SampleType>(dspState); },
-      [&](auto& automation, IO<SampleType> io, Index startSample, Index endSample) {
-        GainDsp::automatedProcessing(dspState, automation, io, startSample, endSample);
-      },
-      [&](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); });
-  }
-  else {
-    staticProcessing<SampleType>(
-      data, [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); });
-  }
-  auto io = IO<SampleType>(ioCache);
-  GainDsp::levelMetering(dspState, io, data.numSamples);
 }
 
 } // namespace Steinberg::Vst

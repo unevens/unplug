@@ -74,6 +74,7 @@ void MeterValueLabel(MeterIndex meterIndex,
  * Displays the value of a meter as text, centered in the rectangle between the current position and size. Not editable
  * */
 void MeterValueLabelCentered(MeterIndex meterIndex,
+                             std::string const& prefix = "",
                              std::function<std::string(float)> const& toString = unplug::linearToDBAsText,
                              float fallbackValue = 0.f,
                              float height = 0.f);

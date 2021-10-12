@@ -153,13 +153,14 @@ void MeterValueLabel(MeterIndex meterIndex, std::function<std::string(float)> co
 }
 
 void MeterValueLabelCentered(MeterIndex meterIndex,
+                             std::string const& prefix,
                              std::function<std::string(float)> const& toString,
                              float fallbackValue,
                              float height)
 {
   auto meters = getMeters();
   auto const value = meters ? meters->get(meterIndex) : fallbackValue;
-  auto const valueAsText = toString(value);
+  auto const valueAsText = prefix + toString(value);
   TextCentered(valueAsText, height);
 }
 

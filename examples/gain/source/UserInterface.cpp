@@ -32,7 +32,7 @@ void paint()
   KnobWithLabels(Param::gain);
   DragFloat(Param::gain);
   SliderFloat(Param::gain);
-  MeterValueLabelCentered(Meter::level);
+  MeterValueLabelCentered(Meter::level, "Level: ");
   LevelMeter(Meter::level, "LevelMeter", { widgetWidth, levelMeterHeight });
   ImGui::EndGroup();
 

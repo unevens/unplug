@@ -5,7 +5,9 @@ set(unplug_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../..")
 
 # set the name and version of the plugin here
 set(unplug_plugin_name "UnPlugGainExample")
-set(unplug_plugin_version 1.0.0)
+
+#set this to true to use the Oversimple oversampling library
+set(unplug_use_oversimple_oversampling TRUE)
 
 #set the cpp standard you want to use for the plugin (must be at least c++17)
 set(unplug_cpp_standard 20)
@@ -69,14 +71,18 @@ set(vst3sdk_SOURCE_DIR ${unplug_SOURCE_DIR}/libs/vst3sdk)
 if (NOT vst3sdk_SOURCE_DIR)
     message(FATAL_ERROR "VST3 SDK is missing. Please run: git submodule update --init --recursive in your unplug local repository")
 endif ()
-project(${unplug_plugin_name} VERSION ${unplug_plugin_version})
+project(${unplug_plugin_name})
 set(SMTG_VSTGUI_ROOT "${vst3sdk_SOURCE_DIR}")
 cmake_policy(SET CMP0077 NEW)
 set(SMTG_ADD_VSTGUI OFF)
 add_subdirectory(${vst3sdk_SOURCE_DIR} "${PROJECT_BINARY_DIR}/vst3sdk")
 smtg_enable_vst3_sdk()
 
-# reset c++ standard to the desired one (vst sdk set it to c++14)
+if(unplug_use_oversimple_oversampling)
+    add_subdirectory("${unplug_SOURCE_DIR}/libs/oversimple" "${PROJECT_BINARY_DIR}/oversimple")
+endif()
+
+# reset c++ standard to the desired one (vst sdk set it to 14, oversimple to 17)
 set(CMAKE_CXX_STANDARD ${unplug_cpp_standard})
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS FALSE)
@@ -117,6 +123,10 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC UNPLUG_VST3=1)
 if (SMTG_WIN)
     target_compile_definitions(${PROJECT_NAME} PUBLIC _USE_MATH_DEFINES=1)
 endif ()
+
+if(unplug_use_oversimple_oversampling)
+    target_link_libraries(${PROJECT_NAME} PRIVATE oversimple)
+endif()
 
 # OpenGL
 find_package(OpenGL REQUIRED)
@@ -173,6 +183,3 @@ target_link_libraries(${PROJECT_NAME} PRIVATE unplug-opaque-gl)
 if (${unplug_expose_vst3style_parameter_api} STREQUAL TRUE)
     target_compile_definitions(${PROJECT_NAME} PUBLIC UNPLUG_EXPOSE_VST3STYLE_PARAMETER_API=1)
 endif ()
-
-
-

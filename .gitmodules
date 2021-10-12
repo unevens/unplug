@@ -14,3 +14,6 @@
 [submodule "libs/lockfree-async"]
 	path = libs/lockfree-async
 	url = https://github.com/unevens/lockfree-async
+[submodule "libs/oversimple"]
+	path = libs/oversimple
+	url = https://github.com/unevens/oversimple

@@ -1,24 +1,9 @@
-//------------------------------------------------------------------------
-// Copyright(c) 2021 Dario Mambro.
-//
-// Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
-// granted, provided that the above copyright notice and this permission notice appear in all copies.
-//
-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
-// AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
-//------------------------------------------------------------------------
-
 #include "Controller.hpp"
 #include "Id.hpp"
 #include "Processor.hpp"
 #include "version.h"
 
 #include "public.sdk/source/main/pluginfactory.h"
-
-#define stringPluginName "UnplugGainDemo"
 
 //------------------------------------------------------------------------
 //  Module init/exit
@@ -44,11 +29,11 @@ using namespace Steinberg::Vst;
 //  VST Plug-in Entry
 //------------------------------------------------------------------------
 
-BEGIN_FACTORY_DEF("unevens", "https://unevens.net", "mailto:hi@unevens.net")
+BEGIN_FACTORY_DEF(stringCompanyName, UNPLUG_PLUGIN_VENDOR_URL, UNPLUG_PLUGIN_VENDOR_MAIL)
 
 //---First Plug-in included in this factory-------
 // its kVstAudioEffectClass component
-DEF_CLASS2(INLINE_UID_FROM_FUID(kUnplugGainExampleProcessorUID),
+DEF_CLASS2(INLINE_UID_FROM_FUID(kProcessorUID),
            PClassInfo::kManyInstances,    // cardinality
            kVstAudioEffectClass,          // the component category (do not changed this)
            stringPluginName,              // here the Plug-in name (to be changed)
@@ -58,12 +43,12 @@ DEF_CLASS2(INLINE_UID_FROM_FUID(kUnplugGainExampleProcessorUID),
            FULL_VERSION_STR,              // Plug-in version (to be changed)
            kVstVersionString,             // the VST 3 SDK version (do not changed this, use always
                                           // this define)
-           UnplugGainExampleProcessor::createInstance) // function pointer called when
+           Processor::createInstance) // function pointer called when
                                           // this component should be
                                           // instantiated
 
 // its kVstComponentControllerClass component
-DEF_CLASS2(INLINE_UID_FROM_FUID(kUnplugGainExampleControllerUID),
+DEF_CLASS2(INLINE_UID_FROM_FUID(kControllerUID),
            PClassInfo::kManyInstances,     // cardinality
            kVstComponentControllerClass,   // the Controller category (do not changed this)
            stringPluginName "Controller",  // controller name (could be the same than component name)
@@ -72,7 +57,7 @@ DEF_CLASS2(INLINE_UID_FROM_FUID(kUnplugGainExampleControllerUID),
            FULL_VERSION_STR,               // Plug-in version (to be changed)
            kVstVersionString,              // the VST 3 SDK version (do not changed this, use always
                                            // this define)
-           UnplugGainExampleController::createInstance) // function pointer called when
+           Controller::createInstance) // function pointer called when
                                            // this component should be
                                            // instantiated
 

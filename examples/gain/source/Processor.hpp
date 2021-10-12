@@ -18,14 +18,14 @@
 
 namespace Steinberg::Vst {
 
-class UnplugGainExampleProcessor final : public UnplugProcessor
+class Processor final : public UnplugProcessor
 {
 public:
-  UnplugGainExampleProcessor();
+  Processor();
 
   static FUnknown* createInstance(void* /*context*/)
   {
-    return (IAudioProcessor*)new UnplugGainExampleProcessor;
+    return (IAudioProcessor*)new Processor;
   }
 
   tresult PLUGIN_API process(ProcessData& data) override;

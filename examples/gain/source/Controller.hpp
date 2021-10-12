@@ -17,12 +17,12 @@
 
 namespace Steinberg::Vst {
 
-class UnplugGainExampleController final : public UnplugController
+class Controller final : public UnplugController
 {
 public:
   static FUnknown* createInstance(void* /*context*/)
   {
-    return (IEditController*)new UnplugGainExampleController;
+    return (IEditController*)new Controller;
   }
 };
 

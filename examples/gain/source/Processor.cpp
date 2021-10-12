@@ -16,13 +16,13 @@
 
 namespace Steinberg::Vst {
 
-UnplugGainExampleProcessor::UnplugGainExampleProcessor()
+Processor::Processor()
   : dspState{ pluginState }
 {
-  setControllerClass(kUnplugGainExampleControllerUID);
+  setControllerClass(kControllerUID);
 }
 
-tresult PLUGIN_API UnplugGainExampleProcessor::process(ProcessData& data)
+tresult PLUGIN_API Processor::process(ProcessData& data)
 {
   if (data.symbolicSampleSize == kSample64) {
     TProcess<double>(data);
@@ -33,21 +33,21 @@ tresult PLUGIN_API UnplugGainExampleProcessor::process(ProcessData& data)
   return kResultOk;
 }
 
-void UnplugGainExampleProcessor::onSetActive(bool isActive)
+void Processor::onSetActive(bool isActive)
 {
   auto const numIO = getNumIO();
   dspState.metering.setNumChannels(numIO.numOuts);
   dspState.metering.setSampleRate(processSetup.sampleRate);
 }
 
-tresult PLUGIN_API UnplugGainExampleProcessor::setProcessing(TBool state)
+tresult PLUGIN_API Processor::setProcessing(TBool state)
 {
   dspState.metering.reset();
   return kResultOk;
 }
 
 template<class SampleType>
-void UnplugGainExampleProcessor::TProcess(ProcessData& data)
+void Processor::TProcess(ProcessData& data)
 {
   constexpr auto useSamplePreciseAutomation = true;
   if constexpr (useSamplePreciseAutomation) {

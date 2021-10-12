@@ -34,10 +34,10 @@ public:
   void set(MeterIndex index, float value);
 
   /**
- * Gets the value of a meter
- * @index the index of the meter to get
- * @return the value of the meter
- */
+   * Gets the value of a meter
+   * @index the index of the meter to get
+   * @return the value of the meter
+   */
   float get(MeterIndex index) const;
 
   TMeterStorage();
@@ -55,10 +55,10 @@ using MeterStorage = TMeterStorage<NumMeters::value>;
 /**
  * @return the meter storage to be used by the user interface code
  */
-MeterStorage* getMeters();
+MeterStorage& getMeters();
 
 namespace detail {
-void setMeters(MeterStorage*);
+void setMeters(MeterStorage&);
 } // namespace detail
 
 // implementation

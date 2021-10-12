@@ -214,6 +214,16 @@ tresult PLUGIN_API UnplugController::getState(IBStream* state)
 IPlugView* PLUGIN_API UnplugController::createView(FIDString name)
 {
   if (FIDStringsEqual(name, ViewType::kEditor)) {
+    if (!meters) {
+      // this should never happen, see UnplugProcessor::connect and UnlugController::notify
+      assert(false);
+      meters = std::make_shared<unplug::MeterStorage>();
+    }
+    if (!customData) {
+      // this should never happen, see UnplugProcessor::connect and UnlugController::notify
+      assert(false);
+      customData = std::make_shared<unplug::CustomData>();
+    }
     auto ui = new View(*this);
     auto message = owned(allocateMessage());
     message->setMessageID(vst3::messaageIds::userInterfaceChangedId);

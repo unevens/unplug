@@ -187,17 +187,6 @@ tresult UnplugProcessor::setActive(TBool state)
     static_cast<float>(processSetup.sampleRate), UserInterface::getRefreshRate(), processSetup.maxSamplesPerBlock, numIO
   };
   pluginState.customData->setBlockSizeInfo(blockSizeInfo);
-
-  auto message = owned(allocateMessage());
-  message->setMessageID(vst3::messaageIds::meterSharingId);
-  auto const meterStorageAddress = reinterpret_cast<uintptr_t>(&pluginState.meters);
-  message->getAttributes()->setBinary(
-    vst3::messaageIds::meterStorageId, &meterStorageAddress, sizeof(meterStorageAddress));
-  auto const customDataAddress = reinterpret_cast<uintptr_t>(&customDataWrapped);
-  message->getAttributes()->setBinary(
-    vst3::messaageIds::customStorageId, &customDataAddress, sizeof(customDataAddress));
-  sendMessage(message);
-
   onSetActive(state);
   return AudioEffect::setActive(state);
 }
@@ -288,6 +277,27 @@ bool UnplugProcessor::onSetBusArrangements(SpeakerArrangement* inputs,
                                     [](int numInputChannels, int numOutputChannels, int numSidechainChannnels) {
                                       return numInputChannels == numOutputChannels;
                                     });
+}
+void UnplugProcessor::sendSharedDataToController()
+{
+  auto message = owned(allocateMessage());
+  message->setMessageID(vst3::messaageIds::meterSharingId);
+  auto const meterStorageAddress = reinterpret_cast<uintptr_t>(&pluginState.meters);
+  message->getAttributes()->setBinary(
+    vst3::messaageIds::meterStorageId, &meterStorageAddress, sizeof(meterStorageAddress));
+  auto const customDataAddress = reinterpret_cast<uintptr_t>(&customDataWrapped);
+  message->getAttributes()->setBinary(
+    vst3::messaageIds::customStorageId, &customDataAddress, sizeof(customDataAddress));
+  sendMessage(message);
+}
+
+tresult UnplugProcessor::connect(IConnectionPoint* other)
+{
+  auto const result = ComponentBase::connect(other);
+  if (result == kResultTrue) {
+    sendSharedDataToController();
+  }
+  return result;
 }
 
 } // namespace Steinberg::Vst

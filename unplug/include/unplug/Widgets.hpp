@@ -76,7 +76,6 @@ void MeterValueLabel(MeterIndex meterIndex,
 void MeterValueLabelCentered(MeterIndex meterIndex,
                              std::string const& prefix = "",
                              std::function<std::string(float)> const& toString = unplug::linearToDBAsText,
-                             float fallbackValue = 0.f,
                              float height = 0.f);
 
 /**
@@ -109,7 +108,6 @@ struct LevelMeterSettings
   ImVec4 intermediateColor = { 1.f, 1.f, 0.f, 1.f };
   float relativePositionOfIntermediateColor = 0.5f;
   FillStyle fillStyle = FillStyle::gradient;
-  float fallbackValue = 0.f;
   float thicknessAtZero = 1.f;
   std::function<float(float)> scaling = linearToDB<float>;
 };

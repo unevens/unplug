@@ -39,12 +39,10 @@ void paint()
   ImGui::SameLine();
 
   ImGui::BeginGroup();
-  auto customData = CustomData::getCurrent();
-  if (customData) {
-    ImGui::TableNextColumn();
-    PlotRingBuffer("Level", customData->levelRingBuffer);
-    PlotWaveformRingBuffer("Waveform", customData->waveformRingBuffer);
-  }
+  auto& customData = CustomData::getCurrent();
+  ImGui::TableNextColumn();
+  PlotRingBuffer("Level", customData.levelRingBuffer);
+  PlotWaveformRingBuffer("Waveform", customData.waveformRingBuffer);
   ImGui::EndGroup();
 }
 
@@ -80,7 +78,8 @@ std::array<float, 3> getBackgroundColor()
 
 void setupStyle() {}
 
-void adjustSize(int& width, int& height, int prevWidth, int prevHeight) {
+void adjustSize(int& width, int& height, int prevWidth, int prevHeight)
+{
   width = std::max(width, 400);
   height = std::max(height, 400);
 }

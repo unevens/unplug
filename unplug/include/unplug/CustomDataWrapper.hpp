@@ -32,9 +32,9 @@ public:
   /**
    * Gets the plugin custom data from the user interface code
    * */
-  static Data* getCurrent()
+  static Data& getCurrent()
   {
-    return currentInstance;
+    return *currentInstance;
   }
 
   /**

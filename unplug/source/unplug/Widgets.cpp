@@ -144,10 +144,10 @@ void ValueLabelCentered(ParamIndex paramIndex, ShowLabel showLabel, float height
   TextCentered(text, height);
 }
 
-void MeterValueLabel(MeterIndex meterIndex, std::function<std::string(float)> const& toString, float fallbackValue)
+void MeterValueLabel(MeterIndex meterIndex, std::function<std::string(float)> const& toString)
 {
-  auto meters = getMeters();
-  auto const value = meters ? meters->get(meterIndex) : fallbackValue;
+  auto const& meters = getMeters();
+  auto const value = meters.get(meterIndex);
   auto const valueAsText = toString(value);
   return ImGui::TextUnformatted(valueAsText.c_str());
 }
@@ -155,11 +155,10 @@ void MeterValueLabel(MeterIndex meterIndex, std::function<std::string(float)> co
 void MeterValueLabelCentered(MeterIndex meterIndex,
                              std::string const& prefix,
                              std::function<std::string(float)> const& toString,
-                             float fallbackValue,
                              float height)
 {
-  auto meters = getMeters();
-  auto const value = meters ? meters->get(meterIndex) : fallbackValue;
+  auto const& meters = getMeters();
+  auto const value = meters.get(meterIndex) ;
   auto const valueAsText = prefix + toString(value);
   TextCentered(valueAsText, height);
 }
@@ -421,8 +420,8 @@ static void DrawLevelMeter(float scaledValue,
 
 static float getMeterValue(MeterIndex meterIndex, LevelMeterSettings const& settings)
 {
-  auto const meters = getMeters();
-  auto const rawValue = meters ? meters->get(meterIndex) : settings.fallbackValue;
+  auto const& meters = getMeters();
+  auto const rawValue = meters.get(meterIndex);
   return rawValue;
 }
 

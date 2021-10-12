@@ -293,7 +293,7 @@ void EventHandler::setCurrentContext()
   ImPlot::SetCurrentContext(implotContext);
   detail::setParameters(&parameters);
   if constexpr (NumMeters::value > 0) {
-    detail::setMeters(meters.get());
+    detail::setMeters(*meters);
   }
   custom->setCurrent();
 }

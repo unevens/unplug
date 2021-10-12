@@ -115,6 +115,8 @@ private:
   template<unplug::Serialization::Action>
   bool serialization(IBStreamer& streamer);
 
+  void sendSharedDataToController();
+
 public:
   tresult PLUGIN_API initialize(FUnknown* context) final;
 
@@ -136,6 +138,10 @@ public:
                                         int32 numIns,
                                         SpeakerArrangement* outputs,
                                         int32 numOuts) final;
+
+
+  tresult PLUGIN_API connect (IConnectionPoint* other) override;
+
 };
 
 template<class SampleType, class StaticProcessing>

@@ -24,30 +24,33 @@ void paint()
 {
   auto const main_viewport = ImGui::GetMainViewport();
   auto const viewWidth = main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x;
+  auto const levelMeterHeight = 24.f;
+  auto const widgetWidth = std::min(viewWidth / 2, 300.f);
 
-  if (ImGui::BeginTable("##table", 2, 0)) {
-    ImGui::TableNextRow();
+  ImGui::BeginGroup();
+  ImGui::PushItemWidth(widgetWidth);
+  KnobWithLabels(Param::gain);
+  DragFloat(Param::gain);
+  SliderFloat(Param::gain);
+  MeterValueLabelCentered(Meter::level);
+  LevelMeter(Meter::level, "LevelMeter", { widgetWidth, levelMeterHeight });
+  ImGui::EndGroup();
+
+  ImGui::SameLine();
+
+  ImGui::BeginGroup();
+  auto customData = CustomData::getCurrent();
+  if (customData) {
     ImGui::TableNextColumn();
-    auto const widgetWidth = viewWidth / 2;
-    ImGui::PushItemWidth(widgetWidth);
-    KnobWithLabels(Param::gain);
-    DragFloat(Param::gain);
-    SliderFloat(Param::gain);
-    MeterValueLabelCentered(Meter::level);
-    auto customData = CustomData::getCurrent();
-    if (customData) {
-      ImGui::TableNextColumn();
-      PlotRingBuffer("Level", customData->levelRingBuffer);
-      PlotWaveformRingBuffer("Waveform", customData->waveformRingBuffer);
-    }
-    ImGui::EndTable();
+    PlotRingBuffer("Level", customData->levelRingBuffer);
+    PlotWaveformRingBuffer("Waveform", customData->waveformRingBuffer);
   }
-  LevelMeter(Meter::level, "LevelMeter", { viewWidth, 50.f });
+  ImGui::EndGroup();
 }
 
 std::array<int, 2> getDefaultSize()
 {
-  return { { 1000, 700 } };
+  return { { 800, 620 } };
 }
 
 bool isResizingAllowed()
@@ -77,7 +80,10 @@ std::array<float, 3> getBackgroundColor()
 
 void setupStyle() {}
 
-void adjustSize(int& width, int& height, int prevWidth, int prevHeight) {}
+void adjustSize(int& width, int& height, int prevWidth, int prevHeight) {
+  width = std::max(width, 400);
+  height = std::max(height, 400);
+}
 
 float getRefreshRate()
 {

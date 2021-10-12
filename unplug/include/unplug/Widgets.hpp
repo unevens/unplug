@@ -152,10 +152,7 @@ void DifferenceLevelMeter(MeterIndex meterIndex,
 /**
  * Difference level taking an explicit value.
  * */
-void DifferenceLevelMeterRaw(float value,
-                             std::string const& name,
-                             ImVec2 size,
-                             DifferenceLevelMeterSettings settings);
+void DifferenceLevelMeterRaw(float value, std::string const& name, ImVec2 size, DifferenceLevelMeterSettings settings);
 
 /**
  * Displays the value of a parameter as text, allowing user input upon click or double click, centered in the rectangle

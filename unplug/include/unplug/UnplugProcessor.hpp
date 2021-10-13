@@ -110,12 +110,17 @@ protected:
   unplug::PluginState pluginState;
   unplug::detail::CachedIO ioCache;
   std::array<int32, unplug::NumParameters::value> automationPointsHandled;
+  uint64_t latency;
 
 private:
   template<unplug::Serialization::Action>
   bool serialization(IBStreamer& streamer);
 
   void sendSharedDataToController();
+
+  void sendLatencyChangedMessage();
+
+  void checkLatency(uint64_t newLatency);
 
 public:
   tresult PLUGIN_API initialize(FUnknown* context) final;
@@ -139,9 +144,12 @@ public:
                                         SpeakerArrangement* outputs,
                                         int32 numOuts) final;
 
+  tresult PLUGIN_API connect(IConnectionPoint* other) override;
 
-  tresult PLUGIN_API connect (IConnectionPoint* other) override;
-
+  uint32 PLUGIN_API getLatencySamples() override
+  {
+    return static_cast<uint32>(latency);
+  }
 };
 
 template<class SampleType, class StaticProcessing>

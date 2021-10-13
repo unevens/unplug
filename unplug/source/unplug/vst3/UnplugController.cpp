@@ -300,6 +300,13 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
     customData = *reinterpret_cast<std::shared_ptr<CustomData>*>(getAddress(customStorageId));
     return kResultOk;
   }
+  else if (FIDStringsEqual(message->getMessageID(), latencyChangedId)) {
+    auto handler = getComponentHandler();
+    assert(handler);
+    if (handler) {
+      handler->restartComponent(kLatencyChanged);
+    }
+  }
   else
     return onNotify(message) ? kResultOk : kResultFalse;
 }

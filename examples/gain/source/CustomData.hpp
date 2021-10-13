@@ -17,6 +17,7 @@
 #include "unplug/CustomDataWrapper.hpp"
 #include "unplug/IO.hpp"
 #include "unplug/NumIO.hpp"
+#include "unplug/Oversampling.hpp"
 #include "unplug/RingBuffer.hpp"
 #include "unplug/Serialization.hpp"
 
@@ -24,26 +25,33 @@ struct PluginCustomData final
 {
   lockfree::RealtimeObject<unplug::RingBuffer<float>> levelRingBuffer;
   lockfree::RealtimeObject<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
+  lockfree::RealtimeObject<unplug::Oversampling<double>> oversampling64;
 
   PluginCustomData()
     : levelRingBuffer{ std::make_unique<unplug::RingBuffer<float>>() }
     , waveformRingBuffer{ std::make_unique<unplug::WaveformRingBuffer<float>>() }
+    , oversampling64{ std::make_unique<unplug::Oversampling<double>>() }
   {}
 
-  void setBlockSizeInfo(unplug::BlockSizeInfo const& blockSizeInfo)
+  void setBlockSizeInfo(unplug::BlockSizeInfo const& blockSizeInfo,
+                        std::function<void(uint64_t newLatency)> const& checkLatency)
   {
     unplug::setBlockSizeInfo(
       levelRingBuffer, blockSizeInfo, [](unplug::RingBuffer<float>& ringBuffer) { ringBuffer.reset(0.f); });
     unplug::setBlockSizeInfo(waveformRingBuffer, blockSizeInfo, [](unplug::WaveformRingBuffer<float>& ringBuffer) {
       ringBuffer.reset(unplug::WaveformElement<float>{ 0.f, 0.f });
     });
+    unplug::setBlockSizeInfo(oversampling64, blockSizeInfo, checkLatency);
   }
 
   template<unplug::Serialization::Action action>
-  bool serialization(unplug::Serialization::Streamer<action>& streamer)
+  bool serialization(unplug::Serialization::Streamer<action>& streamer,
+                     std::function<void(uint64_t newLatency)> const& checkLatency)
   {
+    using namespace unplug;
     ringBufferSettingsSerialization(levelRingBuffer, streamer);
     ringBufferSettingsSerialization(waveformRingBuffer, streamer);
+    oversamplingSettingsSerialization(oversampling64, streamer, checkLatency);
     return true;
   }
 };

@@ -39,6 +39,16 @@ public:
     : stream{ stream }
   {}
 
+  bool operator()(bool& value)
+  {
+    if constexpr (action == load) {
+      return stream.readBool(value);
+    }
+    if constexpr (action == save) {
+      return stream.writeBool(value);
+    }
+  }
+
   bool operator()(float& value)
   {
     if constexpr (action == load) {
@@ -135,7 +145,6 @@ public:
     }
   }
 
-
   bool operator()(int32_t* data, std::size_t numElements)
   {
     auto numElements32 = static_cast<Steinberg::int32>(numElements);
@@ -195,4 +204,4 @@ public:
   }
 };
 
-} // namespace unplug
+} // namespace unplug::Serialization

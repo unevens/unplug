@@ -365,11 +365,13 @@ bool setBlockSizeInfo(lockfree::RealtimeObject<RingBufferClass>& rtRingBuffer,
     bool const sizeInfoChanged = prevSizeInfo != blockSizeInfo;
     return sizeInfoChanged;
   };
-  auto const resizeRingBuffer = [&](RingBufferClass& ringBuffer) {
-    ringBuffer.setBlockSizeInfo(blockSizeInfo);
-    onSizeChanged(ringBuffer);
+  auto const resizeRingBuffer = [&](RingBufferClass const& ringBuffer) {
+    auto newRingBuffer = std::make_unique<RingBufferClass>(ringBuffer);
+    newRingBuffer->setBlockSizeInfo(blockSizeInfo);
+    onSizeChanged(*newRingBuffer);
+    return newRingBuffer;
   };
-  bool const hasChanged = rtRingBuffer.changeFromNonRealtimeThreadIf(resizeRingBuffer, isSizeInfoChanged);
+  bool const hasChanged = rtRingBuffer.changeIf(resizeRingBuffer, isSizeInfoChanged);
   return hasChanged;
 }
 
@@ -382,7 +384,7 @@ bool ringBufferSettingsSerialization(lockfree::RealtimeObject<RingBufferClass>& 
     auto pointsPerSecond = ringBuffer->getPointsPerSecond();
     if (!streamer(pointsPerSecond))
       return false;
-    auto durationInSeconds = ringBuffer->getPointsPerSecond();
+    auto durationInSeconds = ringBuffer->getDurationInSeconds();
     if (!streamer(durationInSeconds))
       return false;
   }
@@ -397,10 +399,12 @@ bool ringBufferSettingsSerialization(lockfree::RealtimeObject<RingBufferClass>& 
       return pointsPerSecond != ringBuffer.getPointsPerSecond() ||
              durationInSeconds != ringBuffer.getDurationInSeconds();
     };
-    auto const applySettings = [=](RingBufferClass& ringBuffer) {
-      ringBuffer.setResolution(pointsPerSecond, durationInSeconds);
+    auto const applySettings = [=](RingBufferClass const& ringBuffer) {
+      auto newRingBuffer = std::make_unique<RingBufferClass>(ringBuffer);
+      newRingBuffer->setResolution(pointsPerSecond, durationInSeconds);
+      return newRingBuffer;
     };
-    rtRingBuffer.changeFromNonRealtimeThreadIf(applySettings, haveSettingsChanged);
+    rtRingBuffer.changeIf(applySettings, haveSettingsChanged);
   }
   return true;
 }

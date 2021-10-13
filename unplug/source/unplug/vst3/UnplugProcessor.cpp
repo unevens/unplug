@@ -103,7 +103,8 @@ bool UnplugProcessor::serialization(IBStreamer& ibStreamer)
       pluginState.parameters.setNormalized(i, value);
     }
   }
-  auto const ok = pluginState.customData->template serialization<action>(streamer);
+  auto const ok =
+    pluginState.customData->template serialization<action>(streamer, [this] (auto newLatency){ checkLatency(newLatency); });
   return ok;
 }
 
@@ -182,11 +183,14 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
 
 tresult UnplugProcessor::setActive(TBool state)
 {
-  auto const numIO = getNumIO();
-  auto blockSizeInfo = BlockSizeInfo{
-    static_cast<float>(processSetup.sampleRate), UserInterface::getRefreshRate(), processSetup.maxSamplesPerBlock, numIO
-  };
-  pluginState.customData->setBlockSizeInfo(blockSizeInfo);
+  if (state) {
+    auto const numIO = getNumIO();
+    auto blockSizeInfo = BlockSizeInfo{ static_cast<float>(processSetup.sampleRate),
+                                        UserInterface::getRefreshRate(),
+                                        processSetup.maxSamplesPerBlock,
+                                        numIO };
+    pluginState.customData->setBlockSizeInfo(blockSizeInfo, [this] (auto newLatency){ checkLatency(newLatency); });
+  }
   onSetActive(state);
   return AudioEffect::setActive(state);
 }
@@ -298,6 +302,21 @@ tresult UnplugProcessor::connect(IConnectionPoint* other)
     sendSharedDataToController();
   }
   return result;
+}
+
+void UnplugProcessor::sendLatencyChangedMessage()
+{
+  auto message = owned(allocateMessage());
+  message->setMessageID(vst3::messaageIds::latencyChangedId);
+  sendMessage(message);
+}
+
+void UnplugProcessor::checkLatency(uint64_t newLatency)
+{
+  if (latency != newLatency) {
+    latency = newLatency;
+    sendLatencyChangedMessage();
+  }
 }
 
 } // namespace Steinberg::Vst

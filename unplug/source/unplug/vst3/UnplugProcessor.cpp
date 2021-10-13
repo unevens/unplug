@@ -103,8 +103,8 @@ bool UnplugProcessor::serialization(IBStreamer& ibStreamer)
       pluginState.parameters.setNormalized(i, value);
     }
   }
-  auto const ok =
-    pluginState.customData->template serialization<action>(streamer, [this] (auto newLatency){ checkLatency(newLatency); });
+  auto const ok = pluginState.customData->template serialization<action>(
+    streamer, [this](auto newLatency) { checkLatency(newLatency); });
   return ok;
 }
 
@@ -184,12 +184,15 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
 tresult UnplugProcessor::setActive(TBool state)
 {
   if (state) {
+    bool const isUsingDoublePrecision = processSetup.symbolicSampleSize == kSample64;
+    pluginState.customData->setFloatingPointPrecision(isUsingDoublePrecision);
     auto const numIO = getNumIO();
     auto blockSizeInfo = BlockSizeInfo{ static_cast<float>(processSetup.sampleRate),
+                                        getOversamplingRate(),
                                         UserInterface::getRefreshRate(),
                                         processSetup.maxSamplesPerBlock,
                                         numIO };
-    pluginState.customData->setBlockSizeInfo(blockSizeInfo, [this] (auto newLatency){ checkLatency(newLatency); });
+    pluginState.customData->setBlockSizeInfo(blockSizeInfo, [this](auto newLatency) { checkLatency(newLatency); });
   }
   onSetActive(state);
   return AudioEffect::setActive(state);

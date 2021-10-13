@@ -73,6 +73,11 @@ protected:
 
   NumIO getNumIO();
 
+  virtual Index getOversamplingRate() const
+  {
+    return 1;
+  }
+
   /** Called from initialize, at first after constructor */
   virtual void onInitialization();
 

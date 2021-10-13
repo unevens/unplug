@@ -23,19 +23,12 @@ namespace unplug {
 struct BlockSizeInfo final
 {
   float sampleRate = 44100;
-  float refreshRate = 30;
+  Index oversamplingRate = 1;
+  float userInterfaceRefreshRate = 30;
   Index maxAudioBlockSize = 128;
   NumIO numIO;
 
-  bool operator==(BlockSizeInfo const& other) const noexcept
-  {
-    return std::memcmp(this, &other, sizeof(BlockSizeInfo)) == 0;
-  }
-
-  bool operator!=(BlockSizeInfo const& other) const noexcept
-  {
-    return !(*this == other);
-  }
+  bool operator==(BlockSizeInfo const& other) const noexcept = default;
 };
 
 } // namespace unplug

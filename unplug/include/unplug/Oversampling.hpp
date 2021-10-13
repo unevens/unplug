@@ -39,6 +39,11 @@ public:
     return oversampling;
   }
 
+  Impl const& get() const
+  {
+    return oversampling;
+  }
+
   Settings const& getSettings() const
   {
     return settings;
@@ -51,18 +56,18 @@ private:
 
 template<class SampleType>
 bool setBlockSizeInfo(lockfree::RealtimeObject<Oversampling<SampleType>>& rtOversampling,
-                      unplug::BlockSizeInfo const& blockSizeInfo,
+                      Index numChannels, Index maxAudioBlockSize,
                       std::function<void(uint64_t)> const& checkLatency)
 {
   auto const isSizeInfoChanged = [&](Oversampling<SampleType> const& oversampling) {
-    bool const isNumChannelsChanged = blockSizeInfo.numIO.numOuts != oversampling.getSettings().numChannels;
-    bool const isBlockSizeChanged = blockSizeInfo.maxAudioBlockSize != oversampling.getSettings().numSamplesPerBlock;
+    bool const isNumChannelsChanged = numChannels != oversampling.getSettings().numChannels;
+    bool const isBlockSizeChanged = maxAudioBlockSize != oversampling.getSettings().numSamplesPerBlock;
     return isNumChannelsChanged || isBlockSizeChanged;
   };
   auto const adaptOversampling = [&](Oversampling<SampleType> const& oversampling) {
     auto settings = oversampling.getSettings();
-    settings.numChannels = blockSizeInfo.numIO.numOuts;
-    settings.numSamplesPerBlock = blockSizeInfo.maxAudioBlockSize;
+    settings.numChannels = numChannels;
+    settings.numSamplesPerBlock = maxAudioBlockSize;
     return std::make_unique<Oversampling<SampleType>>(std::move(settings));
   };
   bool const hasChanged = rtOversampling.changeIf(adaptOversampling, isSizeInfoChanged);
@@ -79,6 +84,8 @@ bool oversamplingSettingsSerialization(lockfree::RealtimeObject<Oversampling<Sam
                                        std::function<void(uint64_t)> const& checkLatency)
 {
   auto oversampling = rtOversampling.getFromNonRealtimeThread();
+  if(!oversampling)
+    return false;
   auto settings = oversampling->getSettings();
   if (!streamer(settings.numChannels))
     return false;

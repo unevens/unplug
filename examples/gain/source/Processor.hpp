@@ -34,7 +34,10 @@ public:
 
   tresult PLUGIN_API setProcessing(TBool state) override;
 
+
 private:
+  Index getOversamplingRate() const override;
+
   template<class SampleType>
   void TProcess(ProcessData& data);
 

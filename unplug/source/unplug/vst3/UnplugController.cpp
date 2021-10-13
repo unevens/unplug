@@ -306,6 +306,7 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
     if (handler) {
       handler->restartComponent(kLatencyChanged);
     }
+    return kResultOk;
   }
   else
     return onNotify(message) ? kResultOk : kResultFalse;

@@ -168,7 +168,7 @@ private:
     auto const maxWriteIncrementPerAudioBlock = pointsPerSample * static_cast<float>(sizeInfo.maxAudioBlockSize);
     readBlockSize = static_cast<int>(std::ceil(durationInSeconds * pointsPerSecond));
     auto const audioBlockDuration = static_cast<float>(sizeInfo.maxAudioBlockSize) / sizeInfo.sampleRate;
-    auto const refreshTime = 1.f / sizeInfo.refreshRate;
+    auto const refreshTime = 1.f / sizeInfo.userInterfaceRefreshRate;
     auto const audioBlocksPerUserInterfaceRefreshTime = refreshTime / audioBlockDuration;
     resize(static_cast<int>(std::ceil(maxWriteIncrementPerAudioBlock)), audioBlocksPerUserInterfaceRefreshTime);
   }

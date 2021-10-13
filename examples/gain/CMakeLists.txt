@@ -9,7 +9,7 @@ set(unplug_plugin_name "UnPlugGainExample")
 #set this to true to use the Oversimple oversampling library
 set(unplug_use_oversimple_oversampling TRUE)
 
-#set the cpp standard you want to use for the plugin (must be at least c++17)
+#set the cpp standard you want to use for the plugin (must be at least c++20)
 set(unplug_cpp_standard 20)
 
 # sets the version of openGL to use: supported values are 2 and 3

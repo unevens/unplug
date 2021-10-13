@@ -23,6 +23,8 @@ struct NumIO final
 {
   Index numIns = 1;
   Index numOuts = 1;
+
+  bool operator==(NumIO const& other) const noexcept = default;
 };
 
 } // namespace unplug

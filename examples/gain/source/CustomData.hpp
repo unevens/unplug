@@ -25,35 +25,13 @@ struct PluginCustomData final
 {
   lockfree::RealtimeObject<unplug::RingBuffer<float>> levelRingBuffer;
   lockfree::RealtimeObject<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
-  lockfree::RealtimeObject<unplug::Oversampling<double>> oversampling64;
-  lockfree::RealtimeObject<unplug::Oversampling<float>> oversampling32;
+  lockfree::RealtimeObject<unplug::Oversampling> oversampling;
 
   PluginCustomData()
     : levelRingBuffer{ std::make_unique<unplug::RingBuffer<float>>() }
     , waveformRingBuffer{ std::make_unique<unplug::WaveformRingBuffer<float>>() }
-    , oversampling64{ std::unique_ptr<unplug::Oversampling<double>>{nullptr} }
-    , oversampling32{ std::unique_ptr<unplug::Oversampling<float>>{nullptr} }
+    , oversampling{ std::unique_ptr<unplug::Oversampling>{ nullptr } }
   {}
-
-  void setFloatingPointPrecision(bool doublePrecision)
-  {
-    if (doublePrecision) {
-      if (!oversampling64.getFromNonRealtimeThread()) {
-        auto const oversampling32_ = oversampling32.getFromNonRealtimeThread();
-        auto settings = oversampling32_ ? oversampling32_->getSettings() : oversimple::OversamplingSettings{};
-        oversampling64.set(std::make_unique<unplug::Oversampling<double>>(settings));
-        oversampling32.set({});
-      }
-    }
-    else {
-      if (!oversampling32.getFromNonRealtimeThread()) {
-        auto const oversampling64_ = oversampling64.getFromNonRealtimeThread();
-        auto settings = oversampling64_ ? oversampling64_->getSettings() : oversimple::OversamplingSettings{};
-        oversampling32.set(std::make_unique<unplug::Oversampling<float>>(settings));
-        oversampling64.set({});
-      }
-    }
-  }
 
   void setBlockSizeInfo(unplug::BlockSizeInfo const& blockSizeInfo,
                         std::function<void(uint64_t newLatency)> const& checkLatency)
@@ -63,10 +41,11 @@ struct PluginCustomData final
     unplug::setBlockSizeInfo(waveformRingBuffer, blockSizeInfo, [](unplug::WaveformRingBuffer<float>& ringBuffer) {
       ringBuffer.reset(unplug::WaveformElement<float>{ 0.f, 0.f });
     });
-    unplug::setBlockSizeInfo(
-      oversampling64, blockSizeInfo.numIO.numOuts, blockSizeInfo.maxAudioBlockSize, checkLatency);
-    unplug::setBlockSizeInfo(
-      oversampling32, blockSizeInfo.numIO.numOuts, blockSizeInfo.maxAudioBlockSize, checkLatency);
+    unplug::setBlockSizeInfo(oversampling,
+                             blockSizeInfo.numIO.numOuts,
+                             blockSizeInfo.maxAudioBlockSize,
+                             blockSizeInfo.precision,
+                             checkLatency);
   }
 
   template<unplug::Serialization::Action action>
@@ -78,14 +57,9 @@ struct PluginCustomData final
       return false;
     if (!ringBufferSettingsSerialization(waveformRingBuffer, streamer))
       return false;
-    bool const hasSerializedFromOversampling64 =
-      oversamplingSettingsSerialization(oversampling64, streamer, checkLatency);
-    if (hasSerializedFromOversampling64) {
-      return true;
-    }
-    else {
-      return oversamplingSettingsSerialization(oversampling32, streamer, checkLatency);
-    }
+    if (!oversamplingSettingsSerialization(oversampling, streamer, checkLatency))
+      return false;
+    return true;
   }
 };
 

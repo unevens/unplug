@@ -185,13 +185,15 @@ tresult UnplugProcessor::setActive(TBool state)
 {
   if (state) {
     bool const isUsingDoublePrecision = processSetup.symbolicSampleSize == kSample64;
-    pluginState.customData->setFloatingPointPrecision(isUsingDoublePrecision);
     auto const numIO = getNumIO();
-    auto blockSizeInfo = BlockSizeInfo{ static_cast<float>(processSetup.sampleRate),
-                                        getOversamplingRate(),
-                                        UserInterface::getRefreshRate(),
-                                        processSetup.maxSamplesPerBlock,
-                                        numIO };
+    auto blockSizeInfo =
+      BlockSizeInfo{ static_cast<float>(processSetup.sampleRate),
+                     getOversamplingRate(),
+                     UserInterface::getRefreshRate(),
+                     processSetup.maxSamplesPerBlock,
+                     numIO,
+                     processSetup.symbolicSampleSize == kSample64 ? FloatingPointPrecision::float64
+                                                                  : FloatingPointPrecision::float32 };
     pluginState.customData->setBlockSizeInfo(blockSizeInfo, [this](auto newLatency) { checkLatency(newLatency); });
   }
   onSetActive(state);

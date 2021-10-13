@@ -16,6 +16,13 @@
 #include <cstring>
 
 namespace unplug {
+
+enum class FloatingPointPrecision
+{
+  float32,
+  float64
+};
+
 /**
  * A struct holding the information about the audio block size and the user interface framerate - which can be useful to
  * resize ring buffers.
@@ -27,6 +34,7 @@ struct BlockSizeInfo final
   float userInterfaceRefreshRate = 30;
   Index maxAudioBlockSize = 128;
   NumIO numIO;
+  FloatingPointPrecision precision = FloatingPointPrecision::float32;
 
   bool operator==(BlockSizeInfo const& other) const noexcept = default;
 };

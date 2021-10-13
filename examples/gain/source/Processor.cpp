@@ -38,16 +38,9 @@ tresult PLUGIN_API Processor::setProcessing(TBool state)
 UnplugProcessor::Index Processor::getOversamplingRate() const
 {
   auto const& customData = customDataWrapped->get();
-  {
-    auto oversampling64 = customData.oversampling64.getFromNonRealtimeThread();
-    if (oversampling64)
-      return oversampling64->get().getRate();
-  }
-  {
-    auto oversampling32 = customData.oversampling32.getFromNonRealtimeThread();
-    if (oversampling32)
-      return oversampling32->get().getRate();
-  }
+  auto oversampling = customData.oversampling.getFromNonRealtimeThread();
+  if (oversampling)
+    return oversampling->getProccessor().getRate();
   return 1;
 }
 

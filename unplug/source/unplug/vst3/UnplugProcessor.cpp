@@ -306,7 +306,7 @@ tresult UnplugProcessor::connect(IConnectionPoint* other)
   if (result == kResultTrue) {
     sendSharedDataToController();
   }
-  return result;
+  return onConnect(other) ? kResultTrue : kResultFalse;
 }
 
 void UnplugProcessor::sendLatencyChangedMessage()

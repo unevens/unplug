@@ -110,6 +110,11 @@ protected:
     return true;
   }
 
+  virtual bool onConnect(IConnectionPoint* other)
+  {
+    return true;
+  }
+
 protected:
   std::shared_ptr<unplug::CustomData> customDataWrapped;
   unplug::PluginState pluginState;
@@ -149,7 +154,7 @@ public:
                                         SpeakerArrangement* outputs,
                                         int32 numOuts) final;
 
-  tresult PLUGIN_API connect(IConnectionPoint* other) override;
+  tresult PLUGIN_API connect(IConnectionPoint* other) final;
 
   uint32 PLUGIN_API getLatencySamples() override
   {

@@ -12,53 +12,37 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/NumIO.hpp"
+#include <cstring>
 
 namespace unplug {
 
-namespace detail {
-class EventHandler;
-}
+enum class FloatingPointPrecision
+{
+  float32,
+  float64
+};
 
 /**
- * A class that wraps the plugin custom data that will be available to both the user interface and the processor.
- * */
-template<class TData>
-class CustomDataWrapper final
+ * A struct holding the information about the context in which the process is happening, such as the audio block size,
+ * the sample rate, the number inputs/outputs and their number of channels, the floating point precision, the current
+ * amount of oversampling and the user interface framerate - which can be useful to resize ring buffers.
+ */
+struct ContextInfo final
 {
-public:
-  using Data = TData;
+  float sampleRate = 44100;
+  Index oversamplingRate = 1;
+  float userInterfaceRefreshRate = 30;
+  Index maxAudioBlockSize = 128;
+  NumIO numIO;
+  FloatingPointPrecision precision = FloatingPointPrecision::float32;
 
-  friend class detail::EventHandler;
-  /**
-   * Gets the plugin custom data from the user interface code
-   * */
-  static Data& getCurrent()
+  float getOversampledSampleRate() const
   {
-    return *currentInstance;
+    return sampleRate * static_cast<float>(oversamplingRate);
   }
 
-  /**
-   * Gets the plugin custom data from the dsp code
-   * */
-  Data& get()
-  {
-    return data;
-  }
-
-  CustomDataWrapper() = default;
-
-  CustomDataWrapper(CustomDataWrapper const&) = delete;
-
-  CustomDataWrapper& operator=(CustomDataWrapper const&) = delete;
-
-private:
-  void setCurrent()
-  {
-    currentInstance = &data;
-  }
-
-  Data data;
-  static inline thread_local Data* currentInstance = nullptr;
+  bool operator==(ContextInfo const& other) const noexcept = default;
 };
 
 } // namespace unplug

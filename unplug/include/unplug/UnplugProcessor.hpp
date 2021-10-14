@@ -13,10 +13,10 @@
 
 #pragma once
 
-#include "CustomData.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
 #include "PluginState.hpp"
+#include "SharedData.hpp"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
@@ -42,6 +42,7 @@ protected:
   template<class SampleType>
   using IO = unplug::IO<SampleType>;
   using NumIO = unplug::NumIO;
+  using ContextInfo = unplug::ContextInfo;
 
   /** helper function for processing without sample precise automation */
   template<class SampleType, class StaticProcessing>
@@ -115,14 +116,23 @@ protected:
     return true;
   }
 
-protected:
-  std::shared_ptr<unplug::CustomData> customDataWrapped;
+  virtual bool onSetup(ContextInfo const& context)
+  {
+    return true;
+  }
+
+  void updateLatency(Index procesorId, uint64_t processorLatency);
+
+  std::shared_ptr<unplug::SharedDataWrapped> sharedDataWrapped;
   unplug::PluginState pluginState;
   unplug::detail::CachedIO ioCache;
   std::array<int32, unplug::NumParameters::value> automationPointsHandled;
+  std::vector<uint64_t> latencies;
   uint64_t latency;
 
 private:
+  ContextInfo contextInfo;
+
   template<unplug::Serialization::Action>
   bool serialization(IBStreamer& streamer);
 
@@ -130,9 +140,9 @@ private:
 
   void sendLatencyChangedMessage();
 
-  void checkLatency(uint64_t newLatency);
-
 public:
+  bool setup();
+
   tresult PLUGIN_API initialize(FUnknown* context) final;
 
   tresult PLUGIN_API terminate() final;
@@ -146,7 +156,7 @@ public:
 
   tresult PLUGIN_API setActive(TBool state) final;
 
-  /** used for communication with the controller */
+  /** used to handle messages from the controller */
   tresult PLUGIN_API notify(IMessage* message) final;
 
   tresult PLUGIN_API setBusArrangements(SpeakerArrangement* inputs,

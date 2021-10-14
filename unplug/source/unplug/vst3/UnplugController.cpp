@@ -219,15 +219,15 @@ IPlugView* PLUGIN_API UnplugController::createView(FIDString name)
       assert(false);
       meters = std::make_shared<unplug::MeterStorage>();
     }
-    if (!customData) {
+    if (!sharedData) {
       // this should never happen, see UnplugProcessor::connect and UnlugController::notify
       assert(false);
-      customData = std::make_shared<unplug::CustomData>();
+      sharedData = std::make_shared<unplug::SharedDataWrapped>();
     }
     auto ui = new View(*this);
     auto message = owned(allocateMessage());
-    message->setMessageID(vst3::messaageIds::userInterfaceChangedId);
-    message->getAttributes()->setInt(vst3::messaageIds::userInterfaceStateId, 1);
+    message->setMessageID(vst3::messageId::userInterfaceChangedId);
+    message->getAttributes()->setInt(vst3::messageId::userInterfaceStateId, 1);
     sendMessage(message);
     return ui;
   }
@@ -274,15 +274,15 @@ void UnplugController::applyPreset(int presetIndex)
       assert(setOk);
     }
     auto message = owned(allocateMessage());
-    message->setMessageID(vst3::messaageIds::programChangeId);
-    message->getAttributes()->setInt(vst3::messaageIds::programChangeId, presetIndex);
+    message->setMessageID(vst3::messageId::programChangeId);
+    message->getAttributes()->setInt(vst3::messageId::programChangeId, presetIndex);
     sendMessage(message);
   }
 }
 
 tresult PLUGIN_API UnplugController::notify(IMessage* message)
 {
-  using namespace vst3::messaageIds;
+  using namespace vst3::messageId;
   if (!message)
     return kInvalidArgument;
 
@@ -297,7 +297,7 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
       return address;
     };
     meters = *reinterpret_cast<std::shared_ptr<MeterStorage>*>(getAddress(meterStorageId));
-    customData = *reinterpret_cast<std::shared_ptr<CustomData>*>(getAddress(customStorageId));
+    sharedData = *reinterpret_cast<std::shared_ptr<SharedDataWrapped>*>(getAddress(sharedDataStorageId));
     return kResultOk;
   }
   else if (FIDStringsEqual(message->getMessageID(), latencyChangedId)) {
@@ -315,8 +315,8 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
 void UnplugController::onViewClosed()
 {
   auto message = owned(allocateMessage());
-  message->setMessageID(vst3::messaageIds::userInterfaceChangedId);
-  message->getAttributes()->setInt(vst3::messaageIds::userInterfaceStateId, 0);
+  message->setMessageID(vst3::messageId::userInterfaceChangedId);
+  message->getAttributes()->setInt(vst3::messageId::userInterfaceStateId, 0);
   sendMessage(message);
 }
 

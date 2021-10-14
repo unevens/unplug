@@ -17,6 +17,7 @@
 #include "unplug/UserInterface.hpp"
 #include "unplug/detail/GetSortedParameterDescriptions.hpp"
 #include "unplug/detail/Vst3MessageIds.hpp"
+#include <numeric>
 
 using namespace unplug;
 using Presets = detail::Presets;
@@ -45,8 +46,9 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
 
   ioCache.resize(1, 1);
 
-  customDataWrapped = std::make_shared<CustomData>();
-  pluginState.customData = &(customDataWrapped->get());
+  sharedDataWrapped = std::make_shared<SharedDataWrapped>(
+    [this](Index processorId, uint64_t processorLatency) { updateLatency(processorId, processorLatency); });
+  pluginState.sharedData = &(sharedDataWrapped->get());
   pluginState.meters = std::make_shared<MeterStorage>();
 
   onInitialization();
@@ -103,8 +105,7 @@ bool UnplugProcessor::serialization(IBStreamer& ibStreamer)
       pluginState.parameters.setNormalized(i, value);
     }
   }
-  auto const ok = pluginState.customData->template serialization<action>(
-    streamer, [this](auto newLatency) { checkLatency(newLatency); });
+  auto const ok = pluginState.sharedData->template serialization<action>(streamer);
   return ok;
 }
 
@@ -145,7 +146,7 @@ tresult PLUGIN_API UnplugProcessor::canProcessSampleSize(int32 symbolicSampleSiz
 
 tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
 {
-  using namespace vst3::messaageIds;
+  using namespace vst3::messageId;
   if (!message)
     return kInvalidArgument;
 
@@ -184,17 +185,7 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
 tresult UnplugProcessor::setActive(TBool state)
 {
   if (state) {
-    bool const isUsingDoublePrecision = processSetup.symbolicSampleSize == kSample64;
-    auto const numIO = getNumIO();
-    auto blockSizeInfo =
-      BlockSizeInfo{ static_cast<float>(processSetup.sampleRate),
-                     getOversamplingRate(),
-                     UserInterface::getRefreshRate(),
-                     processSetup.maxSamplesPerBlock,
-                     numIO,
-                     processSetup.symbolicSampleSize == kSample64 ? FloatingPointPrecision::float64
-                                                                  : FloatingPointPrecision::float32 };
-    pluginState.customData->setBlockSizeInfo(blockSizeInfo, [this](auto newLatency) { checkLatency(newLatency); });
+    setup();
   }
   onSetActive(state);
   return AudioEffect::setActive(state);
@@ -290,13 +281,13 @@ bool UnplugProcessor::onSetBusArrangements(SpeakerArrangement* inputs,
 void UnplugProcessor::sendSharedDataToController()
 {
   auto message = owned(allocateMessage());
-  message->setMessageID(vst3::messaageIds::meterSharingId);
+  message->setMessageID(vst3::messageId::meterSharingId);
   auto const meterStorageAddress = reinterpret_cast<uintptr_t>(&pluginState.meters);
   message->getAttributes()->setBinary(
-    vst3::messaageIds::meterStorageId, &meterStorageAddress, sizeof(meterStorageAddress));
-  auto const customDataAddress = reinterpret_cast<uintptr_t>(&customDataWrapped);
+    vst3::messageId::meterStorageId, &meterStorageAddress, sizeof(meterStorageAddress));
+  auto const sharedDataAddress = reinterpret_cast<uintptr_t>(&sharedDataWrapped);
   message->getAttributes()->setBinary(
-    vst3::messaageIds::customStorageId, &customDataAddress, sizeof(customDataAddress));
+    vst3::messageId::sharedDataStorageId, &sharedDataAddress, sizeof(sharedDataAddress));
   sendMessage(message);
 }
 
@@ -312,14 +303,29 @@ tresult UnplugProcessor::connect(IConnectionPoint* other)
 void UnplugProcessor::sendLatencyChangedMessage()
 {
   auto message = owned(allocateMessage());
-  message->setMessageID(vst3::messaageIds::latencyChangedId);
+  message->setMessageID(vst3::messageId::latencyChangedId);
   sendMessage(message);
 }
 
-void UnplugProcessor::checkLatency(uint64_t newLatency)
+bool UnplugProcessor::setup()
 {
-  if (latency != newLatency) {
-    latency = newLatency;
+  contextInfo.sampleRate = static_cast<float>(processSetup.sampleRate);
+  contextInfo.oversamplingRate = getOversamplingRate();
+  contextInfo.userInterfaceRefreshRate = UserInterface::getRefreshRate();
+  contextInfo.maxAudioBlockSize = processSetup.maxSamplesPerBlock;
+  contextInfo.numIO = getNumIO();
+  contextInfo.precision =
+    processSetup.symbolicSampleSize == kSample64 ? FloatingPointPrecision::float64 : FloatingPointPrecision::float32;
+  pluginState.sharedData->setup(contextInfo);
+  return onSetup(contextInfo);
+}
+
+void UnplugProcessor::updateLatency(Index processorId, uint64_t processorLatency)
+{
+  latencies.resize(std::max(latencies.size(), static_cast<std::size_t>(processorId + 1)), 0);
+  if (latencies[processorId] != processorLatency) {
+    latencies[processorId] = processorLatency;
+    latency = std::reduce(latencies.begin(), latencies.end());
     sendLatencyChangedMessage();
   }
 }

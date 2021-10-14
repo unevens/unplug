@@ -12,9 +12,9 @@
 //------------------------------------------------------------------------
 
 #include "unplug/UserInterface.hpp"
-#include "CustomData.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
+#include "SharedData.hpp"
 #include "unplug/Plot.hpp"
 #include "unplug/Widgets.hpp"
 
@@ -39,10 +39,10 @@ void paint()
   ImGui::SameLine();
 
   ImGui::BeginGroup();
-  auto& customData = CustomData::getCurrent();
+  auto& sharedData = SharedDataWrapped::getCurrent();
   ImGui::TableNextColumn();
-  PlotRingBuffer("Level", customData.levelRingBuffer);
-  PlotWaveformRingBuffer("Waveform", customData.waveformRingBuffer);
+  PlotRingBuffer("Level", sharedData.levelRingBuffer);
+  PlotWaveformRingBuffer("Waveform", sharedData.waveformRingBuffer);
   ImGui::EndGroup();
 }
 

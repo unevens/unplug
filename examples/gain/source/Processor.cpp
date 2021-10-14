@@ -22,11 +22,12 @@ Processor::Processor()
   setControllerClass(kControllerUID);
 }
 
-void Processor::onSetActive(bool isActive)
+bool Processor::onSetup(ContextInfo const& context)
 {
-  auto const numIO = getNumIO();
-  dspState.metering.setNumChannels(numIO.numOuts);
-  dspState.metering.setSampleRate(processSetup.sampleRate);
+  dspState.metering.setNumChannels(context.numIO.numOuts);
+  auto const oversampledSampleRate = context.getOversampledSampleRate();
+  dspState.metering.setSampleRate(oversampledSampleRate);
+  return true;
 }
 
 tresult PLUGIN_API Processor::setProcessing(TBool state)
@@ -37,11 +38,7 @@ tresult PLUGIN_API Processor::setProcessing(TBool state)
 
 UnplugProcessor::Index Processor::getOversamplingRate() const
 {
-  auto const& customData = customDataWrapped->get();
-  auto oversampling = customData.oversampling.getFromNonRealtimeThread();
-  if (oversampling)
-    return oversampling->getProccessor().getRate();
-  return 1;
+  return sharedDataWrapped->get().oversampling.getProcessorOnNonRealtimeThread().getRate();
 }
 
 } // namespace Steinberg::Vst

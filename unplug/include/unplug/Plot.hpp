@@ -143,7 +143,7 @@ bool PlotRingBuffer(const char* name,
                     std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
                       makeStereoOrGenericPlotChannelLegend())
 {
-  auto ringBuffer = rtRingBuffer.getFromNonRealtimeThread();
+  auto ringBuffer = rtRingBuffer.getOnNonRealtimeThread();
   if (ringBuffer) {
     return PlotRingBuffer(name, *ringBuffer, getChannelLegend);
   }
@@ -197,7 +197,7 @@ bool PlotWaveformRingBuffer(const char* name,
                             std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
                               makeStereoOrGenericPlotChannelLegend())
 {
-  auto ringBuffer = rtRingBuffer.getFromNonRealtimeThread();
+  auto ringBuffer = rtRingBuffer.getOnNonRealtimeThread();
   if (ringBuffer) {
     return PlotWaveformRingBuffer(name, *ringBuffer, alpha, getChannelLegend);
   }

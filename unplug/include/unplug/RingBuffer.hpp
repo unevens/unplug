@@ -13,7 +13,7 @@
 
 #pragma once
 #include "lockfree/RealtimeObject.hpp"
-#include "unplug/BlockSizeInfo.hpp"
+#include "unplug/ContextInfo.hpp"
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
 #include "unplug/Serialization.hpp"
@@ -97,9 +97,9 @@ public:
     std::fill(std::begin(accumulator), std::end(accumulator), valueToResetTo);
   }
 
-  void setBlockSizeInfo(BlockSizeInfo const& info)
+  void setContext(ContextInfo const& info)
   {
-    sizeInfo = info;
+    contextInfo = info;
     resize();
   }
 
@@ -126,9 +126,9 @@ public:
     return durationInSeconds;
   }
 
-  BlockSizeInfo const& getSizeInfo() const
+  ContextInfo const& getContext() const
   {
-    return sizeInfo;
+    return contextInfo;
   }
 
   RingBuffer()
@@ -146,7 +146,7 @@ public:
     , pointsPerSecond(other.pointsPerSecond)
     , secondsPerPoint(other.secondsPerPoint)
     , durationInSeconds(other.durationInSeconds)
-    , sizeInfo(other.sizeInfo)
+    , contextInfo(other.contextInfo)
     , buffer(other.buffer)
   {}
 
@@ -161,14 +161,14 @@ private:
 
   void resize()
   {
-    numChannels = choseNumChannels(sizeInfo.numIO);
+    numChannels = choseNumChannels(contextInfo.numIO);
     accumulator.resize(numChannels);
-    samplesPerPoint = sizeInfo.sampleRate / pointsPerSecond;
+    samplesPerPoint = contextInfo.getOversampledSampleRate() / pointsPerSecond;
     pointsPerSample = 1.f / samplesPerPoint;
-    auto const maxWriteIncrementPerAudioBlock = pointsPerSample * static_cast<float>(sizeInfo.maxAudioBlockSize);
+    auto const maxWriteIncrementPerAudioBlock = pointsPerSample * static_cast<float>(contextInfo.maxAudioBlockSize);
     readBlockSize = static_cast<int>(std::ceil(durationInSeconds * pointsPerSecond));
-    auto const audioBlockDuration = static_cast<float>(sizeInfo.maxAudioBlockSize) / sizeInfo.sampleRate;
-    auto const refreshTime = 1.f / sizeInfo.userInterfaceRefreshRate;
+    auto const audioBlockDuration = static_cast<float>(contextInfo.maxAudioBlockSize) / contextInfo.sampleRate;
+    auto const refreshTime = 1.f / contextInfo.userInterfaceRefreshRate;
     auto const audioBlocksPerUserInterfaceRefreshTime = refreshTime / audioBlockDuration;
     resize(static_cast<int>(std::ceil(maxWriteIncrementPerAudioBlock)), audioBlocksPerUserInterfaceRefreshTime);
   }
@@ -206,7 +206,7 @@ private:
   float pointsPerSecond = 128;
   float durationInSeconds = 1.f;
   float secondsPerPoint;
-  BlockSizeInfo sizeInfo;
+  ContextInfo contextInfo;
   Buffer buffer;
 };
 
@@ -356,22 +356,22 @@ void sendToWaveformRingBuffer(WaveformRingBuffer<WaveformSampleType, Allocator>&
  * Sets the audio block information and the user interface framerate for a ring buffer, resizing it accordingly.
  * */
 template<class RingBufferClass, class OnSizeChanged>
-bool setBlockSizeInfo(lockfree::RealtimeObject<RingBufferClass>& rtRingBuffer,
-                      unplug::BlockSizeInfo const& blockSizeInfo,
-                      OnSizeChanged onSizeChanged)
+bool setup(lockfree::RealtimeObject<RingBufferClass>& rtRingBuffer,
+           unplug::ContextInfo const& context,
+           OnSizeChanged onSizeChanged)
 {
-  auto const isSizeInfoChanged = [&](RingBufferClass const& ringBuffer) {
-    auto const& prevSizeInfo = ringBuffer.getSizeInfo();
-    bool const sizeInfoChanged = prevSizeInfo != blockSizeInfo;
-    return sizeInfoChanged;
+  auto const isContextChanged = [&](RingBufferClass const& ringBuffer) {
+    auto const& prevContext = ringBuffer.getContext();
+    bool const anyChange = prevContext != context;
+    return anyChange;
   };
   auto const resizeRingBuffer = [&](RingBufferClass const& ringBuffer) {
     auto newRingBuffer = std::make_unique<RingBufferClass>(ringBuffer);
-    newRingBuffer->setBlockSizeInfo(blockSizeInfo);
+    newRingBuffer->setContext(context);
     onSizeChanged(*newRingBuffer);
     return newRingBuffer;
   };
-  bool const hasChanged = rtRingBuffer.changeIf(resizeRingBuffer, isSizeInfoChanged);
+  bool const hasChanged = rtRingBuffer.changeIf(resizeRingBuffer, isContextChanged);
   return hasChanged;
 }
 
@@ -380,7 +380,7 @@ bool ringBufferSettingsSerialization(lockfree::RealtimeObject<RingBufferClass>& 
                                      Serialization::Streamer<action>& streamer)
 {
   if constexpr (action == Serialization::Action::save) {
-    auto ringBuffer = rtRingBuffer.getFromNonRealtimeThread();
+    auto ringBuffer = rtRingBuffer.getOnNonRealtimeThread();
     auto pointsPerSecond = ringBuffer->getPointsPerSecond();
     if (!streamer(pointsPerSecond))
       return false;

@@ -13,56 +13,49 @@
 
 #pragma once
 #include "lockfree/RealtimeObject.hpp"
-#include "unplug/BlockSizeInfo.hpp"
-#include "unplug/CustomDataWrapper.hpp"
+#include "unplug/ContextInfo.hpp"
 #include "unplug/IO.hpp"
 #include "unplug/NumIO.hpp"
 #include "unplug/Oversampling.hpp"
 #include "unplug/RingBuffer.hpp"
 #include "unplug/Serialization.hpp"
+#include "unplug/SharedDataWrapper.hpp"
 
-struct PluginCustomData final
+struct SharedData final
 {
   lockfree::RealtimeObject<unplug::RingBuffer<float>> levelRingBuffer;
   lockfree::RealtimeObject<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
-  lockfree::RealtimeObject<unplug::Oversampling> oversampling;
+  unplug::Oversampling oversampling;
 
-  PluginCustomData()
+  SharedData(unplug::LatencyUpdater const& updateLatency)
     : levelRingBuffer{ std::make_unique<unplug::RingBuffer<float>>() }
     , waveformRingBuffer{ std::make_unique<unplug::WaveformRingBuffer<float>>() }
-    , oversampling{ std::unique_ptr<unplug::Oversampling>{ nullptr } }
+    , oversampling{ [=](int oversamplingLatency) { updateLatency(0, oversamplingLatency); } }
   {}
 
-  void setBlockSizeInfo(unplug::BlockSizeInfo const& blockSizeInfo,
-                        std::function<void(uint64_t newLatency)> const& checkLatency)
+  void setup(unplug::ContextInfo const& context)
   {
-    unplug::setBlockSizeInfo(
-      levelRingBuffer, blockSizeInfo, [](unplug::RingBuffer<float>& ringBuffer) { ringBuffer.reset(0.f); });
-    unplug::setBlockSizeInfo(waveformRingBuffer, blockSizeInfo, [](unplug::WaveformRingBuffer<float>& ringBuffer) {
+    oversampling.setup(context.numIO.numOuts, context.maxAudioBlockSize, context.precision);
+    unplug::setup(levelRingBuffer, context, [](unplug::RingBuffer<float>& ringBuffer) { ringBuffer.reset(0.f); });
+    unplug::setup(waveformRingBuffer, context, [](unplug::WaveformRingBuffer<float>& ringBuffer) {
       ringBuffer.reset(unplug::WaveformElement<float>{ 0.f, 0.f });
     });
-    unplug::setBlockSizeInfo(oversampling,
-                             blockSizeInfo.numIO.numOuts,
-                             blockSizeInfo.maxAudioBlockSize,
-                             blockSizeInfo.precision,
-                             checkLatency);
   }
 
   template<unplug::Serialization::Action action>
-  bool serialization(unplug::Serialization::Streamer<action>& streamer,
-                     std::function<void(uint64_t newLatency)> const& checkLatency)
+  bool serialization(unplug::Serialization::Streamer<action>& streamer)
   {
     using namespace unplug;
     if (!ringBufferSettingsSerialization(levelRingBuffer, streamer))
       return false;
     if (!ringBufferSettingsSerialization(waveformRingBuffer, streamer))
       return false;
-    if (!oversamplingSettingsSerialization(oversampling, streamer, checkLatency))
+    if (!oversampling.serialization(streamer))
       return false;
     return true;
   }
 };
 
 namespace unplug {
-using CustomData = CustomDataWrapper<PluginCustomData>;
+using SharedDataWrapped = SharedDataWrapper<SharedData>;
 }

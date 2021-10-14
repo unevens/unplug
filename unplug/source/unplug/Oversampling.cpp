@@ -15,43 +15,49 @@
 
 namespace unplug {
 
-bool setBlockSizeInfo(lockfree::RealtimeObject<Oversampling>& rtOversampling,
-                      Index numChannels,
-                      Index maxAudioBlockSize,
-                      SupportedSampleTypes supportedSampleTypes,
-                      std::function<void(uint64_t)> const& updateLatency)
+bool Oversampling::setContext(Context const& context)
 {
-  auto const isSizeInfoChanged = [&](Oversampling const& oversampling) {
-    bool const isNumChannelsChanged = numChannels != oversampling.getSettings().numChannels;
-    bool const isBlockSizeChanged = maxAudioBlockSize != oversampling.getSettings().numSamplesPerBlock;
-    bool const supportedSampleTypeChanged = supportedSampleTypes != oversampling.getSettings().supportedScalarTypes;
-    return isNumChannelsChanged || isBlockSizeChanged || supportedSampleTypeChanged;
+  auto const isContextChanged = [&](detail::Oversampling const& oversampling) {
+    return oversampling.getSettings().context != context;
   };
-  auto const adaptOversampling = [&](Oversampling const& oversampling) {
+  auto const adaptOversampling = [&](detail::Oversampling const& oversampling) {
     auto settings = oversampling.getSettings();
-    settings.numChannels = numChannels;
-    settings.numSamplesPerBlock = maxAudioBlockSize;
-    settings.supportedScalarTypes = supportedSampleTypes;
-    return std::make_unique<Oversampling>(std::move(settings));
+    settings.context = context;
+    return std::make_unique<detail::Oversampling>(settings);
   };
-  bool const hasChanged = rtOversampling.changeIf(adaptOversampling, isSizeInfoChanged);
+  bool const hasChanged = oversampling.changeIf(adaptOversampling, isContextChanged);
   if (hasChanged) {
-    auto oversampling = rtOversampling.getFromNonRealtimeThread();
-    updateLatency(oversampling->getProccessor().getLatency());
+    onLatencyChanged(getProcessorOnNonRealtimeThread().getLatency());
   }
   return hasChanged;
 }
 
-bool setBlockSizeInfo(lockfree::RealtimeObject<Oversampling>& rtOversampling,
-                      Index numChannels,
-                      Index maxAudioBlockSize,
-                      FloatingPointPrecision floatingPointPrecision,
-                      std::function<void(uint64_t)> const& updateLatency)
+bool Oversampling::setup(Index numChannels, Index maxAudioBlockSize, FloatingPointPrecision floatingPointPrecision)
 {
-  auto supportedSampleTypes = floatingPointPrecision == FloatingPointPrecision::float64
-                                ? SupportedSampleTypes::onlyDouble
-                                : SupportedSampleTypes::onlyFloat;
-  return setBlockSizeInfo(rtOversampling, numChannels, maxAudioBlockSize, supportedSampleTypes, updateLatency);
+  auto context = Context{};
+  context.numChannels = numChannels;
+  context.numSamplesPerBlock = maxAudioBlockSize;
+  context.supportedScalarTypes = floatingPointPrecision == FloatingPointPrecision::float64
+                                   ? SupportedSampleTypes::onlyDouble
+                                   : SupportedSampleTypes::onlyFloat;
+  return setContext(context);
+}
+
+bool Oversampling::setRequirements(const Oversampling::Requirements& requirements)
+{
+  auto const haveRequirementsChanges = [&](detail::Oversampling const& oversampling) {
+    return oversampling.getSettings().requirements != requirements;
+  };
+  auto const adaptOversampling = [&](detail::Oversampling const& oversampling) {
+    auto settings = oversampling.getSettings();
+    settings.requirements = requirements;
+    return std::make_unique<detail::Oversampling>(settings);
+  };
+  bool const hasChanged = oversampling.changeIf(adaptOversampling, haveRequirementsChanges);
+  if (hasChanged) {
+    onLatencyChanged(getProcessorOnNonRealtimeThread().getLatency());
+  }
+  return hasChanged;
 }
 
 } // namespace unplug

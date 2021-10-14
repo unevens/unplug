@@ -30,10 +30,9 @@ public:
 
   tresult PLUGIN_API process(ProcessData& data) override;
 
-  void onSetActive(bool isActive) override;
-
   tresult PLUGIN_API setProcessing(TBool state) override;
 
+  bool onSetup(ContextInfo const& context) override;
 
 private:
   Index getOversamplingRate() const override;

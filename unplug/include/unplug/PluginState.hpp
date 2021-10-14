@@ -12,7 +12,7 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "CustomData.hpp"
+#include "SharedData.hpp"
 #include "unplug/MeterStorage.hpp"
 #include "unplug/ParameterStorage.hpp"
 #include <memory>
@@ -27,7 +27,7 @@ struct PluginState
 {
   ParameterStorage parameters;
   std::shared_ptr<MeterStorage> meters;
-  CustomData::Data* customData{ nullptr };
+  SharedDataWrapped::Data* sharedData{ nullptr };
   std::atomic<bool> isUserInterfaceOpen{ false };
 };
 

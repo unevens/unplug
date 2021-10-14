@@ -15,10 +15,11 @@
 #include "Serialization.hpp"
 #include "lockfree/RealtimeObject.hpp"
 #include "oversimple/Oversampling.hpp"
-#include "unplug/BlockSizeInfo.hpp"
+#include "unplug/ContextInfo.hpp"
 
 namespace unplug {
 
+namespace detail {
 /**
  * A class that holds together an oversimple::Oversampling processor and its settings, ready to be used wrapped in a
  * lockfree::RealtimeObject
@@ -48,7 +49,7 @@ public:
   /**
    * @return a reference to the oversampling processor
    * */
-  oversimple::Oversampling& getProccessor()
+  oversimple::Oversampling& getProcessor()
   {
     return oversampling;
   }
@@ -56,7 +57,7 @@ public:
   /**
    * @return a const reference to the oversampling processor
    * */
-  oversimple::Oversampling const& getProccessor() const
+  oversimple::Oversampling const& getProcessor() const
   {
     return oversampling;
   }
@@ -73,99 +74,117 @@ private:
   Settings settings;
   oversimple::Oversampling oversampling;
 };
+} // namespace detail
 
 using SupportedSampleTypes = oversimple::OversamplingSettings::SupportedScalarTypes;
 
-/**
- * Updates the settings of an oversampling object to match the requirements passed as arguments to the functions.
- * Also takes a function to update the plugin with the new latency of the oversampling object.
- * This overload lets you support both float and double precision if you desire to.
- * @param rtOversampling an Oversampling object wrapped by a RealtimeObject
- * @param numChannels the number of channels that the oversampling should allocate resources for
- * @param supportedSampleTypes weather the oversampling object should support only single precision, only double, or
- * both. Each type will allocate its own resources.
- * @updateLatency a function that will be called if the oversampling object has changed an to which the latency of the
- * oversampling object will be passed
- * */
-bool setBlockSizeInfo(lockfree::RealtimeObject<Oversampling>& rtOversampling,
-                      Index numChannels,
-                      Index maxAudioBlockSize,
-                      SupportedSampleTypes supportedSampleTypes,
-                      std::function<void(uint64_t)> const& updateLatency);
-
-/**
- * Updates the settings of an oversampling object to match the requirements passed as arguments to the functions.
- * Also takes a function to update the plugin with the new latency of the oversampling object.
- * This overload will only allocate the resources for the specified floating point type.
- * @param rtOversampling an Oversampling object wrapped by a RealtimeObject
- * @param numChannels the number of channels that the oversampling should allocate resources for
- * @param floatingPointPrecision the floating point type that will be supported by the oversampling object
- * @updateLatency a function that will be called if the oversampling object has changed an to which the latency of the
- * oversampling object will be passed
- * */
-bool setBlockSizeInfo(lockfree::RealtimeObject<Oversampling>& rtOversampling,
-                      Index numChannels,
-                      Index maxAudioBlockSize,
-                      FloatingPointPrecision floatingPointPrecision,
-                      std::function<void(uint64_t)> const& updateLatency);
-
-/**
- * Serialization helper for the oversampling settings.
- * @param rtOversampling an Oversampling object wrapped by a RealtimeObject
- * @streamer the streamer that perform the serialization and the deserialization
- * @updateLatency a function that will be called if the oversampling object has changed an to which the latency of the
- * oversampling object will be passed
- * */
-template<Serialization::Action action>
-bool oversamplingSettingsSerialization(lockfree::RealtimeObject<Oversampling>& rtOversampling,
-                                       Serialization::Streamer<action>& streamer,
-                                       std::function<void(uint64_t)> const& updateLatency)
+class Oversampling final
 {
-  auto oversampling = rtOversampling.getFromNonRealtimeThread();
-  if (!oversampling)
-    return false;
-  auto settings = oversampling->getSettings();
-  if (!streamer(settings.numChannels))
-    return false;
-  if (!streamer(settings.numScalarToVecUpsamplers))
-    return false;
-  if (!streamer(settings.numVecToVecUpsamplers))
-    return false;
-  if (!streamer(settings.numScalarToScalarUpsamplers))
-    return false;
-  if (!streamer(settings.numScalarToScalarDownsamplers))
-    return false;
-  if (!streamer(settings.numVecToScalarDownsamplers))
-    return false;
-  if (!streamer(settings.numVecToVecDownsamplers))
-    return false;
-  if (!streamer(settings.numScalarBuffers))
-    return false;
-  if (!streamer(settings.numInterleavedBuffers))
-    return false;
-  if (!streamer(settings.order))
-    return false;
-  if (!streamer(settings.linearPhase))
-    return false;
-  if (!streamer(settings.numSamplesPerBlock))
-    return false;
-  if (!streamer(settings.firTransitionBand))
-    return false;
+  lockfree::RealtimeObject<detail::Oversampling> oversampling;
+  std::function<void(Index)> onLatencyChanged;
 
-  if constexpr (action == Serialization::Action::load) {
-    auto const haveSettingsChanged = [&](Oversampling const& oversampling) {
-      return !(settings == oversampling.getSettings());
-    };
-    auto const applySettings = [&](Oversampling const& oversampling) {
-      return std::make_unique<Oversampling>(std::move(settings));
-    };
-    bool const hasChanged = rtOversampling.changeIf(applySettings, haveSettingsChanged);
-    if (hasChanged) {
-      oversampling = rtOversampling.getFromNonRealtimeThread();
-      updateLatency(oversampling->getProccessor().getLatency());
-    }
+public:
+  using Requirements = oversimple::OversamplingSettings::Requirements;
+  using Context = oversimple::OversamplingSettings::Context;
+
+  explicit Oversampling(std::function<void(Index)> onLatencyChanged)
+    : oversampling{ std::make_unique<detail::Oversampling>(detail::Oversampling::Settings{}) }
+    , onLatencyChanged{ std::move(onLatencyChanged) }
+  {}
+
+  Requirements const& getRequirements() const
+  {
+    return oversampling.getOnNonRealtimeThread()->getSettings().requirements;
   }
-  return true;
-}
+
+  bool setRequirements(Requirements const& newRequirements);
+
+  /**
+   * @return a reference to the oversampling processor
+   * */
+  oversimple::Oversampling& getProcessorOnRealTimeThread()
+  {
+    return oversampling.getOnRealtimeThread()->getProcessor();
+  }
+
+  /**
+   * @return a const reference to the oversampling processor
+   * */
+  oversimple::Oversampling const& getProcessorOnNonRealtimeThread() const
+  {
+    return oversampling.getOnNonRealtimeThread()->getProcessor();
+  }
+
+  /**
+   * Updates the settings of the oversampling object to the audio processing context passed to the function. Also takes
+   * a function to update the plugin with the new latency of the oversampling object. This overload lets you support
+   * both float and double precision if you desire to.
+   * @param context an instance of struct that describes the audio processing context
+   * @return true if settings has changed, false otherwise
+   * */
+  bool setContext(Context const& context);
+
+  /**
+   * Updates the settings of an oversampling object to the audio processing context described by arguments passed to the
+   * function.
+   * Also takes a function to update the plugin with the new latency of the oversampling object.
+   * This overload will only allocate the resources for the specified floating point type.
+   * @param numChannels the number of channels that the oversampling should allocate resources for
+   * @param maxAudioBlockSize the maximum number of samples that can be received during a processing call
+   * @param floatingPointPrecision the floating point type that will be supported by the oversampling object
+   * @return true if settings has changed, false otherwise
+   * */
+  bool setup(Index numChannels, Index maxAudioBlockSize, FloatingPointPrecision floatingPointPrecision);
+
+  /**
+   * Serialization helper for the oversampling settings.
+   * @streamer the streamer that perform the serialization and the deserialization
+   * */
+  template<Serialization::Action action>
+  bool serialization(Serialization::Streamer<action>& streamer)
+  {
+    auto settings = oversampling.getOnNonRealtimeThread()->getSettings();
+    if (!streamer(settings.context.numChannels))
+      return false;
+    if (!streamer(settings.requirements.numScalarToVecUpsamplers))
+      return false;
+    if (!streamer(settings.requirements.numVecToVecUpsamplers))
+      return false;
+    if (!streamer(settings.requirements.numScalarToScalarUpsamplers))
+      return false;
+    if (!streamer(settings.requirements.numScalarToScalarDownsamplers))
+      return false;
+    if (!streamer(settings.requirements.numVecToScalarDownsamplers))
+      return false;
+    if (!streamer(settings.requirements.numVecToVecDownsamplers))
+      return false;
+    if (!streamer(settings.requirements.numScalarBuffers))
+      return false;
+    if (!streamer(settings.requirements.numInterleavedBuffers))
+      return false;
+    if (!streamer(settings.requirements.order))
+      return false;
+    if (!streamer(settings.requirements.linearPhase))
+      return false;
+    if (!streamer(settings.context.numSamplesPerBlock))
+      return false;
+    if (!streamer(settings.requirements.firTransitionBand))
+      return false;
+
+    if constexpr (action == Serialization::Action::load) {
+      auto const haveSettingsChanged = [&](detail::Oversampling const& oversampling) {
+        return !(settings == oversampling.getSettings());
+      };
+      auto const applySettings = [&](detail::Oversampling const& oversampling) {
+        return std::make_unique<detail::Oversampling>(std::move(settings));
+      };
+      bool const hasChanged = oversampling.changeIf(applySettings, haveSettingsChanged);
+      if (hasChanged) {
+        onLatencyChanged(getProcessorOnNonRealtimeThread().getLatency());
+      }
+    }
+    return true;
+  }
+};
 
 } // namespace unplug

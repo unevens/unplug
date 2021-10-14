@@ -12,9 +12,9 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "CustomData.hpp"
 #include "Meters.hpp"
 #include "Parameters.hpp"
+#include "SharedData.hpp"
 #include "unplug/Automation.hpp"
 #include "unplug/IO.hpp"
 #include "unplug/Math.hpp"
@@ -74,8 +74,8 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
   if (wantsLevelMetering) {
     assert(state.metering.levels.size() == numOutputChannels);
     state.metering.levels.resize(numOutputChannels);
-    auto& customData = *state.pluginState.customData;
-    auto levelRingBuffer = customData.levelRingBuffer.getFromRealtimeThread();
+    auto& sharedData = *state.pluginState.sharedData;
+    auto levelRingBuffer = sharedData.levelRingBuffer.getOnRealtimeThread();
     if (levelRingBuffer) {
       unplug::sendToRingBuffer(
         *levelRingBuffer,
@@ -93,7 +93,7 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
         [&](auto accumulatedValue, auto elementValue) { return accumulatedValue + elementValue; },
         [](auto weightedValue) { return std::max(-90.f, unplug::linearToDB(weightedValue)); });
     }
-    auto waveformRingBuffer = customData.waveformRingBuffer.getFromRealtimeThread();
+    auto waveformRingBuffer = sharedData.waveformRingBuffer.getOnRealtimeThread();
     if (waveformRingBuffer) {
       unplug::sendToWaveformRingBuffer(*waveformRingBuffer, outputs, numOutputChannels, 0, numSamples);
     }

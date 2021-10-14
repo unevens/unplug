@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include "CustomData.hpp"
 #include "GetParameterDescriptions.hpp"
 #include "Meters.hpp"
+#include "SharedData.hpp"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "unplug/GetVersion.hpp"
 #include "unplug/MeterStorage.hpp"
@@ -62,7 +62,7 @@ public:
   MidiMapping midiMapping;
   std::array<int, 2> lastViewSize{ { -1, -1 } };
   std::shared_ptr<unplug::MeterStorage> meters;
-  std::shared_ptr<unplug::CustomData> customData;
+  std::shared_ptr<unplug::SharedDataWrapped> sharedData;
 
 protected:
   template<unplug::Serialization::Action action>

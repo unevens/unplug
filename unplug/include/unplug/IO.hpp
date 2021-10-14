@@ -42,7 +42,7 @@ public:
    * @inIndex the index of the desired input
    * @return the channels for the specified input
    * */
-  Channels getIn(Index inIndex)
+  Channels getIn(Index inIndex) const
   {
     auto const& in = io.ins[inIndex];
     return { in.template getChannels<SampleType>(), in.numChannels };
@@ -53,7 +53,7 @@ public:
    * @inIndex the index of the desired output
    * @return the channels for the specified output
    * */
-  Channels getOut(Index outIndex)
+  Channels getOut(Index outIndex) const
   {
     auto const& out = io.outs[outIndex];
     return { out.template getChannels<SampleType>(), out.numChannels };

@@ -239,7 +239,7 @@ tresult UnplugProcessor::acceptSimpleBusArrangement(
   return kResultTrue;
 }
 
-unplug::NumIO UnplugProcessor::getNumIO()
+unplug::NumIO UnplugProcessor::updateNumIO()
 {
   auto const input = getAudioInput(0);
   auto const output = getAudioOutput(0);
@@ -313,7 +313,7 @@ bool UnplugProcessor::setup()
   contextInfo.oversamplingRate = getOversamplingRate();
   contextInfo.userInterfaceRefreshRate = UserInterface::getRefreshRate();
   contextInfo.maxAudioBlockSize = processSetup.maxSamplesPerBlock;
-  contextInfo.numIO = getNumIO();
+  contextInfo.numIO = updateNumIO();
   contextInfo.precision =
     processSetup.symbolicSampleSize == kSample64 ? FloatingPointPrecision::float64 : FloatingPointPrecision::float32;
   pluginState.sharedData->setup(contextInfo);

@@ -45,8 +45,35 @@ protected:
   using ContextInfo = unplug::ContextInfo;
 
   /** helper function for processing without sample precise automation */
+  template<class SampleType, class StaticProcessing, class Upsampling, class Downsampling>
+  void staticProcessing(ProcessData& data,
+                        StaticProcessing staticProcessing_,
+                        Upsampling upsampling,
+                        Downsampling downsampling);
+
+  /** helper function for processing without sample precise automation */
   template<class SampleType, class StaticProcessing>
-  void staticProcessing(ProcessData& data, StaticProcessing staticProcessing);
+  void staticProcessing(ProcessData& data, StaticProcessing staticProcessing_)
+  {
+    staticProcessing<SampleType>(
+      data, staticProcessing_, [](IO<SampleType> const&) {}, [](IO<SampleType> const&) {});
+  }
+
+  /** helper function for processing with sample precise automation */
+  template<class SampleType,
+           class StaticProcessing,
+           class PrepareAutomation,
+           class AutomatedProcessing,
+           class SetParameterAutomation,
+           class Upsampling,
+           class Downsampling>
+  void processWithSamplePreciseAutomation(ProcessData& data,
+                                          StaticProcessing staticProcessing,
+                                          PrepareAutomation prepareAutomation,
+                                          AutomatedProcessing automatedProcessing,
+                                          SetParameterAutomation setParameterAutomation,
+                                          Upsampling upsampling,
+                                          Downsampling downsampling);
 
   /** helper function for processing with sample precise automation */
   template<class SampleType,
@@ -58,7 +85,17 @@ protected:
                                           StaticProcessing staticProcessing,
                                           PrepareAutomation prepareAutomation,
                                           AutomatedProcessing automatedProcessing,
-                                          SetParameterAutomation setParameterAutomation);
+                                          SetParameterAutomation setParameterAutomation)
+  {
+    processWithSamplePreciseAutomation<SampleType>(
+      data,
+      staticProcessing,
+      prepareAutomation,
+      automatedProcessing,
+      setParameterAutomation,
+      [](IO<SampleType> const&) {},
+      [](IO<SampleType> const&) {});
+  }
 
   /** updates the parameters to the last values received by the host  */
   void updateParametersToLastPoint(ProcessData& data);
@@ -72,8 +109,13 @@ protected:
     bool acceptSidechain,
     const std::function<bool(int numInputs, int numOutputs, int numSidechain)>& acceptNumChannels);
 
-  NumIO getNumIO();
+  /** Gets information regarding the audio buffer */
+  ContextInfo const& getContextInfo() const
+  {
+    return contextInfo;
+  }
 
+  /** Override this function to let unplug know about the oversampling rate used by your processing call */
   virtual Index getOversamplingRate() const
   {
     return 1;
@@ -123,22 +165,15 @@ protected:
 
   void updateLatency(Index procesorId, uint64_t processorLatency);
 
-  std::shared_ptr<unplug::SharedDataWrapped> sharedDataWrapped;
-  unplug::PluginState pluginState;
-  unplug::detail::CachedIO ioCache;
-  std::array<int32, unplug::NumParameters::value> automationPointsHandled;
-  std::vector<uint64_t> latencies;
-  uint64_t latency;
-
 private:
-  ContextInfo contextInfo;
-
   template<unplug::Serialization::Action>
   bool serialization(IBStreamer& streamer);
 
   void sendSharedDataToController();
 
   void sendLatencyChangedMessage();
+
+  NumIO updateNumIO();
 
 public:
   bool setup();
@@ -170,17 +205,35 @@ public:
   {
     return static_cast<uint32>(latency);
   }
+
+protected:
+  std::shared_ptr<unplug::SharedDataWrapped> sharedDataWrapped;
+  unplug::PluginState pluginState;
+  unplug::detail::CachedIO ioCache;
+  std::array<int32, unplug::NumParameters::value> automationPointsHandled;
+  std::vector<uint64_t> latencies;
+  uint64_t latency;
+
+private:
+  ContextInfo contextInfo;
 };
 
-template<class SampleType, class StaticProcessing>
-void UnplugProcessor::staticProcessing(ProcessData& data, StaticProcessing staticProcessing)
+template<class SampleType, class StaticProcessing, class Upsampling, class Downsampling>
+void UnplugProcessor::staticProcessing(ProcessData& data,
+                                       StaticProcessing staticProcessing_,
+                                       Upsampling upsampling,
+                                       Downsampling downsampling)
 {
   unplug::detail::setupIO<SampleType>(ioCache, data);
   auto io = IO<SampleType>(ioCache);
   updateParametersToLastPoint(data);
   bool const isNotFlushing = !io.isFlushing();
   if (isNotFlushing) {
-    staticProcessing(io, data.numSamples);
+    auto const oversamplingRate = getContextInfo().oversamplingRate;
+    auto const numSamples = data.numSamples * oversamplingRate;
+    upsampling(io);
+    staticProcessing_(io, numSamples);
+    downsampling(io);
   }
 }
 
@@ -188,23 +241,30 @@ template<class SampleType,
          class StaticProcessing,
          class PrepareAutomation,
          class AutomatedProcessing,
-         class SetParameterAutomation>
+         class SetParameterAutomation,
+         class Upsampling,
+         class Downsampling>
 void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
-                                                         StaticProcessing staticProcessing,
+                                                         StaticProcessing staticProcessing_,
                                                          PrepareAutomation prepareAutomation,
                                                          AutomatedProcessing automatedProcessing,
-                                                         SetParameterAutomation setParameterAutomation)
+                                                         SetParameterAutomation setParameterAutomation,
+                                                         Upsampling upsampling,
+                                                         Downsampling downsampling)
 {
   using AutomationEvent = unplug::AutomationEvent<SampleType>;
   unplug::detail::setupIO<SampleType>(ioCache, data);
   auto io = IO<SampleType>(ioCache);
   bool const isNotFlushing = !io.isFlushing();
   if (isNotFlushing) {
-    auto automation = prepareAutomation();
+    upsampling(io);
+    auto const oversamplingRate = getContextInfo().oversamplingRate;
+    auto const numSamples = data.numSamples * oversamplingRate;
     if (data.inputParameterChanges) {
+      auto automation = prepareAutomation();
       int32 const numParamsChanged = data.inputParameterChanges->getParameterCount();
       if (numParamsChanged == 0) {
-        staticProcessing(io, data.numSamples);
+        staticProcessing_(io, numSamples);
       }
       else {
         // reset cache of handled points
@@ -220,6 +280,7 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
               int32 sampleOffset;
               paramQueue->getPoint(0, sampleOffset, value);
               if (sampleOffset > 0) {
+                sampleOffset *= oversamplingRate;
                 auto const parameterId = paramQueue->getParameterId();
                 value = pluginState.parameters.valueFromNormalized(parameterId, value);
                 auto const prevValue = pluginState.parameters.get(parameterId);
@@ -233,7 +294,7 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
         // handle other changes until the end
         int32 currentSample = 0;
         while (numChangesToHandle > 0) {
-          int32 nextSample = data.numSamples;
+          int32 nextSample = numSamples;
           for (int32 index = 0; index < numParamsChanged; index++) {
             if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
               int32 const numPoints = paramQueue->getPointCount();
@@ -248,6 +309,7 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
                   ++automationPointsHandled[index];
                   break;
                 }
+                sampleOffset *= oversamplingRate;
                 const bool startsAtCurrentSample = sampleOffset == currentSample;
                 if (startsAtCurrentSample) {
                   value = pluginState.parameters.valueFromNormalized(parameterId, value);
@@ -257,10 +319,11 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
                   auto const endPoint = point + 1;
                   if (endPoint < numPoints) {
                     paramQueue->getPoint(endPoint, nextSampleOffset, nextValue);
+                    nextSampleOffset *= oversamplingRate;
                     nextValue = pluginState.parameters.valueFromNormalized(parameterId, nextValue);
                   }
                   else {
-                    nextSampleOffset = data.numSamples;
+                    nextSampleOffset = numSamples;
                     nextValue = value;
                   }
                   bool const isJump = sampleOffset == nextSampleOffset;
@@ -271,10 +334,11 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
                     auto const endPointAfterJump = endPoint + 1;
                     if (endPointAfterJump < numPoints) {
                       paramQueue->getPoint(endPointAfterJump, nextSampleOffsetAfterJump, nextValueAfterJump);
+                      nextSampleOffsetAfterJump *= oversamplingRate;
                       nextValueAfterJump = pluginState.parameters.valueFromNormalized(parameterId, nextValueAfterJump);
                     }
                     else {
-                      nextSampleOffsetAfterJump = data.numSamples;
+                      nextSampleOffsetAfterJump = numSamples;
                       nextValueAfterJump = nextValue;
                     }
                     setParameterAutomation(
@@ -303,8 +367,9 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
       }
     }
     else {
-      staticProcessing(io, data.numSamples);
+      staticProcessing_(io, numSamples);
     }
+    downsampling(io);
   }
   updateParametersToLastPoint(data);
 }

@@ -30,7 +30,7 @@ struct SharedData final
   SharedData(unplug::LatencyUpdater const& updateLatency)
     : levelRingBuffer{ std::make_unique<unplug::RingBuffer<float>>() }
     , waveformRingBuffer{ std::make_unique<unplug::WaveformRingBuffer<float>>() }
-    , oversampling{ [=](int oversamplingLatency) { updateLatency(0, oversamplingLatency); } }
+    , oversampling{ [=](int oversamplingLatency) { updateLatency(0, oversamplingLatency); }, oversamplingSettings() }
   {}
 
   void setup(unplug::ContextInfo const& context)
@@ -53,6 +53,15 @@ struct SharedData final
     if (!oversampling.serialization(streamer))
       return false;
     return true;
+  }
+
+private:
+  static oversimple::OversamplingSettings oversamplingSettings()
+  {
+    auto settings = oversimple::OversamplingSettings{};
+    settings.requirements.numScalarToScalarUpsamplers = 1;
+    settings.requirements.numScalarToScalarDownsamplers = 1;
+    return settings;
   }
 };
 

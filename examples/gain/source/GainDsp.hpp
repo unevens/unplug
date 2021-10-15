@@ -104,6 +104,12 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
 }
 
 template<class SampleType>
+unplug::LinearAutomation<SampleType> prepareAutomation(State& state)
+{
+  return unplug::LinearAutomation<SampleType>(state.pluginState.parameters);
+}
+
+template<class SampleType>
 void staticProcessing(State& state, IO<SampleType> io, Index numSamples)
 {
   auto const gain = state.pluginState.parameters.get(Param::gain);
@@ -166,8 +172,63 @@ void automatedProcessing(State& state,
 }
 
 template<class SampleType>
-unplug::LinearAutomation<SampleType> prepareAutomation(State& state)
+Index upsampling(State& state, IO<SampleType> io, int numSamples)
 {
-  return unplug::LinearAutomation<SampleType>(state.pluginState.parameters);
+  oversimple::TOversampling<SampleType>& oversampling =
+    state.pluginState.sharedData->oversampling.getProcessorOnRealTimeThread().get<SampleType>();
+  auto& upsampler = oversampling.scalarToScalarUpsamplers[0];
+  return upsampler->processBlock(io.getIn(0).buffers, io.getIn(0).numChannels, numSamples);
 }
+
+template<class SampleType>
+void downsampling(State& state, IO<SampleType> io, int numUpsampledSamples, int requiredOutputSamples)
+{
+  oversimple::TOversampling<SampleType>& oversampling =
+    state.pluginState.sharedData->oversampling.getProcessorOnRealTimeThread().get<SampleType>();
+  auto& downsampler = oversampling.scalarToScalarDownsamplers[0];
+  downsampler->processBlock(io.getIn(0).buffers, io.getOut(0).numChannels, numUpsampledSamples, requiredOutputSamples);
+}
+
+template<class SampleType>
+void staticProcessingOversampled(State& state, IO<SampleType> io, Index numSamples)
+{
+  bool const bypass = state.pluginState.parameters.get(Param::bypass) > 0.0;
+  if (bypass)
+    return;
+  oversimple::TOversampling<SampleType>& oversampling =
+    state.pluginState.sharedData->oversampling.getProcessorOnRealTimeThread().get<SampleType>();
+  auto& upsampler = oversampling.scalarToScalarUpsamplers[0];
+  auto const gain = state.pluginState.parameters.get(Param::gain);
+  auto buffer = upsampler->getOutput().get();
+  auto const numChannels = oversampling.getNumChannels();
+  for (Index channelIndex = 0; channelIndex < numChannels; ++channelIndex) {
+    for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex) {
+      buffer[sampleIndex] = gain * buffer[sampleIndex];
+    }
+  }
+}
+
+template<class SampleType>
+void automatedProcessingOversampled(State& state,
+                                    Automation<SampleType>& automation,
+                                    IO<SampleType> io,
+                                    Index startSample,
+                                    Index endSample)
+{
+  bool const bypass = automation.parameters[Param::bypass].currentValue > 0.0;
+  if (bypass)
+    return;
+  oversimple::TOversampling<SampleType>& oversampling =
+    state.pluginState.sharedData->oversampling.getProcessorOnRealTimeThread().get<SampleType>();
+  auto& upsampler = oversampling.scalarToScalarUpsamplers[0];
+  auto buffer = upsampler->getOutput().get();
+  auto const numChannels = oversampling.getNumChannels();
+  for (Index sampleIndex = startSample; sampleIndex < endSample; ++sampleIndex) {
+    for (Index channelIndex = 0; channelIndex < numChannels; ++channelIndex) {
+      auto const gain = automation.next(Param::gain);
+      buffer[channelIndex][sampleIndex] = gain * buffer[channelIndex][sampleIndex];
+    }
+  }
+}
+
 } // namespace GainDsp

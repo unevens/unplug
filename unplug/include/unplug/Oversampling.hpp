@@ -87,8 +87,9 @@ public:
   using Requirements = oversimple::OversamplingSettings::Requirements;
   using Context = oversimple::OversamplingSettings::Context;
 
-  explicit Oversampling(std::function<void(Index)> onLatencyChanged)
-    : oversampling{ std::make_unique<detail::Oversampling>(detail::Oversampling::Settings{}) }
+  explicit Oversampling(std::function<void(Index)> onLatencyChanged,
+                        oversimple::OversamplingSettings const& settings = {})
+    : oversampling{ std::make_unique<detail::Oversampling>(settings) }
     , onLatencyChanged{ std::move(onLatencyChanged) }
   {}
 

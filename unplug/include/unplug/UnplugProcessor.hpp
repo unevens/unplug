@@ -56,7 +56,10 @@ protected:
   void staticProcessing(ProcessData& data, StaticProcessing staticProcessing_)
   {
     staticProcessing<SampleType>(
-      data, staticProcessing_, [](IO<SampleType> const&) {}, [](IO<SampleType> const&) {});
+      data,
+      staticProcessing_,
+      [](IO<SampleType> const&, Index numSamples) { return numSamples; },
+      [](IO<SampleType> const&, Index numUpsampledSamples, Index requiredOutputSamples){});
   }
 
   /** helper function for processing with sample precise automation */
@@ -93,8 +96,8 @@ protected:
       prepareAutomation,
       automatedProcessing,
       setParameterAutomation,
-      [](IO<SampleType> const&) {},
-      [](IO<SampleType> const&) {});
+      [](IO<SampleType> const&, Index numSamples) { return numSamples; },
+      [](IO<SampleType> const&, Index numUpsampledSamples, Index requiredOutputSamples){});
   }
 
   /** updates the parameters to the last values received by the host  */
@@ -231,9 +234,9 @@ void UnplugProcessor::staticProcessing(ProcessData& data,
   if (isNotFlushing) {
     auto const oversamplingRate = getContextInfo().oversamplingRate;
     auto const numSamples = data.numSamples * oversamplingRate;
-    upsampling(io);
-    staticProcessing_(io, numSamples);
-    downsampling(io);
+    auto const numUpsampledSamples = upsampling(io, numSamples);
+    staticProcessing_(io, numUpsampledSamples);
+    downsampling(io, numSamples, numUpsampledSamples);
   }
 }
 
@@ -257,9 +260,11 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
   auto io = IO<SampleType>(ioCache);
   bool const isNotFlushing = !io.isFlushing();
   if (isNotFlushing) {
-    upsampling(io);
     auto const oversamplingRate = getContextInfo().oversamplingRate;
     auto const numSamples = data.numSamples * oversamplingRate;
+    auto const numUpsampledSamples = upsampling(io, data.numSamples);
+    // this implementation of sample precise automation does not support linear phase oversampling, so
+    assert(numUpsampledSamples == numSamples);
     if (data.inputParameterChanges) {
       auto automation = prepareAutomation();
       int32 const numParamsChanged = data.inputParameterChanges->getParameterCount();
@@ -369,7 +374,7 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
     else {
       staticProcessing_(io, numSamples);
     }
-    downsampling(io);
+    downsampling(io, numSamples, data.numSamples);
   }
   updateParametersToLastPoint(data);
 }

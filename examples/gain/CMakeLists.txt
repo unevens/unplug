@@ -32,7 +32,7 @@ set(unplug_use_asan FALSE)
 
 # C++ global config
 if (WIN32)
-    add_compile_options("/EHsc")
+    add_compile_options("/EHsc" "/Zc:__cplusplus")
     ADD_DEFINITIONS(-DUNICODE)
     ADD_DEFINITIONS(-D_UNICODE)
 else ()

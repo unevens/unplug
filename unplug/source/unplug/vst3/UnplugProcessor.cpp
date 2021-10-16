@@ -331,10 +331,16 @@ void UnplugProcessor::updateLatency(Index dspUnitIndex, uint64_t dspUnitLatency)
 
 UnplugProcessor::UnplugProcessor()
   : AudioEffect()
-  , setupPluginInterface{ [this] { setup(); },
+  , setupPluginInterface{ [this] { sendRestartMessage(); },
                           [this](Index dspUnitIndex, uint32_t dspUnitLatency) {
                             updateLatency(dspUnitIndex, dspUnitLatency);
                           } }
 {}
+
+void UnplugProcessor::sendRestartMessage() {
+  auto message = owned(allocateMessage());
+  message->setMessageID(vst3::messageId::restartId);
+  sendMessage(message);
+}
 
 } // namespace Steinberg::Vst

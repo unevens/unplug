@@ -176,6 +176,8 @@ protected:
 
   void updateLatency(Index dspUnitIndex, uint64_t dspUnitLatency);
 
+  void sendRestartMessage();
+
   uint32_t getLatency() const
   {
     return latency.load(std::memory_order_acquire);

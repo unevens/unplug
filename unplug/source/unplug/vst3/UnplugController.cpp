@@ -307,6 +307,14 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
     }
     return kResultOk;
   }
+  else if (FIDStringsEqual(message->getMessageID(), restartId)) {
+    auto handler = getComponentHandler();
+    assert(handler);
+    if (handler) {
+      handler->restartComponent(kLatencyChanged);
+    }
+    return kResultOk;
+  }
   else
     return onNotify(message) ? kResultOk : kResultFalse;
 }

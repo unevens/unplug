@@ -30,19 +30,19 @@ public:
     onUpdateLatency(dspUnitIndex, dspUnitLatency);
   }
 
-  void setup() const
+  void restart() const
   {
-    onSetup();
+    onRestart();
   }
 
   SetupPluginFromDsp(std::function<void()> onSetup, UpdateLatency onUpdateLatency)
-    : onSetup{ std::move(onSetup) }
+    : onRestart{ std::move(onSetup) }
     , onUpdateLatency{ std::move(onUpdateLatency) }
   {}
 
 private:
   UpdateLatency onUpdateLatency;
-  std::function<void()> onSetup;
+  std::function<void()> onRestart;
 };
 
 class SetupPluginFromDspUnit final
@@ -53,9 +53,9 @@ public:
     pluginInterface.setLatency(dspUnitIndex, dspUnitLatency);
   }
 
-  void setup() const
+  void restart() const
   {
-    pluginInterface.setup();
+    pluginInterface.restart();
   }
 
   SetupPluginFromDspUnit(SetupPluginFromDsp pluginInterface, unplug::Index dspUnitIndex)

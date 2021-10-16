@@ -22,6 +22,25 @@
 
 namespace unplug {
 
+
+using SupportedSampleTypes = oversimple::OversamplingSettings::SupportedScalarTypes;
+
+//template<class Object, class Settings>
+//class DspObject{
+//
+//  Object& get() { return object;}
+//
+//  void changeSettings(std::function<Settings&>const&change){
+//
+//  }
+//
+//public:
+//
+//  Settings
+//  Object object;
+//
+//};
+
 /**
  * A class that holds together an oversimple::Oversampling processor and its settings, ready to be used wrapped in a
  * lockfree::RealtimeObject
@@ -43,7 +62,7 @@ public:
   /**
    * Copy-constructor. Copies the settings and create a new processor from them.
    * */
-  Oversampling(Oversampling const& other)
+  Oversampling(Oversampling const& other) noexcept
     : settings(other.settings)
     , oversampling(other.settings)
   {}
@@ -105,7 +124,7 @@ private:
   oversimple::Oversampling oversampling;
 };
 
-using SupportedSampleTypes = oversimple::OversamplingSettings::SupportedScalarTypes;
+
 
 class RealtimeOversampling final
 {

@@ -26,6 +26,7 @@ inline constexpr auto userInterfaceChangedId = "unplug user interface message";
 inline constexpr auto userInterfaceStateId = "unplug user interface state";
 
 inline constexpr auto latencyChangedId = "unplug latency changed";
+inline constexpr auto restartId = "unplug restart message";
 
 
 } // namespace unplug::vst3

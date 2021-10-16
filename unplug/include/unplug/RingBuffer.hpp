@@ -131,6 +131,12 @@ public:
     return contextInfo;
   }
 
+  void setUseOversampledSampleRate(bool value)
+  {
+    useOversampledSampleRate = value;
+    resize();
+  }
+
   RingBuffer()
   {
     secondsPerPoint = 1.f / pointsPerSecond;
@@ -163,7 +169,8 @@ private:
   {
     numChannels = choseNumChannels(contextInfo.numIO);
     accumulator.resize(numChannels);
-    samplesPerPoint = contextInfo.getOversampledSampleRate() / pointsPerSecond;
+    auto actualSampleRate = useOversampledSampleRate ? contextInfo.getOversampledSampleRate() : contextInfo.sampleRate;
+    samplesPerPoint = actualSampleRate / pointsPerSecond;
     pointsPerSample = 1.f / samplesPerPoint;
     auto const maxWriteIncrementPerAudioBlock = pointsPerSample * static_cast<float>(contextInfo.maxAudioBlockSize);
     readBlockSize = static_cast<int>(std::ceil(durationInSeconds * pointsPerSecond));
@@ -207,6 +214,7 @@ private:
   float durationInSeconds = 1.f;
   float secondsPerPoint;
   ContextInfo contextInfo;
+  bool useOversampledSampleRate = false;
   Buffer buffer;
 };
 

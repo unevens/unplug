@@ -186,8 +186,9 @@ void downsampling(State& state, IO<SampleType> io, Index numUpsampledSamples, In
   oversimple::TOversampling<SampleType>& oversampling =
     state.pluginState.sharedData->oversampling.getProcessorOnAudioThread().get<SampleType>();
   auto& downsampler = oversampling.scalarToScalarDownsamplers[0];
+  auto& upsampler = oversampling.scalarToScalarUpsamplers[0];
   downsampler->processBlock(
-    io.getIn(0).buffers, io.getOut(0).buffers, io.getOut(0).numChannels, numUpsampledSamples, requiredOutputSamples);
+    upsampler->getOutput().get(), io.getOut(0).buffers, io.getOut(0).numChannels, numUpsampledSamples, requiredOutputSamples);
 }
 
 template<class SampleType>

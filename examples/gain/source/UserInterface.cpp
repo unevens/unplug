@@ -26,6 +26,7 @@ void paint()
   auto const viewWidth = main_viewport->Size.x - 2 * ImGui::GetStyle().ItemSpacing.x;
   auto const levelMeterHeight = 24.f;
   auto const widgetWidth = std::min(viewWidth / 2, 300.f);
+  auto& sharedData = SharedDataWrapped::getCurrent();
 
   ImGui::BeginGroup();
   ImGui::PushItemWidth(widgetWidth);
@@ -34,12 +35,13 @@ void paint()
   SliderFloat(Param::gain);
   MeterValueLabelCentered(Meter::level, "Level: ");
   LevelMeter(Meter::level, "LevelMeter", { widgetWidth, levelMeterHeight });
+  OversamplingRateCombo(sharedData.oversampling);
+  // OversamplingLinearPhaseCheckbox(sharedData.oversampling);
   ImGui::EndGroup();
 
   ImGui::SameLine();
 
   ImGui::BeginGroup();
-  auto& sharedData = SharedDataWrapped::getCurrent();
   ImGui::TableNextColumn();
   PlotRingBuffer("Level", sharedData.levelRingBuffer);
   PlotWaveformRingBuffer("Waveform", sharedData.waveformRingBuffer);

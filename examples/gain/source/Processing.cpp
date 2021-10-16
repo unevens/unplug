@@ -40,7 +40,7 @@ void Processor::TProcess(ProcessData& data)
     if (useSamplePreciseAutomation) {
       processWithSamplePreciseAutomation<SampleType>(
         data,
-        [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); },
+        [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessingOversampled(dspState, io, numSamples); },
         [this]() { return GainDsp::prepareAutomation<SampleType>(dspState); },
         [&](auto& automation, IO<SampleType> io, Index startSample, Index endSample) {
           GainDsp::automatedProcessingOversampled(dspState, automation, io, startSample, endSample);

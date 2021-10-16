@@ -30,7 +30,12 @@ struct SharedData final
   explicit SharedData(unplug::SetupPluginFromDsp const& setupPlugin)
     : levelRingBuffer{ std::make_unique<unplug::RingBuffer<float>>() }
     , waveformRingBuffer{ std::make_unique<unplug::WaveformRingBuffer<float>>() }
-    , oversampling{ unplug::SetupPluginFromDspUnit(setupPlugin, 0) }
+    , oversampling{ unplug::SetupPluginFromDspUnit(setupPlugin, 0), [] {
+                     auto settings = unplug::Oversampling::Settings{};
+                     settings.requirements.numScalarToScalarUpsamplers = 1;
+                     settings.requirements.numScalarToScalarDownsamplers = 1;
+                     return settings;
+                   }() }
   {}
 
   void setup(unplug::ContextInfo const& context)
@@ -42,7 +47,7 @@ struct SharedData final
     });
   }
 
-  void receiveChangesOnRealtimeThread()
+  void receiveChangesOnAudioThread()
   {
     oversampling.receiveChangesOnAudioThread();
     levelRingBuffer.receiveChangesOnRealtimeThread();

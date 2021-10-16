@@ -92,6 +92,49 @@ bool Combo(ParamIndex paramIndex, ShowLabel showLabel)
   return hasValueChanged;
 }
 
+bool OversamplingRateCombo(unplug::Oversampling& oversampling, ShowLabel showLabel, Index maxOrder)
+{
+  using namespace ImGui;
+
+  auto const order = oversampling.getRequirementsOnUiThread().order;
+
+  auto const toText = [](int order) { return order == 0 ? "Off" : std::to_string(1 << order) + "x"; };
+
+  auto const valueAsText = toText(order);
+  auto const controlName = makeLabel(showLabel, "Oversampling", "COMBO");
+
+  if (!BeginCombo(controlName.c_str(), valueAsText.c_str(), ImGuiComboFlags_None)) {
+    return false;
+  }
+
+  auto const numItems = maxOrder + 1;
+
+  bool hasValueChanged = false;
+  auto newOrder = order;
+  for (int i = 0; i < numItems; i++) {
+    PushID((void*)(intptr_t)i);
+    const bool selectedItem = (i == newOrder);
+    auto const itemText = toText(i);
+    if (Selectable(itemText.c_str(), selectedItem)) {
+      hasValueChanged = true;
+      newOrder = i;
+    }
+    if (selectedItem)
+      SetItemDefaultFocus();
+    PopID();
+  }
+
+  EndCombo();
+  if (hasValueChanged) {
+    ImGuiContext const& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    oversampling.changeRequirements([newOrder](auto& requirements) { requirements.order = newOrder; });
+    MarkItemEdited(g.LastItemData.ID);
+  }
+
+  return hasValueChanged;
+}
+
 bool Checkbox(ParamIndex paramIndex, ShowLabel showLabel)
 {
   return Control(paramIndex, [=](ParameterData const& parameter) {
@@ -100,6 +143,20 @@ bool Checkbox(ParamIndex paramIndex, ShowLabel showLabel)
     bool const isActive = ImGui::Checkbox(controlName.c_str(), &isChecked);
     return ControlOutput{ controlName, isChecked ? 1.f : 0.f, isActive };
   });
+}
+
+bool OversamplingLinearPhaseCheckbox(unplug::Oversampling& oversampling, ShowLabel showLabel, const char* overrideLabel)
+{
+  using namespace ImGui;
+  auto const controlName = makeLabel(showLabel, overrideLabel ? overrideLabel : "Linear Phase", "CHECKBOX");
+  auto const isLinearPhase = oversampling.getRequirementsOnUiThread().linearPhase;
+  auto isChecked = isLinearPhase;
+  bool const isActive = ImGui::Checkbox(controlName.c_str(), &isChecked);
+  bool const hasChanged = isChecked != isLinearPhase;
+  if (hasChanged) {
+    oversampling.changeRequirements([isChecked](auto& requirements) { requirements.linearPhase = isChecked; });
+  }
+  return isActive;
 }
 
 void TextCentered(std::string const& text, float height)
@@ -158,7 +215,7 @@ void MeterValueLabelCentered(MeterIndex meterIndex,
                              float height)
 {
   auto const& meters = getMeters();
-  auto const value = meters.get(meterIndex) ;
+  auto const value = meters.get(meterIndex);
   auto const valueAsText = prefix + toString(value);
   TextCentered(valueAsText, height);
 }

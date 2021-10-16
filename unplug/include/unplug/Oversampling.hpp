@@ -16,9 +16,9 @@
 #include "lockfree/RealtimeObject.hpp"
 #include "oversimple/Oversampling.hpp"
 
-#include <utility>
 #include "unplug/ContextInfo.hpp"
 #include "unplug/SetupPluginFromDsp.hpp"
+#include <utility>
 
 namespace unplug {
 
@@ -86,8 +86,9 @@ class Oversampling final
 public:
   using Requirements = oversimple::OversamplingSettings::Requirements;
   using Context = oversimple::OversamplingSettings::Context;
+  using Settings = oversimple::OversamplingSettings;
 
-  explicit Oversampling(SetupPluginFromDspUnit setupPlugin, oversimple::OversamplingSettings const& settings = {})
+  explicit Oversampling(SetupPluginFromDspUnit setupPlugin, Settings const& settings = {})
     : oversampling{ std::make_unique<detail::Oversampling>(settings) }
     , setupPlugin{ std::move(setupPlugin) }
   {}
@@ -103,6 +104,8 @@ public:
   }
 
   bool setRequirements(Requirements const& newRequirements);
+
+  void changeRequirements(std::function<void(Requirements&)> const& change);
 
   /**
    * @return a reference to the oversampling processor
@@ -158,8 +161,6 @@ public:
   bool serialization(Serialization::Streamer<action>& streamer)
   {
     auto settings = oversampling.getOnNonRealtimeThread()->getSettings();
-    if (!streamer(settings.context.numChannels))
-      return false;
     if (!streamer(settings.requirements.numScalarToVecUpsamplers))
       return false;
     if (!streamer(settings.requirements.numVecToVecUpsamplers))
@@ -179,8 +180,6 @@ public:
     if (!streamer(settings.requirements.order))
       return false;
     if (!streamer(settings.requirements.linearPhase))
-      return false;
-    if (!streamer(settings.context.numSamplesPerBlock))
       return false;
     if (!streamer(settings.requirements.firTransitionBand))
       return false;

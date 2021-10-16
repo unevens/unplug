@@ -16,6 +16,7 @@
 #include "imgui_internal.h" //ImVec2 and ImVec4 operators
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
+#include "unplug/Oversampling.hpp"
 #include "unplug/ParameterAccess.hpp"
 #include <functional>
 #include <string>
@@ -271,22 +272,19 @@ struct ControlOutput
  * */
 bool Control(ParamIndex paramIndex, std::function<ControlOutput(ParameterData const& parameter)> const& control);
 
-inline ImVec4 operator*(ImVec4 const& lhs, float rhs) noexcept
-{
-  return { lhs.x * rhs, lhs.y * rhs, lhs.z * rhs, lhs.w * rhs };
-}
+/**
+ * Controls the oversampling rate through a combo control
+ * */
+bool OversamplingRateCombo(unplug::Oversampling& oversampling,
+                           ShowLabel showLabel = ShowLabel::yes,
+                           Index maxOrder = 5);
 
-inline ImVec4 mix(ImVec4 a, ImVec4 b, float amountOfB)
-{
-  return a + (b - a) * amountOfB;
-}
-
-inline ImVec4 mix(ImVec4 a, ImVec4 b, ImVec4 intermediate, float amountOfB, float intermediatePoint = 0.5f)
-{
-  return amountOfB > intermediatePoint
-           ? intermediate + (b - intermediate) * ((amountOfB - intermediatePoint) / (1.f - intermediatePoint))
-           : a + (intermediate - a) * (amountOfB / intermediatePoint);
-}
+/**
+ * Controls the oversampling linear phase
+ * */
+bool OversamplingLinearPhaseCheckbox(unplug::Oversampling& oversampling,
+                                     ShowLabel showLabel = ShowLabel::yes,
+                                     const char* overrideLabel = nullptr);
 
 /**
  * implementation details that can be useful to implement custom controls

@@ -38,7 +38,7 @@ bool Oversampling::setup(Index numChannels, Index maxAudioBlockSize, FloatingPoi
   context.numChannels = numChannels;
   context.numSamplesPerBlock = maxAudioBlockSize;
   context.supportedScalarTypes = floatingPointPrecision == FloatingPointPrecision::float64
-                                   ? SupportedSampleTypes::onlyDouble
+                                   ? SupportedSampleTypes::floatAndDouble
                                    : SupportedSampleTypes::onlyFloat;
   return setContext(context);
 }
@@ -59,6 +59,12 @@ bool Oversampling::setRequirements(const Oversampling::Requirements& requirement
     setupPlugin.setup();
   }
   return hasChanged;
+}
+
+void Oversampling::changeRequirements(std::function<void(Requirements&)>const& change) {
+  auto requirements = getRequirementsOnUiThread();
+  change(requirements);
+  setRequirements(requirements);
 }
 
 } // namespace unplug

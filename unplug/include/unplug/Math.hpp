@@ -12,12 +12,13 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "imgui.h"
+#include "imgui_internal.h" //ImVec2 and ImVec4 operators
 #include "unplug/Index.hpp"
 #include <cmath>
 #include <string>
 
 namespace unplug {
-
 
 template<class T>
 inline static constexpr T pi = static_cast<T>(M_PI);
@@ -44,11 +45,28 @@ struct FractionalIndex final
   Index integer;
   float fractional;
 
-  FractionalIndex(float value)
+  explicit FractionalIndex(float value)
     : value(value)
     , integer(static_cast<Index>(std::trunc(value)))
     , fractional(value - static_cast<float>(integer))
   {}
 };
+
+inline ImVec4 operator*(ImVec4 const& lhs, float rhs) noexcept
+{
+  return { lhs.x * rhs, lhs.y * rhs, lhs.z * rhs, lhs.w * rhs };
+}
+
+inline ImVec4 mix(ImVec4 a, ImVec4 b, float amountOfB)
+{
+  return a + (b - a) * amountOfB;
+}
+
+inline ImVec4 mix(ImVec4 a, ImVec4 b, ImVec4 intermediate, float amountOfB, float intermediatePoint = 0.5f)
+{
+  return amountOfB > intermediatePoint
+           ? intermediate + (b - intermediate) * ((amountOfB - intermediatePoint) / (1.f - intermediatePoint))
+           : a + (intermediate - a) * (amountOfB / intermediatePoint);
+}
 
 } // namespace unplug

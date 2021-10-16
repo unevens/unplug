@@ -29,7 +29,7 @@ tresult PLUGIN_API Processor::process(ProcessData& data)
 template<class SampleType>
 void Processor::TProcess(ProcessData& data)
 {
-  pluginState.sharedData->receiveChangesOnRealtimeThread();
+  pluginState.sharedData->receiveChangesOnAudioThread();
 
   auto const& oversamplingRequirements = pluginState.sharedData->oversampling.getRequirementsOnAudioThread();
   bool const hasLatency = getLatency() > 0;

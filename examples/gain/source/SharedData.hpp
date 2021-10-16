@@ -27,10 +27,10 @@ struct SharedData final
   lockfree::RealtimeObject<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
   unplug::Oversampling oversampling;
 
-  SharedData(unplug::LatencyUpdater const& updateLatency)
+  explicit SharedData(unplug::SetupPluginFromDsp const& setupPlugin)
     : levelRingBuffer{ std::make_unique<unplug::RingBuffer<float>>() }
     , waveformRingBuffer{ std::make_unique<unplug::WaveformRingBuffer<float>>() }
-    , oversampling{ [=](int oversamplingLatency) { updateLatency(0, oversamplingLatency); }, oversamplingSettings() }
+    , oversampling{ unplug::SetupPluginFromDspUnit(setupPlugin, 0) }
   {}
 
   void setup(unplug::ContextInfo const& context)
@@ -40,6 +40,13 @@ struct SharedData final
     unplug::setup(waveformRingBuffer, context, [](unplug::WaveformRingBuffer<float>& ringBuffer) {
       ringBuffer.reset(unplug::WaveformElement<float>{ 0.f, 0.f });
     });
+  }
+
+  void receiveChangesOnRealtimeThread()
+  {
+    oversampling.receiveChangesOnAudioThread();
+    levelRingBuffer.receiveChangesOnRealtimeThread();
+    waveformRingBuffer.receiveChangesOnRealtimeThread();
   }
 
   template<unplug::Serialization::Action action>

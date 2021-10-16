@@ -26,10 +26,10 @@
 #include "unplug/MeterStorage.hpp"
 #include "unplug/ParameterStorage.hpp"
 #include "unplug/Serialization.hpp"
+#include "unplug/SetupPluginFromDsp.hpp"
 #include "unplug/detail/SetupIOFromVst3ProcessData.hpp"
 #include <atomic>
 #include <memory>
-#include <unplug/detail/SetupIOFromVst3ProcessData.hpp>
 
 namespace Steinberg::Vst {
 
@@ -59,7 +59,7 @@ protected:
       data,
       staticProcessing_,
       [](IO<SampleType> const&, Index numSamples) { return numSamples; },
-      [](IO<SampleType> const&, Index numUpsampledSamples, Index requiredOutputSamples){});
+      [](IO<SampleType> const&, Index numUpsampledSamples, Index requiredOutputSamples) {});
   }
 
   /** helper function for processing with sample precise automation */
@@ -97,7 +97,7 @@ protected:
       automatedProcessing,
       setParameterAutomation,
       [](IO<SampleType> const&, Index numSamples) { return numSamples; },
-      [](IO<SampleType> const&, Index numUpsampledSamples, Index requiredOutputSamples){});
+      [](IO<SampleType> const&, Index numUpsampledSamples, Index requiredOutputSamples) {});
   }
 
   /** updates the parameters to the last values received by the host  */
@@ -116,6 +116,14 @@ protected:
   ContextInfo const& getContextInfo() const
   {
     return contextInfo;
+  }
+  /**Gets an interface to pass to dsp elements that may need to tell the processor their latency or request the whole
+   * processor to setup (think of oversampling: when changing the oversampling rate, the latency may change, and the
+   * amount of samples that other dsp elements may need to pre allocate may also change). (Not marked as const because
+   * the returned interface contains lambdas to non-const member of functions) */
+  unplug::SetupPluginFromDsp const& getSetupPluginInterface()
+  {
+    return setupPluginInterface;
   }
 
   /** Override this function to let unplug know about the oversampling rate used by your processing call */
@@ -166,7 +174,12 @@ protected:
     return true;
   }
 
-  void updateLatency(Index procesorId, uint64_t processorLatency);
+  void updateLatency(Index dspUnitIndex, uint64_t dspUnitLatency);
+
+  uint32_t getLatency() const
+  {
+    return latency;
+  }
 
 private:
   template<unplug::Serialization::Action>
@@ -178,9 +191,9 @@ private:
 
   NumIO updateNumIO();
 
-public:
   bool setup();
 
+public:
   tresult PLUGIN_API initialize(FUnknown* context) final;
 
   tresult PLUGIN_API terminate() final;
@@ -209,16 +222,19 @@ public:
     return static_cast<uint32>(latency);
   }
 
+  UnplugProcessor();
+
 protected:
   std::shared_ptr<unplug::SharedDataWrapped> sharedDataWrapped;
   unplug::PluginState pluginState;
   unplug::detail::CachedIO ioCache;
   std::array<int32, unplug::NumParameters::value> automationPointsHandled;
-  std::vector<uint64_t> latencies;
-  uint64_t latency;
 
 private:
   ContextInfo contextInfo;
+  std::vector<uint32_t> latencies;
+  uint32_t latency;
+  unplug::SetupPluginFromDsp setupPluginInterface;
 };
 
 template<class SampleType, class StaticProcessing, class Upsampling, class Downsampling>

@@ -27,7 +27,7 @@ bool Oversampling::setContext(Context const& context)
   };
   bool const hasChanged = oversampling.changeIf(adaptOversampling, isContextChanged);
   if (hasChanged) {
-    onLatencyChanged(getProcessorOnNonRealtimeThread().getLatency());
+    setupPlugin.setLatency(getProcessorOnUiThread().getLatency());
   }
   return hasChanged;
 }
@@ -55,7 +55,8 @@ bool Oversampling::setRequirements(const Oversampling::Requirements& requirement
   };
   bool const hasChanged = oversampling.changeIf(adaptOversampling, haveRequirementsChanges);
   if (hasChanged) {
-    onLatencyChanged(getProcessorOnNonRealtimeThread().getLatency());
+    setupPlugin.setLatency(getProcessorOnUiThread().getLatency());
+    setupPlugin.setup();
   }
   return hasChanged;
 }

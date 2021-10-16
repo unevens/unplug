@@ -12,14 +12,13 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "unplug/SetupPluginFromDsp.hpp"
 
 namespace unplug {
 
 namespace detail {
 class EventHandler;
 }
-
-using LatencyUpdater = std::function<void(unplug::Index processorId, uint64_t processorLatency)>;
 
 /**
  * A class that wraps the plugin custom data that will be available to both the user interface and the processor.
@@ -47,8 +46,8 @@ public:
     return data;
   }
 
-  explicit SharedDataWrapper(LatencyUpdater const& latencyUpdater = [](auto, auto) {})
-    : data(latencyUpdater)
+  explicit SharedDataWrapper(unplug::SetupPluginFromDsp const& setupPlugin)
+    : data(setupPlugin)
   {}
 
   SharedDataWrapper(SharedDataWrapper const&) = delete;

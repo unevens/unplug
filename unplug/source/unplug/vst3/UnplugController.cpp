@@ -222,7 +222,6 @@ IPlugView* PLUGIN_API UnplugController::createView(FIDString name)
     if (!sharedData) {
       // this should never happen, see UnplugProcessor::connect and UnlugController::notify
       assert(false);
-      sharedData = std::make_shared<unplug::SharedDataWrapped>();
     }
     auto ui = new View(*this);
     auto message = owned(allocateMessage());

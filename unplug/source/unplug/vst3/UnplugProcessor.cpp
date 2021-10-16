@@ -46,8 +46,7 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
 
   ioCache.resize(1, 1);
 
-  sharedDataWrapped = std::make_shared<SharedDataWrapped>(
-    [this](Index processorId, uint64_t processorLatency) { updateLatency(processorId, processorLatency); });
+  sharedDataWrapped = std::make_shared<SharedDataWrapped>(getSetupPluginInterface());
   pluginState.sharedData = &(sharedDataWrapped->get());
   pluginState.meters = std::make_shared<MeterStorage>();
 
@@ -185,6 +184,12 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
 tresult UnplugProcessor::setActive(TBool state)
 {
   if (state) {
+    contextInfo.sampleRate = static_cast<float>(processSetup.sampleRate);
+    contextInfo.userInterfaceRefreshRate = UserInterface::getRefreshRate();
+    contextInfo.maxAudioBlockSize = processSetup.maxSamplesPerBlock;
+    contextInfo.numIO = updateNumIO();
+    contextInfo.precision =
+      processSetup.symbolicSampleSize == kSample64 ? FloatingPointPrecision::float64 : FloatingPointPrecision::float32;
     setup();
   }
   onSetActive(state);
@@ -205,13 +210,13 @@ tresult UnplugProcessor::acceptSimpleBusArrangement(
   int32 numIns,
   SpeakerArrangement* outputs,
   int32 numOuts,
-  bool acceptSidechain,
-  const std::function<bool(int numInputs, int numOutputs, int numSidechain)>& acceptNumChannels)
+  bool acceptSideChain,
+  const std::function<bool(int numInputs, int numOutputs, int numSideChain)>& acceptNumChannels)
 {
   if (numOuts != 1) {
     return kResultFalse;
   }
-  if (acceptSidechain) {
+  if (acceptSideChain) {
     if (numIns != 1 && numIns != 2) {
       return kResultFalse;
     }
@@ -221,20 +226,20 @@ tresult UnplugProcessor::acceptSimpleBusArrangement(
       return kResultFalse;
     }
   }
-  bool const hasSidechain = numIns == 2;
+  bool const hasSideChain = numIns == 2;
   auto const numInputChannels = SpeakerArr::getChannelCount(inputs[0]);
   auto const numOutputChannels = SpeakerArr::getChannelCount(outputs[0]);
-  auto const numSidechainChannels = hasSidechain ? SpeakerArr::getChannelCount(inputs[1]) : 0;
-  if (!acceptNumChannels(numInputChannels, numOutputChannels, numSidechainChannels)) {
+  auto const numSideChainChannels = hasSideChain ? SpeakerArr::getChannelCount(inputs[1]) : 0;
+  if (!acceptNumChannels(numInputChannels, numOutputChannels, numSideChainChannels)) {
     return kResultFalse;
   }
   getAudioInput(0)->setArrangement(inputs[0]);
   getAudioInput(0)->setName(STR16("Input"));
   getAudioOutput(0)->setArrangement(inputs[0]);
   getAudioOutput(0)->setName(STR16("Output"));
-  if (hasSidechain) {
+  if (hasSideChain) {
     getAudioInput(0)->setArrangement(inputs[1]);
-    getAudioInput(0)->setName(STR16("Sidechain"));
+    getAudioInput(0)->setName(STR16("SideChain"));
   }
   return kResultTrue;
 }
@@ -268,13 +273,13 @@ bool UnplugProcessor::onSetBusArrangements(SpeakerArrangement* inputs,
                                            SpeakerArrangement* outputs,
                                            int32 numOuts)
 {
-  bool const hasSidechain = false;
+  bool const hasSideChain = false;
   return acceptSimpleBusArrangement(inputs,
                                     numIns,
                                     outputs,
                                     numOuts,
-                                    hasSidechain,
-                                    [](int numInputChannels, int numOutputChannels, int numSidechainChannnels) {
+                                    hasSideChain,
+                                    [](int numInputChannels, int numOutputChannels, int numSideChainChannnels) {
                                       return numInputChannels == numOutputChannels;
                                     });
 }
@@ -309,25 +314,27 @@ void UnplugProcessor::sendLatencyChangedMessage()
 
 bool UnplugProcessor::setup()
 {
-  contextInfo.sampleRate = static_cast<float>(processSetup.sampleRate);
   contextInfo.oversamplingRate = getOversamplingRate();
-  contextInfo.userInterfaceRefreshRate = UserInterface::getRefreshRate();
-  contextInfo.maxAudioBlockSize = processSetup.maxSamplesPerBlock;
-  contextInfo.numIO = updateNumIO();
-  contextInfo.precision =
-    processSetup.symbolicSampleSize == kSample64 ? FloatingPointPrecision::float64 : FloatingPointPrecision::float32;
   pluginState.sharedData->setup(contextInfo);
   return onSetup(contextInfo);
 }
 
-void UnplugProcessor::updateLatency(Index processorId, uint64_t processorLatency)
+void UnplugProcessor::updateLatency(Index dspUnitIndex, uint64_t dspUnitLatency)
 {
-  latencies.resize(std::max(latencies.size(), static_cast<std::size_t>(processorId + 1)), 0);
-  if (latencies[processorId] != processorLatency) {
-    latencies[processorId] = processorLatency;
+  latencies.resize(std::max(latencies.size(), static_cast<std::size_t>(dspUnitIndex + 1)), 0);
+  if (latencies[dspUnitIndex] != dspUnitLatency) {
+    latencies[dspUnitIndex] = dspUnitLatency;
     latency = std::reduce(latencies.begin(), latencies.end());
     sendLatencyChangedMessage();
   }
 }
+
+UnplugProcessor::UnplugProcessor()
+  : AudioEffect()
+  , setupPluginInterface{ [this] { setup(); },
+                          [this](Index dspUnitIndex, uint32_t dspUnitLatency) {
+                            updateLatency(dspUnitIndex, dspUnitLatency);
+                          } }
+{}
 
 } // namespace Steinberg::Vst

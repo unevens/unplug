@@ -29,20 +29,53 @@ tresult PLUGIN_API Processor::process(ProcessData& data)
 template<class SampleType>
 void Processor::TProcess(ProcessData& data)
 {
-  constexpr auto useSamplePreciseAutomation = true;
-  if constexpr (useSamplePreciseAutomation) {
-    processWithSamplePreciseAutomation<SampleType>(
-      data,
-      [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); },
-      [this]() { return GainDsp::prepareAutomation<SampleType>(dspState); },
-      [&](auto& automation, IO<SampleType> io, Index startSample, Index endSample) {
-        GainDsp::automatedProcessing(dspState, automation, io, startSample, endSample);
-      },
-      [&](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); });
+  pluginState.sharedData->receiveChangesOnRealtimeThread();
+
+  auto const& oversamplingRequirements = pluginState.sharedData->oversampling.getRequirementsOnAudioThread();
+  bool const hasLatency = getLatency() > 0;
+  bool const useSamplePreciseAutomation = !hasLatency;
+  bool isOversamplingEnabled = oversamplingRequirements.order > 0;
+
+  if (isOversamplingEnabled) {
+    if (useSamplePreciseAutomation) {
+      processWithSamplePreciseAutomation<SampleType>(
+        data,
+        [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); },
+        [this]() { return GainDsp::prepareAutomation<SampleType>(dspState); },
+        [&](auto& automation, IO<SampleType> io, Index startSample, Index endSample) {
+          GainDsp::automatedProcessingOversampled(dspState, automation, io, startSample, endSample);
+        },
+        [&](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); },
+        [&](IO<SampleType> io, Index numSamples) { return GainDsp::upsampling(dspState, io, numSamples); },
+        [&](IO<SampleType> io, Index numUpsampledSamples, Index requiredOutputSamples) {
+          GainDsp::downsampling(dspState, io, numUpsampledSamples, requiredOutputSamples);
+        });
+    }
+    else {
+      staticProcessing<SampleType>(
+        data,
+        [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessingOversampled(dspState, io, numSamples); },
+        [&](IO<SampleType> io, Index numSamples) { return GainDsp::upsampling(dspState, io, numSamples); },
+        [&](IO<SampleType> io, Index numUpsampledSamples, Index requiredOutputSamples) {
+          GainDsp::downsampling(dspState, io, numUpsampledSamples, requiredOutputSamples);
+        });
+    }
   }
   else {
-    staticProcessing<SampleType>(
-      data, [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); });
+    if (useSamplePreciseAutomation) {
+      processWithSamplePreciseAutomation<SampleType>(
+        data,
+        [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); },
+        [this]() { return GainDsp::prepareAutomation<SampleType>(dspState); },
+        [&](auto& automation, IO<SampleType> io, Index startSample, Index endSample) {
+          GainDsp::automatedProcessing(dspState, automation, io, startSample, endSample);
+        },
+        [&](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); });
+    }
+    else {
+      staticProcessing<SampleType>(
+        data, [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); });
+    }
   }
   auto io = IO<SampleType>(ioCache);
   GainDsp::levelMetering(dspState, io, data.numSamples);

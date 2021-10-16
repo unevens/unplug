@@ -15,7 +15,10 @@
 #include "Serialization.hpp"
 #include "lockfree/RealtimeObject.hpp"
 #include "oversimple/Oversampling.hpp"
+
+#include <utility>
 #include "unplug/ContextInfo.hpp"
+#include "unplug/SetupPluginFromDsp.hpp"
 
 namespace unplug {
 
@@ -80,22 +83,23 @@ using SupportedSampleTypes = oversimple::OversamplingSettings::SupportedScalarTy
 
 class Oversampling final
 {
-  lockfree::RealtimeObject<detail::Oversampling> oversampling;
-  std::function<void(Index)> onLatencyChanged;
-
 public:
   using Requirements = oversimple::OversamplingSettings::Requirements;
   using Context = oversimple::OversamplingSettings::Context;
 
-  explicit Oversampling(std::function<void(Index)> onLatencyChanged,
-                        oversimple::OversamplingSettings const& settings = {})
+  explicit Oversampling(SetupPluginFromDspUnit setupPlugin, oversimple::OversamplingSettings const& settings = {})
     : oversampling{ std::make_unique<detail::Oversampling>(settings) }
-    , onLatencyChanged{ std::move(onLatencyChanged) }
+    , setupPlugin{ std::move(setupPlugin) }
   {}
 
-  Requirements const& getRequirements() const
+  Requirements const& getRequirementsOnUiThread() const
   {
     return oversampling.getOnNonRealtimeThread()->getSettings().requirements;
+  }
+
+  Requirements const& getRequirementsOnAudioThread()
+  {
+    return oversampling.getOnRealtimeThread()->getSettings().requirements;
   }
 
   bool setRequirements(Requirements const& newRequirements);
@@ -103,7 +107,7 @@ public:
   /**
    * @return a reference to the oversampling processor
    * */
-  oversimple::Oversampling& getProcessorOnRealTimeThread()
+  oversimple::Oversampling& getProcessorOnAudioThread()
   {
     return oversampling.getOnRealtimeThread()->getProcessor();
   }
@@ -111,9 +115,18 @@ public:
   /**
    * @return a const reference to the oversampling processor
    * */
-  oversimple::Oversampling const& getProcessorOnNonRealtimeThread() const
+  oversimple::Oversampling const& getProcessorOnUiThread() const
   {
     return oversampling.getOnNonRealtimeThread()->getProcessor();
+  }
+
+  /**
+   * Updates the processor in use on the real-time thread too the last version available.
+   * @return a const reference to the oversampling processor
+   * */
+  oversimple::Oversampling& receiveChangesOnAudioThread()
+  {
+    return oversampling.receiveChangesOnRealtimeThread()->getProcessor();
   }
 
   /**
@@ -181,11 +194,15 @@ public:
       };
       bool const hasChanged = oversampling.changeIf(applySettings, haveSettingsChanged);
       if (hasChanged) {
-        onLatencyChanged(getProcessorOnNonRealtimeThread().getLatency());
+        setupPlugin.setLatency(getProcessorOnUiThread().getLatency());
       }
     }
     return true;
   }
+
+private:
+  lockfree::RealtimeObject<detail::Oversampling> oversampling;
+  SetupPluginFromDspUnit const setupPlugin;
 };
 
 } // namespace unplug

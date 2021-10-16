@@ -130,6 +130,7 @@ bool OversamplingRateCombo(unplug::RealtimeOversampling& oversampling, ShowLabel
     ImGuiWindow* window = g.CurrentWindow;
     oversampling.changeRequirements([newOrder](auto& requirements) { requirements.order = newOrder; });
     MarkItemEdited(g.LastItemData.ID);
+    getParameters().setDirty();
   }
 
   return hasValueChanged;
@@ -155,6 +156,7 @@ bool OversamplingLinearPhaseCheckbox(unplug::RealtimeOversampling& oversampling,
   bool const hasChanged = isChecked != isLinearPhase;
   if (hasChanged) {
     oversampling.changeRequirements([isChecked](auto& requirements) { requirements.linearPhase = isChecked; });
+    getParameters().setDirty();
   }
   return isActive;
 }

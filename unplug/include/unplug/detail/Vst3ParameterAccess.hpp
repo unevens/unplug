@@ -241,6 +241,15 @@ public:
    * */
   bool findParameterFromUserInterfaceCoordinates(int xPos, int yPos, ParamIndex& parameterTag);
 
+  /**
+   * Inform the host of a change inside the plugin that needs to be serialized. There is no need to call this when
+   * editing the parameters. It is exposed here to be used by widgets that controls custom data.
+   * */
+  void setDirty()
+  {
+    controller.setDirty(true);
+  }
+
   ParameterAccess(EditControllerEx1& controller, detail::MidiMapping& midiMapping);
 
   ~ParameterAccess();

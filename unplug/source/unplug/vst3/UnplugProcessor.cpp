@@ -324,7 +324,7 @@ void UnplugProcessor::updateLatency(Index dspUnitIndex, uint64_t dspUnitLatency)
   latencies.resize(std::max(latencies.size(), static_cast<std::size_t>(dspUnitIndex + 1)), 0);
   if (latencies[dspUnitIndex] != dspUnitLatency) {
     latencies[dspUnitIndex] = dspUnitLatency;
-    latency = std::reduce(latencies.begin(), latencies.end());
+    latency.store(std::reduce(latencies.begin(), latencies.end()), std::memory_order_release);
     sendLatencyChangedMessage();
   }
 }

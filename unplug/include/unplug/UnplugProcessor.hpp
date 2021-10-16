@@ -178,7 +178,7 @@ protected:
 
   uint32_t getLatency() const
   {
-    return latency;
+    return latency.load(std::memory_order_acquire);
   }
 
 private:
@@ -219,7 +219,7 @@ public:
 
   uint32 PLUGIN_API getLatencySamples() override
   {
-    return static_cast<uint32>(latency);
+    return static_cast<uint32>(getLatency());
   }
 
   UnplugProcessor();
@@ -233,7 +233,7 @@ protected:
 private:
   ContextInfo contextInfo;
   std::vector<uint32_t> latencies;
-  uint32_t latency;
+  std::atomic<uint32_t> latency;
   unplug::SetupPluginFromDsp setupPluginInterface;
 };
 

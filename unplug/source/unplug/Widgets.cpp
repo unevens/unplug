@@ -92,7 +92,7 @@ bool Combo(ParamIndex paramIndex, ShowLabel showLabel)
   return hasValueChanged;
 }
 
-bool OversamplingRateCombo(unplug::Oversampling& oversampling, ShowLabel showLabel, Index maxOrder)
+bool OversamplingRateCombo(unplug::RealtimeOversampling& oversampling, ShowLabel showLabel, Index maxOrder)
 {
   using namespace ImGui;
 
@@ -145,7 +145,7 @@ bool Checkbox(ParamIndex paramIndex, ShowLabel showLabel)
   });
 }
 
-bool OversamplingLinearPhaseCheckbox(unplug::Oversampling& oversampling, ShowLabel showLabel, const char* overrideLabel)
+bool OversamplingLinearPhaseCheckbox(unplug::RealtimeOversampling& oversampling, ShowLabel showLabel, const char* overrideLabel)
 {
   using namespace ImGui;
   auto const controlName = makeLabel(showLabel, overrideLabel ? overrideLabel : "Linear Phase", "CHECKBOX");

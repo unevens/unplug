@@ -22,7 +22,6 @@
 
 namespace unplug {
 
-namespace detail {
 /**
  * A class that holds together an oversimple::Oversampling processor and its settings, ready to be used wrapped in a
  * lockfree::RealtimeObject
@@ -105,21 +104,18 @@ private:
   Settings settings;
   oversimple::Oversampling oversampling;
 };
-} // namespace detail
 
 using SupportedSampleTypes = oversimple::OversamplingSettings::SupportedScalarTypes;
 
-using OversamplingPreallocated = detail::Oversampling;
-
-class Oversampling final
+class RealtimeOversampling final
 {
 public:
   using Requirements = oversimple::OversamplingSettings::Requirements;
   using Context = oversimple::OversamplingSettings::Context;
   using Settings = oversimple::OversamplingSettings;
 
-  explicit Oversampling(SetupPluginFromDspUnit setupPlugin, Settings const& settings = {})
-    : oversampling{ std::make_unique<detail::Oversampling>(settings) }
+  explicit RealtimeOversampling(SetupPluginFromDspUnit setupPlugin, Settings const& settings = {})
+    : oversampling{ std::make_unique<Oversampling>(settings) }
     , setupPlugin{ std::move(setupPlugin) }
   {}
 
@@ -196,11 +192,11 @@ public:
 
     auto settings = instance->getSettings();
     if constexpr (action == Serialization::Action::load) {
-      auto const haveSettingsChanged = [&](detail::Oversampling const& oversampling) {
+      auto const haveSettingsChanged = [&](Oversampling const& oversampling) {
         return !(settings == oversampling.getSettings());
       };
-      auto const applySettings = [&](detail::Oversampling const& oversampling) {
-        return std::make_unique<detail::Oversampling>(std::move(settings));
+      auto const applySettings = [&](Oversampling const& oversampling) {
+        return std::make_unique<Oversampling>(std::move(settings));
       };
       bool const hasChanged = oversampling.changeIf(applySettings, haveSettingsChanged);
       if (hasChanged) {
@@ -211,7 +207,7 @@ public:
   }
 
 private:
-  lockfree::RealtimeObject<detail::Oversampling> oversampling;
+  lockfree::RealtimeObject<Oversampling> oversampling;
   SetupPluginFromDspUnit const setupPlugin;
 };
 

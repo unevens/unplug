@@ -25,13 +25,13 @@ struct SharedData final
 {
   lockfree::RealtimeObject<unplug::RingBuffer<float>> levelRingBuffer;
   lockfree::RealtimeObject<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
-  unplug::Oversampling oversampling;
+  unplug::RealtimeOversampling oversampling;
 
   explicit SharedData(unplug::SetupPluginFromDsp const& setupPlugin)
     : levelRingBuffer{ std::make_unique<unplug::RingBuffer<float>>() }
     , waveformRingBuffer{ std::make_unique<unplug::WaveformRingBuffer<float>>() }
     , oversampling{ unplug::SetupPluginFromDspUnit(setupPlugin, 0), [] {
-                     auto settings = unplug::Oversampling::Settings{};
+                     auto settings = unplug::RealtimeOversampling::Settings{};
                      settings.requirements.numScalarToScalarUpsamplers = 1;
                      settings.requirements.numScalarToScalarDownsamplers = 1;
                      return settings;

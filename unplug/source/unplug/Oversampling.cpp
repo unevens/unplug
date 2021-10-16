@@ -15,15 +15,15 @@
 
 namespace unplug {
 
-bool Oversampling::setContext(Context const& context)
+bool RealtimeOversampling::setContext(Context const& context)
 {
-  auto const isContextChanged = [&](detail::Oversampling const& oversampling) {
+  auto const isContextChanged = [&](Oversampling const& oversampling) {
     return oversampling.getSettings().context != context;
   };
-  auto const adaptOversampling = [&](detail::Oversampling const& oversampling) {
+  auto const adaptOversampling = [&](Oversampling const& oversampling) {
     auto settings = oversampling.getSettings();
     settings.context = context;
-    return std::make_unique<detail::Oversampling>(settings);
+    return std::make_unique<Oversampling>(settings);
   };
   bool const hasChanged = oversampling.changeIf(adaptOversampling, isContextChanged);
   if (hasChanged) {
@@ -32,7 +32,7 @@ bool Oversampling::setContext(Context const& context)
   return hasChanged;
 }
 
-bool Oversampling::setup(Index numChannels, Index maxAudioBlockSize, FloatingPointPrecision floatingPointPrecision)
+bool RealtimeOversampling::setup(Index numChannels, Index maxAudioBlockSize, FloatingPointPrecision floatingPointPrecision)
 {
   auto context = Context{};
   context.numChannels = numChannels;
@@ -43,15 +43,15 @@ bool Oversampling::setup(Index numChannels, Index maxAudioBlockSize, FloatingPoi
   return setContext(context);
 }
 
-bool Oversampling::setRequirements(const Oversampling::Requirements& requirements)
+bool RealtimeOversampling::setRequirements(const RealtimeOversampling::Requirements& requirements)
 {
-  auto const haveRequirementsChanges = [&](detail::Oversampling const& oversampling) {
+  auto const haveRequirementsChanges = [&](Oversampling const& oversampling) {
     return oversampling.getSettings().requirements != requirements;
   };
-  auto const adaptOversampling = [&](detail::Oversampling const& oversampling) {
+  auto const adaptOversampling = [&](Oversampling const& oversampling) {
     auto settings = oversampling.getSettings();
     settings.requirements = requirements;
-    return std::make_unique<detail::Oversampling>(settings);
+    return std::make_unique<Oversampling>(settings);
   };
   bool const hasChanged = oversampling.changeIf(adaptOversampling, haveRequirementsChanges);
   if (hasChanged) {
@@ -61,7 +61,7 @@ bool Oversampling::setRequirements(const Oversampling::Requirements& requirement
   return hasChanged;
 }
 
-void Oversampling::changeRequirements(std::function<void(Requirements&)>const& change) {
+void RealtimeOversampling::changeRequirements(std::function<void(Requirements&)>const& change) {
   auto requirements = getRequirementsOnUiThread();
   change(requirements);
   setRequirements(requirements);

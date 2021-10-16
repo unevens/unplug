@@ -36,7 +36,7 @@ void paint()
   MeterValueLabelCentered(Meter::level, "Level: ");
   LevelMeter(Meter::level, "LevelMeter", { widgetWidth, levelMeterHeight });
   OversamplingRateCombo(sharedData.oversampling);
-  // OversamplingLinearPhaseCheckbox(sharedData.oversampling);
+  OversamplingLinearPhaseCheckbox(sharedData.oversampling);
   ImGui::EndGroup();
 
   ImGui::SameLine();

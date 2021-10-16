@@ -73,6 +73,34 @@ public:
     return settings;
   }
 
+  template<Serialization::Action action>
+  bool serialization(Serialization::Streamer<action>& streamer)
+  {
+    if (!streamer(settings.requirements.numScalarToVecUpsamplers))
+      return false;
+    if (!streamer(settings.requirements.numVecToVecUpsamplers))
+      return false;
+    if (!streamer(settings.requirements.numScalarToScalarUpsamplers))
+      return false;
+    if (!streamer(settings.requirements.numScalarToScalarDownsamplers))
+      return false;
+    if (!streamer(settings.requirements.numVecToScalarDownsamplers))
+      return false;
+    if (!streamer(settings.requirements.numVecToVecDownsamplers))
+      return false;
+    if (!streamer(settings.requirements.numScalarBuffers))
+      return false;
+    if (!streamer(settings.requirements.numInterleavedBuffers))
+      return false;
+    if (!streamer(settings.requirements.order))
+      return false;
+    if (!streamer(settings.requirements.linearPhase))
+      return false;
+    if (!streamer(settings.requirements.firTransitionBand))
+      return false;
+    return true;
+  }
+
 private:
   Settings settings;
   oversimple::Oversampling oversampling;
@@ -80,6 +108,8 @@ private:
 } // namespace detail
 
 using SupportedSampleTypes = oversimple::OversamplingSettings::SupportedScalarTypes;
+
+using OversamplingPreallocated = detail::Oversampling;
 
 class Oversampling final
 {
@@ -160,30 +190,11 @@ public:
   template<Serialization::Action action>
   bool serialization(Serialization::Streamer<action>& streamer)
   {
-    auto settings = oversampling.getOnNonRealtimeThread()->getSettings();
-    if (!streamer(settings.requirements.numScalarToVecUpsamplers))
-      return false;
-    if (!streamer(settings.requirements.numVecToVecUpsamplers))
-      return false;
-    if (!streamer(settings.requirements.numScalarToScalarUpsamplers))
-      return false;
-    if (!streamer(settings.requirements.numScalarToScalarDownsamplers))
-      return false;
-    if (!streamer(settings.requirements.numVecToScalarDownsamplers))
-      return false;
-    if (!streamer(settings.requirements.numVecToVecDownsamplers))
-      return false;
-    if (!streamer(settings.requirements.numScalarBuffers))
-      return false;
-    if (!streamer(settings.requirements.numInterleavedBuffers))
-      return false;
-    if (!streamer(settings.requirements.order))
-      return false;
-    if (!streamer(settings.requirements.linearPhase))
-      return false;
-    if (!streamer(settings.requirements.firTransitionBand))
+    auto instance = oversampling.getOnNonRealtimeThread();
+    if (!instance->template serialization<action>(streamer))
       return false;
 
+    auto settings = instance->getSettings();
     if constexpr (action == Serialization::Action::load) {
       auto const haveSettingsChanged = [&](detail::Oversampling const& oversampling) {
         return !(settings == oversampling.getSettings());

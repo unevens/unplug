@@ -380,11 +380,21 @@ std::string ParameterAccess::getEditingControl(ParamIndex index) const
 void ParameterAccess::setMidiMapping(ParamIndex index, int midiControl, int channel)
 {
   midiMapping.mapParameter(index, midiControl, channel);
+  auto handler = controller.getComponentHandler();
+  assert(handler);
+  if (handler) {
+    handler->restartComponent(Steinberg::Vst::kMidiCCAssignmentChanged);
+  }
 }
 
 void ParameterAccess::setMidiMapping(ParamIndex index, int midiControl)
 {
   midiMapping.mapParameter(index, midiControl);
+  auto handler = controller.getComponentHandler();
+  assert(handler);
+  if (handler) {
+    handler->restartComponent(Steinberg::Vst::kMidiCCAssignmentChanged);
+  }
 }
 
 bool ParameterAccess::findParameterFromUserInterfaceCoordinates(int xPos, int yPos, ParamIndex& index)

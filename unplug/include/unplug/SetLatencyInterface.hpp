@@ -20,56 +20,22 @@
 
 namespace unplug {
 
-class SetupPluginFromDsp final
+class SetLatencyInterface final
 {
 public:
-  using UpdateLatency = std::function<void(unplug::Index dspUnitIndex, uint32_t dspUnitLatency)>;
 
   void setLatency(unplug::Index dspUnitIndex, uint32_t dspUnitLatency) const
   {
     onUpdateLatency(dspUnitIndex, dspUnitLatency);
   }
 
-  void restart() const
-  {
-    onRestart();
-  }
-
-  SetupPluginFromDsp(std::function<void()> onRestart, UpdateLatency onUpdateLatency)
-    : onRestart{ std::move(onRestart) }
+  SetLatencyInterface(UpdateLatency onUpdateLatency)
     , onUpdateLatency{ std::move(onUpdateLatency) }
   {}
 
 private:
   UpdateLatency onUpdateLatency;
-  std::function<void()> onRestart;
 };
 
-class SetupPluginFromDspUnit final
-{
-public:
-  void setLatency(uint32_t dspUnitLatency) const
-  {
-    if (dspUnitIndex != noLatencyUnit) {
-      pluginInterface.setLatency(dspUnitIndex, dspUnitLatency);
-    }
-  }
-
-  void restart() const
-  {
-    pluginInterface.restart();
-  }
-
-  SetupPluginFromDspUnit(SetupPluginFromDsp pluginInterface, unplug::Index dspUnitIndex)
-    : pluginInterface{ std::move(pluginInterface) }
-    , dspUnitIndex{ dspUnitIndex }
-  {}
-
-  inline constexpr static Index noLatencyUnit = std::numeric_limits<Index>::max();
-
-private:
-  SetupPluginFromDsp const pluginInterface;
-  int dspUnitIndex;
-};
 
 } // namespace unplug

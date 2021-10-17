@@ -93,7 +93,7 @@ public:
     writePosition().store(static_cast<unsigned int>(newWritePosition), std::memory_order_release);
   }
 
-  Index getBufferCapaccity() const
+  Index getBufferCapacity() const
   {
     return bufferCapacity;
   }
@@ -118,6 +118,25 @@ public:
   float getDurationInSeconds() const
   {
     return settings.durationInSeconds;
+  }
+
+  void setContext(ContextInfo const& context)
+  {
+    settings.context = context;
+    resize();
+  }
+
+  void setResolution(float pointsPerSecond, float durationInSeconds)
+  {
+    settings.pointsPerSecond = pointsPerSecond;
+    settings.durationInSeconds = durationInSeconds;
+    resize();
+  }
+
+  void setSettings(RingBufferSettings settings_)
+  {
+    settings = settings_;
+    resize();
   }
 
   ContextInfo const& getContext() const
@@ -241,23 +260,8 @@ private:
   Buffer buffer;
 };
 
-template<class ElementType, class Allocator = std::allocator<ElementType>>
-using RingBufferUnit = DspUnit<RingBuffer<ElementType, Allocator>, RingBufferSettings>;
-
-template<class ElementType, class Allocator = std::allocator<ElementType>>
-RingBufferUnit<ElementType, Allocator> createRingBufferUnit(SetupPluginFromDspUnit setupPlugin,
-                                                            RingBufferSettings resolution = {})
-{
-  return RingBufferUnit<ElementType, Allocator>{ std::move(setupPlugin),
-                                                 [](ContextInfo const& context, RingBufferSettings& settings) {
-                                                   settings.context = context;
-                                                 },
-                                                 resolution,
-                                                 [](RingBuffer<ElementType, Allocator>&) { return 0; } };
-}
-
 template<Serialization::Action action, class ElementType, class Allocator = std::allocator<ElementType>>
-bool serialization(RingBufferUnit<ElementType, Allocator>& ringBuffer, Serialization::Streamer<action>& streamer)
+bool serialization(RingBuffer<ElementType, Allocator>& ringBuffer, Serialization::Streamer<action>& streamer)
 {
   auto settings = ringBuffer.getSettingsForEditing();
   if (!streamer(settings.pointsPerSecond))
@@ -385,16 +389,6 @@ struct WaveformElement final
  * */
 template<class SampleType, class Allocator = std::allocator<WaveformElement<SampleType>>>
 using WaveformRingBuffer = RingBuffer<WaveformElement<SampleType>, Allocator>;
-
-template<class SampleType, class Allocator = std::allocator<WaveformElement<SampleType>>>
-using WaveformRingBufferUnit = DspUnit<WaveformRingBuffer<SampleType, Allocator>, RingBufferSettings>;
-
-template<class SampleType, class Allocator = std::allocator<WaveformElement<SampleType>>>
-WaveformRingBufferUnit<SampleType, Allocator> createWaveformRingBufferUnit(SetupPluginFromDspUnit setupPlugin,
-                                                                           RingBufferSettings resolution = {})
-{
-  return createRingBufferUnit<WaveformElement<SampleType>>(setupPlugin, resolution);
-}
 
 /**
  * Sends the waveform profile to a ring buffer.

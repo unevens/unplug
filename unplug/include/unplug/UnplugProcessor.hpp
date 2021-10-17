@@ -26,7 +26,7 @@
 #include "unplug/MeterStorage.hpp"
 #include "unplug/ParameterStorage.hpp"
 #include "unplug/Serialization.hpp"
-#include "unplug/SetupPluginFromDsp.hpp"
+#include "unplug/SetLatencyInterface.hpp"
 #include "unplug/detail/SetupIOFromVst3ProcessData.hpp"
 #include <atomic>
 #include <memory>
@@ -121,7 +121,7 @@ protected:
    * processor to setup (think of oversampling: when changing the oversampling rate, the latency may change, and the
    * amount of samples that other dsp elements may need to pre allocate may also change). (Not marked as const because
    * the returned interface contains lambdas to non-const member of functions) */
-  unplug::SetupPluginFromDsp const& getSetupPluginInterface()
+  unplug::SetLatencyInterface const& getSetupPluginInterface()
   {
     return setupPluginInterface;
   }
@@ -236,7 +236,7 @@ private:
   ContextInfo contextInfo;
   std::vector<uint32_t> latencies;
   std::atomic<uint32_t> latency;
-  unplug::SetupPluginFromDsp setupPluginInterface;
+  unplug::SetLatencyInterface setupPluginInterface;
 };
 
 template<class SampleType, class StaticProcessing, class Upsampling, class Downsampling>

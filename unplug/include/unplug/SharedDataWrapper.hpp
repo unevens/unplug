@@ -12,13 +12,15 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/SetupPluginFromDsp.hpp"
+#include "unplug/SetLatencyInterface.hpp"
 
 namespace unplug {
 
 namespace detail {
 class EventHandler;
 }
+
+using UpdateLatency = std::function<void(unplug::Index dspUnitIndex, uint32_t dspUnitLatency)>;
 
 /**
  * A class that wraps the plugin custom data that will be available to both the user interface and the processor.
@@ -46,8 +48,8 @@ public:
     return data;
   }
 
-  explicit SharedDataWrapper(unplug::SetupPluginFromDsp const& setupPlugin)
-    : data(setupPlugin)
+  explicit SharedDataWrapper(UpdateLatency udateLatency)
+  : data(std::move(udateLatency))
   {}
 
   SharedDataWrapper(SharedDataWrapper const&) = delete;

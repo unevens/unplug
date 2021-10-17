@@ -23,16 +23,22 @@
 struct SharedData final
 {
   unplug::Oversampling oversampling;
-  unplug::RingBufferUnit<float> levelRingBuffer;
-  unplug::WaveformRingBufferUnit<float> waveformRingBuffer;
+  unplug::RingBuffer<float> levelRingBuffer;
+  unplug::WaveformRingBuffer<float> waveformRingBuffer;
 
-  explicit SharedData(unplug::SetupPluginFromDsp const& setupPlugin)
-    : oversampling{ unplug::createOversamplingUnit(unplug::SetupPluginFromDspUnit(setupPlugin, 0),
-                                                   oversamplingSettings()) }
-    , levelRingBuffer{ std::move(unplug::createRingBufferUnit<float>(
-        unplug::SetupPluginFromDspUnit(setupPlugin, unplug::SetupPluginFromDspUnit::noLatencyUnit))) }
-    , waveformRingBuffer{ unplug::createWaveformRingBufferUnit<float>(
-        unplug::SetupPluginFromDspUnit(setupPlugin, unplug::SetupPluginFromDspUnit::noLatencyUnit)) }
+  void updateLatencyOnParamChange(unplug::ParamIndex paramIndex, double paramValue)
+  {
+    switch (paramIndex) {
+      case 1000:
+        auto const oversamplingLatency = oversampling->getSpecificOversamplerForTheParamValue().getLatency();
+        updateLatency(0, oversamplingLatency);
+      default:
+        break;
+    }
+  }
+
+  explicit SharedData(unplug::UpdateLatency updateLatency)
+    : updateLatency(std::move(updateLatency))
   {}
 
   void setup(unplug::ContextInfo const& context)
@@ -56,6 +62,8 @@ struct SharedData final
   }
 
 private:
+  unplug::UpdateLatency updateLatency;
+
   static oversimple::OversamplingSettings oversamplingSettings()
   {
     auto settings = oversimple::OversamplingSettings{};

@@ -17,22 +17,6 @@
 
 namespace unplug {
 
-Oversampling createOversamplingUnit(SetupPluginFromDspUnit setupPlugin, oversimple::OversamplingSettings settings)
-{
-  using SupportedSampleTypes = oversimple::OversamplingSettings::SupportedScalarTypes;
 
-  return DspUnit<oversimple::Oversampling, oversimple::OversamplingSettings>{
-    std::move(setupPlugin),
-    [](ContextInfo const& context, oversimple::OversamplingSettings& settings) {
-      settings.context.numChannels = context.numIO.numOuts;
-      settings.context.numSamplesPerBlock = context.maxAudioBlockSize;
-      settings.context.supportedScalarTypes = context.precision == FloatingPointPrecision::float64
-                                                ? SupportedSampleTypes::floatAndDouble
-                                                : SupportedSampleTypes::onlyFloat;
-    },
-    settings,
-    [](oversimple::Oversampling& oversampling) { return oversampling.getLatency(); }
-  };
-}
 
 } // namespace unplug

@@ -52,16 +52,17 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
     auto pUnits = units.empty() ? nullptr : units.c_str();
     auto pShortTitle = shortTitle.empty() ? nullptr : shortTitle.c_str();
 
+    int32 const flags = [&] {
+      int32 flags = description.isAutomatable() ? ParameterInfo::kCanAutomate
+                                                : ParameterInfo::kIsReadOnly | ParameterInfo::kIsHidden;
+      if (description.isBypass)
+        flags |= ParameterInfo::kIsBypass;
+      return flags;
+    }();
+
     switch (description.type) {
       case ParameterDescription::Type::numeric: {
-        int32 const flags = [&] {
-          int32 flags = ParameterInfo::kNoFlags;
-          if (description.canBeAutomated)
-            flags = ParameterInfo::kCanAutomate;
-          if (description.isBypass)
-            flags |= ParameterInfo::kIsBypass;
-          return flags;
-        }();
+
         if (description.isNonlinear()) {
           auto parameter = new NonlinearParameter(title.c_str(),
                                                   description.index,
@@ -91,10 +92,8 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
         }
       } break;
       case ParameterDescription::Type::list: {
-        int32 const flags =
-          ParameterInfo::kIsList | (description.canBeAutomated ? ParameterInfo::kCanAutomate : ParameterInfo::kNoFlags);
-        auto parameter =
-          new StringListParameter(title.c_str(), description.index, pUnits, flags, kRootUnitId, pShortTitle);
+        auto parameter = new StringListParameter(
+          title.c_str(), description.index, pUnits, ParameterInfo::kIsList | flags, kRootUnitId, pShortTitle);
         for (auto& entry : description.labels) {
           auto label = ToVstTChar{}(entry);
           parameter->appendString(label.c_str());
@@ -111,6 +110,10 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
       else {
         midiMapping.mapParameter(description.index, description.defaultMidiMapping.control, mapping.channel);
       }
+    }
+
+    if (description.mayChangeLatencyOnEdit()) {
+      parametersWithLatencyUpdate[description.index] = {};
     }
   }
 
@@ -251,12 +254,26 @@ tresult UnplugController::getMidiControllerAssignment(int32 busIndex,
 tresult UnplugController::setParamNormalized(ParamID tag, ParamValue value)
 {
   if (Parameter* parameter = getParameterObject(tag)) {
+
+    auto maybeLatencyUpdate = parametersWithLatencyUpdate.find(tag);
+    if (maybeLatencyUpdate != parametersWithLatencyUpdate.end()) {
+      bool const hasChanged = parameter->getNormalized() != value;
+      if (hasChanged) {
+        auto const plainValue = parameter->toPlain(value);
+        sharedData->get().updateLatencyOnParamChange(static_cast<unplug::ParamIndex>(tag), plainValue);
+        parameter->setNormalized(value);
+        restart();
+      }
+      return kResultTrue;
+    }
+
     parameter->setNormalized(value);
     bool const isProgramChange = (parameter->getInfo().flags & ParameterInfo::kIsProgramChange) != 0;
     if (isProgramChange) {
       int const selectedPreset = static_cast<int>(std::round(value * static_cast<double>(Presets::get().size())));
       applyPreset(selectedPreset);
     }
+
     return kResultTrue;
   }
   return kResultFalse;
@@ -300,11 +317,7 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
     return kResultOk;
   }
   else if (FIDStringsEqual(message->getMessageID(), latencyChangedId)) {
-    auto handler = getComponentHandler();
-    assert(handler);
-    if (handler) {
-      handler->restartComponent(kRoutingInfoChanged);
-    }
+    restart();
     return kResultOk;
   }
   else
@@ -322,6 +335,15 @@ void UnplugController::onViewClosed()
 bool UnplugController::onNotify(IMessage* message)
 {
   return EditControllerEx1::notify(message) == kResultOk;
+}
+
+void UnplugController::restart()
+{
+  auto handler = getComponentHandler();
+  assert(handler);
+  if (handler) {
+    handler->restartComponent(kRoutingInfoChanged);
+  }
 }
 
 } // namespace Steinberg::Vst

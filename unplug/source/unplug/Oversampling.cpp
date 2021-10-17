@@ -13,58 +13,26 @@
 
 #include "unplug/Oversampling.hpp"
 
+#include <utility>
+
 namespace unplug {
 
-bool RealtimeOversampling::setContext(Context const& context)
+Oversampling createOversamplingUnit(SetupPluginFromDspUnit setupPlugin, oversimple::OversamplingSettings settings)
 {
-  auto const isContextChanged = [&](Oversampling const& oversampling) {
-    return oversampling.getSettings().context != context;
-  };
-  auto const adaptOversampling = [&](Oversampling const& oversampling) {
-    auto settings = oversampling.getSettings();
-    settings.context = context;
-    return std::make_unique<Oversampling>(settings);
-  };
-  bool const hasChanged = oversampling.changeIf(adaptOversampling, isContextChanged);
-  if (hasChanged) {
-    setupPlugin.setLatency(getProcessorOnUiThread().getLatency());
-  }
-  return hasChanged;
-}
+  using SupportedSampleTypes = oversimple::OversamplingSettings::SupportedScalarTypes;
 
-bool RealtimeOversampling::setup(Index numChannels, Index maxAudioBlockSize, FloatingPointPrecision floatingPointPrecision)
-{
-  auto context = Context{};
-  context.numChannels = numChannels;
-  context.numSamplesPerBlock = maxAudioBlockSize;
-  context.supportedScalarTypes = floatingPointPrecision == FloatingPointPrecision::float64
-                                   ? SupportedSampleTypes::floatAndDouble
-                                   : SupportedSampleTypes::onlyFloat;
-  return setContext(context);
-}
-
-bool RealtimeOversampling::setRequirements(const RealtimeOversampling::Requirements& requirements)
-{
-  auto const haveRequirementsChanges = [&](Oversampling const& oversampling) {
-    return oversampling.getSettings().requirements != requirements;
+  return DspUnit<oversimple::Oversampling, oversimple::OversamplingSettings>{
+    std::move(setupPlugin),
+    [](ContextInfo const& context, oversimple::OversamplingSettings& settings) {
+      settings.context.numChannels = context.numIO.numOuts;
+      settings.context.numSamplesPerBlock = context.maxAudioBlockSize;
+      settings.context.supportedScalarTypes = context.precision == FloatingPointPrecision::float64
+                                                ? SupportedSampleTypes::floatAndDouble
+                                                : SupportedSampleTypes::onlyFloat;
+    },
+    settings,
+    [](oversimple::Oversampling& oversampling) { return oversampling.getLatency(); }
   };
-  auto const adaptOversampling = [&](Oversampling const& oversampling) {
-    auto settings = oversampling.getSettings();
-    settings.requirements = requirements;
-    return std::make_unique<Oversampling>(settings);
-  };
-  bool const hasChanged = oversampling.changeIf(adaptOversampling, haveRequirementsChanges);
-  if (hasChanged) {
-    setupPlugin.setLatency(getProcessorOnUiThread().getLatency());
-    setupPlugin.setup();
-  }
-  return hasChanged;
-}
-
-void RealtimeOversampling::changeRequirements(std::function<void(Requirements&)>const& change) {
-  auto requirements = getRequirementsOnUiThread();
-  change(requirements);
-  setRequirements(requirements);
 }
 
 } // namespace unplug

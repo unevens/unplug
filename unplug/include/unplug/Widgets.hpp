@@ -275,14 +275,14 @@ bool Control(ParamIndex paramIndex, std::function<ControlOutput(ParameterData co
 /**
  * Controls the oversampling rate through a combo control
  * */
-bool OversamplingRateCombo(unplug::RealtimeOversampling& oversampling,
+bool OversamplingRateCombo(unplug::Oversampling& oversampling,
                            ShowLabel showLabel = ShowLabel::yes,
                            Index maxOrder = 5);
 
 /**
  * Controls the oversampling linear phase
  * */
-bool OversamplingLinearPhaseCheckbox(unplug::RealtimeOversampling& oversampling,
+bool OversamplingLinearPhaseCheckbox(unplug::Oversampling& oversampling,
                                      ShowLabel showLabel = ShowLabel::yes,
                                      const char* overrideLabel = nullptr);
 

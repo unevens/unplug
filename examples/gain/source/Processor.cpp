@@ -38,7 +38,8 @@ tresult PLUGIN_API Processor::setProcessing(TBool state)
 
 UnplugProcessor::Index Processor::getOversamplingRate() const
 {
-  return sharedDataWrapped->get().oversampling.getProcessorOnUiThread().getRate();
+  auto oversamplingOrder = sharedDataWrapped->get().oversampling.getSettingsForEditing().requirements.order;
+  return 1 << oversamplingOrder;
 }
 
 } // namespace Steinberg::Vst

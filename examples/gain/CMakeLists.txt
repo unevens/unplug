@@ -170,7 +170,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
 
 # Unplug
 include_directories("${unplug_SOURCE_DIR}/unplug/include")
-include_directories("${unplug_SOURCE_DIR}/libs/lockfree-async")
+#include_directories("${unplug_SOURCE_DIR}/libs/lockfree-async")
 add_library(unplug-opaque-gl STATIC)
 target_sources(unplug-opaque-gl PRIVATE "${unplug_SOURCE_DIR}/unplug/source/gl/OpaqueGl.cpp")
 target_link_libraries(${PROJECT_NAME} PRIVATE unplug-opaque-gl)

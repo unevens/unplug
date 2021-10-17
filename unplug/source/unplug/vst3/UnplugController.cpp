@@ -303,15 +303,7 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
     auto handler = getComponentHandler();
     assert(handler);
     if (handler) {
-      handler->restartComponent(kLatencyChanged);
-    }
-    return kResultOk;
-  }
-  else if (FIDStringsEqual(message->getMessageID(), restartId)) {
-    auto handler = getComponentHandler();
-    assert(handler);
-    if (handler) {
-      handler->restartComponent(kLatencyChanged);
+      handler->restartComponent(kRoutingInfoChanged);
     }
     return kResultOk;
   }

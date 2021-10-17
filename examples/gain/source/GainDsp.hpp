@@ -75,28 +75,23 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
     assert(state.metering.levels.size() == numOutputChannels);
     state.metering.levels.resize(numOutputChannels);
     auto& sharedData = *state.pluginState.sharedData;
-    auto levelRingBuffer = sharedData.levelRingBuffer.getOnRealtimeThread();
-    if (levelRingBuffer) {
-      unplug::sendToRingBuffer(
-        *levelRingBuffer,
-        outputs,
-        numOutputChannels,
-        0,
-        numSamples,
-        [&](auto sampleValue, Index channel) {
-          auto memory = state.metering.levels[channel];
-          memory += state.metering.levelSmoothingAlpha * static_cast<float>(std::abs(sampleValue) - memory);
-          state.metering.levels[channel] = memory;
-          return memory;
-        },
-        [](auto x, float weight) { return static_cast<float>(x) * weight; },
-        [&](auto accumulatedValue, auto elementValue) { return accumulatedValue + elementValue; },
-        [](auto weightedValue) { return std::max(-90.f, unplug::linearToDB(weightedValue)); });
-    }
-    auto waveformRingBuffer = sharedData.waveformRingBuffer.getOnRealtimeThread();
-    if (waveformRingBuffer) {
-      unplug::sendToWaveformRingBuffer(*waveformRingBuffer, outputs, numOutputChannels, 0, numSamples);
-    }
+    unplug::sendToRingBuffer(
+      sharedData.levelRingBuffer.get(),
+      outputs,
+      numOutputChannels,
+      0,
+      numSamples,
+      [&](auto sampleValue, Index channel) {
+        auto memory = state.metering.levels[channel];
+        memory += state.metering.levelSmoothingAlpha * static_cast<float>(std::abs(sampleValue) - memory);
+        state.metering.levels[channel] = memory;
+        return memory;
+      },
+      [](auto x, float weight) { return static_cast<float>(x) * weight; },
+      [&](auto accumulatedValue, auto elementValue) { return accumulatedValue + elementValue; },
+      [](auto weightedValue) { return std::max(-90.f, unplug::linearToDB(weightedValue)); });
+
+    unplug::sendToWaveformRingBuffer(sharedData.waveformRingBuffer.get(), outputs, numOutputChannels, 0, numSamples);
   }
   auto const level =
     std::reduce(state.metering.levels.begin(), state.metering.levels.end()) * state.metering.invNumChannels;
@@ -174,21 +169,20 @@ void automatedProcessing(State& state,
 template<class SampleType>
 Index upsampling(State& state, IO<SampleType> io, Index numSamples)
 {
-  oversimple::TOversampling<SampleType>& oversampling =
-    state.pluginState.sharedData->oversampling.getProcessorOnAudioThread().get<SampleType>();
-  auto& upsampler = oversampling.scalarToScalarUpsamplers[0];
+  auto& upsampler = state.pluginState.sharedData->oversampling.get().get<SampleType>().scalarToScalarUpsamplers[0];
   return upsampler->processBlock(io.getIn(0).buffers, io.getIn(0).numChannels, numSamples);
 }
 
 template<class SampleType>
 void downsampling(State& state, IO<SampleType> io, Index numUpsampledSamples, Index requiredOutputSamples)
 {
-  oversimple::TOversampling<SampleType>& oversampling =
-    state.pluginState.sharedData->oversampling.getProcessorOnAudioThread().get<SampleType>();
-  auto& downsampler = oversampling.scalarToScalarDownsamplers[0];
-  auto& upsampler = oversampling.scalarToScalarUpsamplers[0];
-  downsampler->processBlock(
-    upsampler->getOutput().get(), io.getOut(0).buffers, io.getOut(0).numChannels, numUpsampledSamples, requiredOutputSamples);
+  auto& downsampler = state.pluginState.sharedData->oversampling.get().get<SampleType>().scalarToScalarDownsamplers[0];
+  auto& upsampler = state.pluginState.sharedData->oversampling.get().get<SampleType>().scalarToScalarUpsamplers[0];
+  downsampler->processBlock(upsampler->getOutput().get(),
+                            io.getOut(0).buffers,
+                            io.getOut(0).numChannels,
+                            numUpsampledSamples,
+                            requiredOutputSamples);
 }
 
 template<class SampleType>
@@ -197,8 +191,7 @@ void staticProcessingOversampled(State& state, IO<SampleType> io, Index numSampl
   bool const bypass = state.pluginState.parameters.get(Param::bypass) > 0.0;
   if (bypass)
     return;
-  oversimple::TOversampling<SampleType>& oversampling =
-    state.pluginState.sharedData->oversampling.getProcessorOnAudioThread().get<SampleType>();
+  auto& oversampling = state.pluginState.sharedData->oversampling.get().get<SampleType>();
   auto& upsampler = oversampling.scalarToScalarUpsamplers[0];
   auto const gain = state.pluginState.parameters.get(Param::gain);
   auto buffer = upsampler->getOutput().get();
@@ -220,8 +213,7 @@ void automatedProcessingOversampled(State& state,
   bool const bypass = automation.parameters[Param::bypass].currentValue > 0.0;
   if (bypass)
     return;
-  oversimple::TOversampling<SampleType>& oversampling =
-    state.pluginState.sharedData->oversampling.getProcessorOnAudioThread().get<SampleType>();
+  auto& oversampling = state.pluginState.sharedData->oversampling.get().get<SampleType>();
   auto& upsampler = oversampling.scalarToScalarUpsamplers[0];
   auto buffer = upsampler->getOutput().get();
   auto const numChannels = oversampling.getNumChannels();

@@ -92,11 +92,11 @@ bool Combo(ParamIndex paramIndex, ShowLabel showLabel)
   return hasValueChanged;
 }
 
-bool OversamplingRateCombo(unplug::RealtimeOversampling& oversampling, ShowLabel showLabel, Index maxOrder)
+bool OversamplingRateCombo(unplug::Oversampling& oversampling, ShowLabel showLabel, Index maxOrder)
 {
   using namespace ImGui;
 
-  auto const order = oversampling.getRequirementsOnUiThread().order;
+  auto const order = oversampling.getSettingsForEditing().requirements.order;
 
   auto const toText = [](int order) { return order == 0 ? "Off" : std::to_string(1 << order) + "x"; };
 
@@ -128,7 +128,7 @@ bool OversamplingRateCombo(unplug::RealtimeOversampling& oversampling, ShowLabel
   if (hasValueChanged) {
     ImGuiContext const& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
-    oversampling.changeRequirements([newOrder](auto& requirements) { requirements.order = newOrder; });
+    oversampling.changeSettings([newOrder](unplug::Oversampling::Settings& settings) { settings.requirements.order = newOrder; });
     MarkItemEdited(g.LastItemData.ID);
     getParameters().setDirty();
   }
@@ -146,16 +146,16 @@ bool Checkbox(ParamIndex paramIndex, ShowLabel showLabel)
   });
 }
 
-bool OversamplingLinearPhaseCheckbox(unplug::RealtimeOversampling& oversampling, ShowLabel showLabel, const char* overrideLabel)
+bool OversamplingLinearPhaseCheckbox(unplug::Oversampling & oversampling, ShowLabel showLabel, const char* overrideLabel)
 {
   using namespace ImGui;
   auto const controlName = makeLabel(showLabel, overrideLabel ? overrideLabel : "Linear Phase", "CHECKBOX");
-  auto const isLinearPhase = oversampling.getRequirementsOnUiThread().linearPhase;
+  auto const isLinearPhase = oversampling.getSettingsForEditing().requirements.linearPhase;
   auto isChecked = isLinearPhase;
   bool const isActive = ImGui::Checkbox(controlName.c_str(), &isChecked);
   bool const hasChanged = isChecked != isLinearPhase;
   if (hasChanged) {
-    oversampling.changeRequirements([isChecked](auto& requirements) { requirements.linearPhase = isChecked; });
+    oversampling.changeSettings([isChecked](unplug::Oversampling::Settings& settings) { settings.requirements.linearPhase = isChecked; });
     getParameters().setDirty();
   }
   return isActive;

@@ -29,12 +29,9 @@ tresult PLUGIN_API Processor::process(ProcessData& data)
 template<class SampleType>
 void Processor::TProcess(ProcessData& data)
 {
-  pluginState.sharedData->receiveChangesOnAudioThread();
-
-  auto const& oversamplingRequirements = pluginState.sharedData->oversampling.getRequirementsOnAudioThread();
   bool const hasLatency = getLatency() > 0;
   bool const useSamplePreciseAutomation = !hasLatency;
-  bool isOversamplingEnabled = oversamplingRequirements.order > 0;
+  bool isOversamplingEnabled = pluginState.sharedData->oversampling.get().getRate();
 
   if (isOversamplingEnabled) {
     if (useSamplePreciseAutomation) {

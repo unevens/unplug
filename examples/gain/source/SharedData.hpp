@@ -12,7 +12,6 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "lockfree/RealtimeObject.hpp"
 #include "unplug/ContextInfo.hpp"
 #include "unplug/IO.hpp"
 #include "unplug/NumIO.hpp"
@@ -23,46 +22,35 @@
 
 struct SharedData final
 {
-  lockfree::RealtimeObject<unplug::RingBuffer<float>> levelRingBuffer;
-  lockfree::RealtimeObject<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
-  unplug::RealtimeOversampling oversampling;
+  unplug::Oversampling oversampling;
+  unplug::RingBufferUnit<float> levelRingBuffer;
+  unplug::WaveformRingBufferUnit<float> waveformRingBuffer;
 
   explicit SharedData(unplug::SetupPluginFromDsp const& setupPlugin)
-    : levelRingBuffer{ std::make_unique<unplug::RingBuffer<float>>() }
-    , waveformRingBuffer{ std::make_unique<unplug::WaveformRingBuffer<float>>() }
-    , oversampling{ unplug::SetupPluginFromDspUnit(setupPlugin, 0), [] {
-                     auto settings = unplug::RealtimeOversampling::Settings{};
-                     settings.requirements.numScalarToScalarUpsamplers = 1;
-                     settings.requirements.numScalarToScalarDownsamplers = 1;
-                     return settings;
-                   }() }
+    : oversampling{ unplug::createOversamplingUnit(unplug::SetupPluginFromDspUnit(setupPlugin, 0),
+                                                   oversamplingSettings()) }
+    , levelRingBuffer{ std::move(unplug::createRingBufferUnit<float>(
+        unplug::SetupPluginFromDspUnit(setupPlugin, unplug::SetupPluginFromDspUnit::noLatencyUnit))) }
+    , waveformRingBuffer{ unplug::createWaveformRingBufferUnit<float>(
+        unplug::SetupPluginFromDspUnit(setupPlugin, unplug::SetupPluginFromDspUnit::noLatencyUnit)) }
   {}
 
   void setup(unplug::ContextInfo const& context)
   {
-    oversampling.setup(context.numIO.numOuts, context.maxAudioBlockSize, context.precision);
-    unplug::setup(levelRingBuffer, context, [](unplug::RingBuffer<float>& ringBuffer) { ringBuffer.reset(0.f); });
-    unplug::setup(waveformRingBuffer, context, [](unplug::WaveformRingBuffer<float>& ringBuffer) {
-      ringBuffer.reset(unplug::WaveformElement<float>{ 0.f, 0.f });
-    });
-  }
-
-  void receiveChangesOnAudioThread()
-  {
-    oversampling.receiveChangesOnAudioThread();
-    levelRingBuffer.receiveChangesOnRealtimeThread();
-    waveformRingBuffer.receiveChangesOnRealtimeThread();
+    oversampling.setContext(context);
+    levelRingBuffer.setContext(context);
+    waveformRingBuffer.setContext(context);
   }
 
   template<unplug::Serialization::Action action>
   bool serialization(unplug::Serialization::Streamer<action>& streamer)
   {
     using namespace unplug;
-    if (!ringBufferSettingsSerialization(levelRingBuffer, streamer))
+    if (!unplug::serialization(levelRingBuffer, streamer))
       return false;
-    if (!ringBufferSettingsSerialization(waveformRingBuffer, streamer))
+    if (!unplug::serialization(waveformRingBuffer, streamer))
       return false;
-    if (!oversampling.serialization(streamer))
+    if (!unplug::serialization(oversampling, streamer))
       return false;
     return true;
   }

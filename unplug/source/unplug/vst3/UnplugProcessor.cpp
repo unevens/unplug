@@ -325,7 +325,6 @@ void UnplugProcessor::updateLatency(Index dspUnitIndex, uint64_t dspUnitLatency)
   if (latencies[dspUnitIndex] != dspUnitLatency) {
     latencies[dspUnitIndex] = dspUnitLatency;
     latency.store(std::reduce(latencies.begin(), latencies.end()), std::memory_order_release);
-    sendLatencyChangedMessage();
   }
 }
 
@@ -338,9 +337,7 @@ UnplugProcessor::UnplugProcessor()
 {}
 
 void UnplugProcessor::sendRestartMessage() {
-  auto message = owned(allocateMessage());
-  message->setMessageID(vst3::messageId::restartId);
-  sendMessage(message);
+  sendLatencyChangedMessage();
 }
 
 } // namespace Steinberg::Vst

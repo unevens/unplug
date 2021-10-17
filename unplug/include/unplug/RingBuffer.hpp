@@ -12,8 +12,8 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "lockfree/RealtimeObject.hpp"
 #include "unplug/ContextInfo.hpp"
+#include "unplug/DspUnit.hpp"
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
 #include "unplug/Serialization.hpp"
@@ -21,6 +21,14 @@
 #include <vector>
 
 namespace unplug {
+
+struct RingBufferSettings final
+{
+  ContextInfo context;
+  float pointsPerSecond = 128;
+  float durationInSeconds = 1.f;
+  bool operator==(RingBufferSettings const&) const noexcept = default;
+};
 
 /**
  * A ring buffer to send continuous data from the dsp to the user interface.
@@ -52,7 +60,7 @@ public:
 
   Index getWritePosition() const
   {
-    return static_cast<Index>(writePosition.load(std::memory_order_acquire));
+    return static_cast<Index>(writePosition().load(std::memory_order_acquire));
   }
 
   Index getReadPosition() const
@@ -82,7 +90,7 @@ public:
 
   void setWritePosition(Index newWritePosition)
   {
-    writePosition.store(static_cast<unsigned int>(newWritePosition), std::memory_order_release);
+    writePosition().store(static_cast<unsigned int>(newWritePosition), std::memory_order_release);
   }
 
   Index getBufferCapaccity() const
@@ -97,23 +105,9 @@ public:
     std::fill(std::begin(accumulator), std::end(accumulator), valueToResetTo);
   }
 
-  void setContext(ContextInfo const& info)
-  {
-    contextInfo = info;
-    resize();
-  }
-
-  void setResolution(float pointsPerSecond_, float durationInSeconds_)
-  {
-    pointsPerSecond = pointsPerSecond_;
-    durationInSeconds = durationInSeconds_;
-    secondsPerPoint = 1.f / pointsPerSecond;
-    resize();
-  }
-
   float getPointsPerSecond() const
   {
-    return pointsPerSecond;
+    return settings.pointsPerSecond;
   }
 
   float getSecondsPerPoint() const
@@ -123,12 +117,12 @@ public:
 
   float getDurationInSeconds() const
   {
-    return durationInSeconds;
+    return settings.durationInSeconds;
   }
 
   ContextInfo const& getContext() const
   {
-    return contextInfo;
+    return settings.context;
   }
 
   void setUseOversampledSampleRate(bool value)
@@ -137,24 +131,12 @@ public:
     resize();
   }
 
-  RingBuffer()
+  explicit RingBuffer(RingBufferSettings settings = {})
+    : settings{ settings }
   {
-    secondsPerPoint = 1.f / pointsPerSecond;
+    secondsPerPoint = 1.f / settings.pointsPerSecond;
+    resize();
   }
-
-  RingBuffer(RingBuffer const& other)
-    : numChannels(other.numChannels)
-    , bufferCapacity(other.bufferCapacity)
-    , writePosition{ other.writePosition.load() }
-    , readBlockSize(other.readBlockSize)
-    , pointsPerSample(other.pointsPerSample)
-    , samplesPerPoint(other.samplesPerPoint)
-    , pointsPerSecond(other.pointsPerSecond)
-    , secondsPerPoint(other.secondsPerPoint)
-    , durationInSeconds(other.durationInSeconds)
-    , contextInfo(other.contextInfo)
-    , buffer(other.buffer)
-  {}
 
   std::vector<ElementType, Allocator> accumulator;
   float accumulatedSamples = 0.f;
@@ -167,13 +149,14 @@ private:
 
   void resize()
   {
+    auto const& contextInfo = settings.context;
     numChannels = choseNumChannels(contextInfo.numIO);
     accumulator.resize(numChannels);
     auto actualSampleRate = useOversampledSampleRate ? contextInfo.getOversampledSampleRate() : contextInfo.sampleRate;
-    samplesPerPoint = actualSampleRate / pointsPerSecond;
+    samplesPerPoint = actualSampleRate / settings.pointsPerSecond;
     pointsPerSample = 1.f / samplesPerPoint;
     auto const maxWriteIncrementPerAudioBlock = pointsPerSample * static_cast<float>(contextInfo.maxAudioBlockSize);
-    readBlockSize = static_cast<int>(std::ceil(durationInSeconds * pointsPerSecond));
+    readBlockSize = static_cast<int>(std::ceil(settings.durationInSeconds * settings.pointsPerSecond));
     auto const audioBlockDuration = static_cast<float>(contextInfo.maxAudioBlockSize) / contextInfo.sampleRate;
     auto const refreshTime = 1.f / contextInfo.userInterfaceRefreshRate;
     auto const audioBlocksPerUserInterfaceRefreshTime = refreshTime / audioBlockDuration;
@@ -192,7 +175,7 @@ private:
   {
     auto const currentWritePosition = getWritePosition();
     if (newSize <= currentWritePosition) {
-      writePosition.store(0, std::memory_order_release);
+      setWritePosition(0);
       auto const delta = currentWritePosition - newSize;
       if (delta > 0) {
         std::copy(std::begin(buffer) + delta * numChannels,
@@ -204,19 +187,90 @@ private:
     buffer.resize(newSize * numChannels);
   }
 
+  template<class T>
+  struct MovableAtomic
+  {
+    std::atomic<T> value;
+
+    std::atomic<T> const& operator()() const
+    {
+      return value;
+    }
+
+    std::atomic<T>& operator()()
+    {
+      return value;
+    }
+
+    friend void swap(MovableAtomic& first, MovableAtomic& second) noexcept
+    {
+      auto const secondValue = second.value.load(std::memory_order_acquire);
+      auto const firstValue = first.value.load(std::memory_order_acquire);
+      first.value.store(secondValue, std::memory_order_release);
+      second.value.store(firstValue, std::memory_order_release);
+    }
+
+    MovableAtomic() = default;
+
+    explicit MovableAtomic(T value)
+      : value{ value }
+    {}
+
+    MovableAtomic(MovableAtomic&& other) noexcept
+      : MovableAtomic()
+    {
+      swap(*this, other);
+    }
+
+    MovableAtomic& operator=(MovableAtomic other) noexcept
+    {
+      swap(*this, other);
+      return *this;
+    }
+  };
+
   Index numChannels = 1;
   Index bufferCapacity = 0;
-  std::atomic<int> writePosition{ 0 };
+  MovableAtomic<int> writePosition{ 0 };
   Index readBlockSize = 0;
   float pointsPerSample = 1.f;
   float samplesPerPoint = 1;
-  float pointsPerSecond = 128;
-  float durationInSeconds = 1.f;
+  RingBufferSettings settings;
   float secondsPerPoint;
-  ContextInfo contextInfo;
   bool useOversampledSampleRate = false;
   Buffer buffer;
 };
+
+template<class ElementType, class Allocator = std::allocator<ElementType>>
+using RingBufferUnit = DspUnit<RingBuffer<ElementType, Allocator>, RingBufferSettings>;
+
+template<class ElementType, class Allocator = std::allocator<ElementType>>
+RingBufferUnit<ElementType, Allocator> createRingBufferUnit(SetupPluginFromDspUnit setupPlugin,
+                                                            RingBufferSettings resolution = {})
+{
+  return RingBufferUnit<ElementType, Allocator>{ std::move(setupPlugin),
+                                                 [](ContextInfo const& context, RingBufferSettings& settings) {
+                                                   settings.context = context;
+                                                 },
+                                                 resolution,
+                                                 [](RingBuffer<ElementType, Allocator>&) { return 0; } };
+}
+
+template<Serialization::Action action, class ElementType, class Allocator = std::allocator<ElementType>>
+bool serialization(RingBufferUnit<ElementType, Allocator>& ringBuffer, Serialization::Streamer<action>& streamer)
+{
+  auto settings = ringBuffer.getSettingsForEditing();
+  if (!streamer(settings.pointsPerSecond))
+    return false;
+  if (!streamer(settings.durationInSeconds))
+    return false;
+
+  if constexpr (action == Serialization::load) {
+    ringBuffer.setSettings(settings);
+  }
+
+  return true;
+}
 
 /**
  * Sends data to a ring buffer, with custom logic to average it
@@ -332,6 +386,16 @@ struct WaveformElement final
 template<class SampleType, class Allocator = std::allocator<WaveformElement<SampleType>>>
 using WaveformRingBuffer = RingBuffer<WaveformElement<SampleType>, Allocator>;
 
+template<class SampleType, class Allocator = std::allocator<WaveformElement<SampleType>>>
+using WaveformRingBufferUnit = DspUnit<WaveformRingBuffer<SampleType, Allocator>, RingBufferSettings>;
+
+template<class SampleType, class Allocator = std::allocator<WaveformElement<SampleType>>>
+WaveformRingBufferUnit<SampleType, Allocator> createWaveformRingBufferUnit(SetupPluginFromDspUnit setupPlugin,
+                                                                           RingBufferSettings resolution = {})
+{
+  return createRingBufferUnit<WaveformElement<SampleType>>(setupPlugin, resolution);
+}
+
 /**
  * Sends the waveform profile to a ring buffer.
  * */
@@ -358,63 +422,6 @@ void sendToWaveformRingBuffer(WaveformRingBuffer<WaveformSampleType, Allocator>&
       return accumulatedValue;
     },
     [](WaveformElement<WaveformSampleType> value) { return value; });
-}
-
-/**
- * Sets the audio block information and the user interface framerate for a ring buffer, resizing it accordingly.
- * */
-template<class RingBufferClass, class OnSizeChanged>
-bool setup(lockfree::RealtimeObject<RingBufferClass>& rtRingBuffer,
-           unplug::ContextInfo const& context,
-           OnSizeChanged onSizeChanged)
-{
-  auto const isContextChanged = [&](RingBufferClass const& ringBuffer) {
-    auto const& prevContext = ringBuffer.getContext();
-    bool const anyChange = prevContext != context;
-    return anyChange;
-  };
-  auto const resizeRingBuffer = [&](RingBufferClass const& ringBuffer) {
-    auto newRingBuffer = std::make_unique<RingBufferClass>(ringBuffer);
-    newRingBuffer->setContext(context);
-    onSizeChanged(*newRingBuffer);
-    return newRingBuffer;
-  };
-  bool const hasChanged = rtRingBuffer.changeIf(resizeRingBuffer, isContextChanged);
-  return hasChanged;
-}
-
-template<class RingBufferClass, Serialization::Action action>
-bool ringBufferSettingsSerialization(lockfree::RealtimeObject<RingBufferClass>& rtRingBuffer,
-                                     Serialization::Streamer<action>& streamer)
-{
-  if constexpr (action == Serialization::Action::save) {
-    auto ringBuffer = rtRingBuffer.getOnNonRealtimeThread();
-    auto pointsPerSecond = ringBuffer->getPointsPerSecond();
-    if (!streamer(pointsPerSecond))
-      return false;
-    auto durationInSeconds = ringBuffer->getDurationInSeconds();
-    if (!streamer(durationInSeconds))
-      return false;
-  }
-  if constexpr (action == Serialization::Action::load) {
-    float pointsPerSecond = 0.f;
-    float durationInSeconds = 0.f;
-    if (!streamer(pointsPerSecond))
-      return false;
-    if (!streamer(durationInSeconds))
-      return false;
-    auto const haveSettingsChanged = [=](RingBufferClass const& ringBuffer) {
-      return pointsPerSecond != ringBuffer.getPointsPerSecond() ||
-             durationInSeconds != ringBuffer.getDurationInSeconds();
-    };
-    auto const applySettings = [=](RingBufferClass const& ringBuffer) {
-      auto newRingBuffer = std::make_unique<RingBufferClass>(ringBuffer);
-      newRingBuffer->setResolution(pointsPerSecond, durationInSeconds);
-      return newRingBuffer;
-    };
-    rtRingBuffer.changeIf(applySettings, haveSettingsChanged);
-  }
-  return true;
 }
 
 } // namespace unplug

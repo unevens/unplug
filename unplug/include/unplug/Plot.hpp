@@ -139,15 +139,11 @@ bool PlotRingBuffer(const char* name,
  * */
 template<class ElementType, class Allocator>
 bool PlotRingBuffer(const char* name,
-                    lockfree::RealtimeObject<RingBuffer<ElementType, Allocator>>& rtRingBuffer,
+                    RingBufferUnit<ElementType, Allocator>& ringBufferUnit,
                     std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
                       makeStereoOrGenericPlotChannelLegend())
 {
-  auto ringBuffer = rtRingBuffer.getOnNonRealtimeThread();
-  if (ringBuffer) {
-    return PlotRingBuffer(name, *ringBuffer, getChannelLegend);
-  }
-  return false;
+  return PlotRingBuffer(name, ringBufferUnit.get(), getChannelLegend);
 }
 
 /**
@@ -192,16 +188,12 @@ bool PlotWaveformRingBuffer(const char* name,
  * */
 template<class ElementType, class Allocator>
 bool PlotWaveformRingBuffer(const char* name,
-                            lockfree::RealtimeObject<WaveformRingBuffer<ElementType, Allocator>>& rtRingBuffer,
+                            WaveformRingBufferUnit<ElementType, Allocator>& ringBufferUnit,
                             float alpha = 0.5f,
                             std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
                               makeStereoOrGenericPlotChannelLegend())
 {
-  auto ringBuffer = rtRingBuffer.getOnNonRealtimeThread();
-  if (ringBuffer) {
-    return PlotWaveformRingBuffer(name, *ringBuffer, alpha, getChannelLegend);
-  }
-  return false;
+  return PlotWaveformRingBuffer(name, ringBufferUnit.get(), alpha, getChannelLegend);
 }
 
 } // namespace unplug

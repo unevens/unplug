@@ -13,7 +13,6 @@
 
 #pragma once
 #include "unplug/ContextInfo.hpp"
-#include "unplug/DspUnit.hpp"
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
 #include "unplug/Serialization.hpp"
@@ -157,6 +156,11 @@ public:
     resize();
   }
 
+  RingBufferSettings const& getSettings() const
+  {
+    return settings;
+  }
+
   std::vector<ElementType, Allocator> accumulator;
   float accumulatedSamples = 0.f;
 
@@ -263,7 +267,7 @@ private:
 template<Serialization::Action action, class ElementType, class Allocator = std::allocator<ElementType>>
 bool serialization(RingBuffer<ElementType, Allocator>& ringBuffer, Serialization::Streamer<action>& streamer)
 {
-  auto settings = ringBuffer.getSettingsForEditing();
+  auto settings = ringBuffer.getSettings();
   if (!streamer(settings.pointsPerSecond))
     return false;
   if (!streamer(settings.durationInSeconds))

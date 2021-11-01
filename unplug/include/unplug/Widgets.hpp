@@ -16,7 +16,6 @@
 #include "imgui_internal.h" //ImVec2 and ImVec4 operators
 #include "unplug/Index.hpp"
 #include "unplug/Math.hpp"
-#include "unplug/Oversampling.hpp"
 #include "unplug/ParameterAccess.hpp"
 #include <functional>
 #include <string>
@@ -271,20 +270,6 @@ struct ControlOutput
  * Controls a parameter with a custom control, used internally by most control that allows to edit a parameter
  * */
 bool Control(ParamIndex paramIndex, std::function<ControlOutput(ParameterData const& parameter)> const& control);
-
-/**
- * Controls the oversampling rate through a combo control
- * */
-bool OversamplingRateCombo(unplug::Oversampling& oversampling,
-                           ShowLabel showLabel = ShowLabel::yes,
-                           Index maxOrder = 5);
-
-/**
- * Controls the oversampling linear phase
- * */
-bool OversamplingLinearPhaseCheckbox(unplug::Oversampling& oversampling,
-                                     ShowLabel showLabel = ShowLabel::yes,
-                                     const char* overrideLabel = nullptr);
 
 /**
  * implementation details that can be useful to implement custom controls

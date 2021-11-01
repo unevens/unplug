@@ -40,6 +40,8 @@ private:
   template<class SampleType>
   void TProcess(ProcessData& data);
 
+  void updateLatency(unplug::ParamIndex paramIndex, ParamValue value) override;
+
   GainDsp::State dspState;
 };
 } // namespace Steinberg::Vst

@@ -35,8 +35,8 @@ void paint()
   SliderFloat(Param::gain);
   MeterValueLabelCentered(Meter::level, "Level: ");
   LevelMeter(Meter::level, "LevelMeter", { widgetWidth, levelMeterHeight });
-  OversamplingRateCombo(sharedData.oversampling);
-  OversamplingLinearPhaseCheckbox(sharedData.oversampling);
+  Combo(Param::oversamplingOrder);
+  Checkbox(Param::oversamplingLinearPhase);
   ImGui::EndGroup();
 
   ImGui::SameLine();

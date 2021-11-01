@@ -26,7 +26,6 @@
 #include "unplug/MeterStorage.hpp"
 #include "unplug/ParameterStorage.hpp"
 #include "unplug/Serialization.hpp"
-#include "unplug/SetLatencyInterface.hpp"
 #include "unplug/detail/SetupIOFromVst3ProcessData.hpp"
 #include <atomic>
 #include <memory>
@@ -117,14 +116,6 @@ protected:
   {
     return contextInfo;
   }
-  /**Gets an interface to pass to dsp elements that may need to tell the processor their latency or request the whole
-   * processor to setup (think of oversampling: when changing the oversampling rate, the latency may change, and the
-   * amount of samples that other dsp elements may need to pre allocate may also change). (Not marked as const because
-   * the returned interface contains lambdas to non-const member of functions) */
-  unplug::SetLatencyInterface const& getSetupPluginInterface()
-  {
-    return setupPluginInterface;
-  }
 
   /** Override this function to let unplug know about the oversampling rate used by your processing call */
   virtual Index getOversamplingRate() const
@@ -174,13 +165,16 @@ protected:
     return true;
   }
 
-  void updateLatency(Index dspUnitIndex, uint64_t dspUnitLatency);
-
-  void sendRestartMessage();
+  virtual void updateLatency(unplug::ParamIndex paramIndex, ParamValue value) {}
 
   uint32_t getLatency() const
   {
-    return latency.load(std::memory_order_acquire);
+    return latency;
+  }
+
+  void setLatency(uint32_t value)
+  {
+    latency = value;
   }
 
 private:
@@ -188,8 +182,6 @@ private:
   bool serialization(IBStreamer& streamer);
 
   void sendSharedDataToController();
-
-  void sendLatencyChangedMessage();
 
   NumIO updateNumIO();
 
@@ -224,8 +216,6 @@ public:
     return static_cast<uint32>(getLatency());
   }
 
-  UnplugProcessor();
-
 protected:
   std::shared_ptr<unplug::SharedDataWrapped> sharedDataWrapped;
   unplug::PluginState pluginState;
@@ -234,9 +224,7 @@ protected:
 
 private:
   ContextInfo contextInfo;
-  std::vector<uint32_t> latencies;
-  std::atomic<uint32_t> latency;
-  unplug::SetLatencyInterface setupPluginInterface;
+  uint32_t latency{ 0 };
 };
 
 template<class SampleType, class StaticProcessing, class Upsampling, class Downsampling>

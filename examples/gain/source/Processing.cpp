@@ -29,10 +29,16 @@ tresult PLUGIN_API Processor::process(ProcessData& data)
 template<class SampleType>
 void Processor::TProcess(ProcessData& data)
 {
-  bool const hasLatency = getLatency() > 0;
+  //todo the oversampling parameters should be updated after having read the incoming param queue
+  auto const oversamplingOrder = static_cast<uint32_t>(std::round(pluginState.parameters.get(Param::oversamplingOrder)));
+  auto const oversamplingLinearPhase = pluginState.parameters.get(Param::oversamplingLinearPhase) > 0.5;
+  bool const hasLatency = oversamplingLinearPhase && oversamplingOrder > 0;
   bool const useSamplePreciseAutomation = !hasLatency;
-  bool isOversamplingEnabled = pluginState.sharedData->oversampling.get().getRate();
 
+  pluginState.sharedData->oversampling.setOrder(oversamplingOrder);
+  pluginState.sharedData->oversampling.setUseLinearPhase(oversamplingLinearPhase);
+
+  bool const isOversamplingEnabled = oversamplingOrder > 0;
   if (isOversamplingEnabled) {
     if (useSamplePreciseAutomation) {
       processWithSamplePreciseAutomation<SampleType>(

@@ -113,7 +113,7 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
     }
 
     if (description.mayChangeLatencyOnEdit()) {
-      parametersWithLatencyUpdate[description.index] = {};
+      parametersWithLatencyUpdate.insert(description.index);
     }
   }
 
@@ -260,8 +260,12 @@ tresult UnplugController::setParamNormalized(ParamID tag, ParamValue value)
       bool const hasChanged = parameter->getNormalized() != value;
       if (hasChanged) {
         auto const plainValue = parameter->toPlain(value);
-        sharedData->get().updateLatencyOnParamChange(static_cast<unplug::ParamIndex>(tag), plainValue);
         parameter->setNormalized(value);
+        auto message = owned(allocateMessage());
+        message->setMessageID(vst3::messageId::updateLatencyId);
+        message->getAttributes()->setInt(vst3::messageId::udateLatencyParamChangedTagId, (int64)tag);
+        message->getAttributes()->setFloat(vst3::messageId::udateLatencyParamChangedValueId, plainValue);
+        sendMessage(message);
         restart();
       }
       return kResultTrue;
@@ -314,10 +318,6 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
     };
     meters = *reinterpret_cast<std::shared_ptr<MeterStorage>*>(getAddress(meterStorageId));
     sharedData = *reinterpret_cast<std::shared_ptr<SharedDataWrapped>*>(getAddress(sharedDataStorageId));
-    return kResultOk;
-  }
-  else if (FIDStringsEqual(message->getMessageID(), latencyChangedId)) {
-    restart();
     return kResultOk;
   }
   else

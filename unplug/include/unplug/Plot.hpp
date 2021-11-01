@@ -135,18 +135,6 @@ bool PlotRingBuffer(const char* name,
 }
 
 /**
- * Plots a simple ring buffer, suitable for ring buffers holding continuous numeric data.
- * */
-template<class ElementType, class Allocator>
-bool PlotRingBuffer(const char* name,
-                    RingBufferUnit<ElementType, Allocator>& ringBufferUnit,
-                    std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
-                      makeStereoOrGenericPlotChannelLegend())
-{
-  return PlotRingBuffer(name, ringBufferUnit.get(), getChannelLegend);
-}
-
-/**
  * Plots a waveform ring buffer.
  * */
 template<class ElementType, class Allocator>
@@ -181,19 +169,6 @@ bool PlotWaveformRingBuffer(const char* name,
       ImPlot::PlotLine(channelLegend.label.c_str(), rawData + 2 * offset + 1, count, xScale, x0, 0, stride);
       ImPlot::PopStyleColor(ImPlotCol_Line);
     });
-}
-
-/**
- * Plots a waveform ring buffer.
- * */
-template<class ElementType, class Allocator>
-bool PlotWaveformRingBuffer(const char* name,
-                            WaveformRingBufferUnit<ElementType, Allocator>& ringBufferUnit,
-                            float alpha = 0.5f,
-                            std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
-                              makeStereoOrGenericPlotChannelLegend())
-{
-  return PlotWaveformRingBuffer(name, ringBufferUnit.get(), alpha, getChannelLegend);
 }
 
 } // namespace unplug

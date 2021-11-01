@@ -12,38 +12,29 @@
 //------------------------------------------------------------------------
 
 #pragma once
+#include "oversimple/Oversampling.hpp"
 #include "unplug/ContextInfo.hpp"
 #include "unplug/IO.hpp"
 #include "unplug/NumIO.hpp"
-#include "unplug/Oversampling.hpp"
 #include "unplug/RingBuffer.hpp"
 #include "unplug/Serialization.hpp"
 #include "unplug/SharedDataWrapper.hpp"
 
 struct SharedData final
 {
-  unplug::Oversampling oversampling;
+  oversimple::Oversampling oversampling;
   unplug::RingBuffer<float> levelRingBuffer;
   unplug::WaveformRingBuffer<float> waveformRingBuffer;
 
-  void updateLatencyOnParamChange(unplug::ParamIndex paramIndex, double paramValue)
-  {
-    switch (paramIndex) {
-      case 1000:
-        auto const oversamplingLatency = oversampling->getSpecificOversamplerForTheParamValue().getLatency();
-        updateLatency(0, oversamplingLatency);
-      default:
-        break;
-    }
-  }
-
-  explicit SharedData(unplug::UpdateLatency updateLatency)
-    : updateLatency(std::move(updateLatency))
+  SharedData()
+    : oversampling{ oversamplingSettings() }
   {}
 
   void setup(unplug::ContextInfo const& context)
   {
-    oversampling.setContext(context);
+    oversampling.setNumChannelsToDownSample(context.numIO.numOuts);
+    oversampling.setNumChannelsToUpSample(context.numIO.numIns);
+    oversampling.prepareBuffers(context.maxAudioBlockSize);
     levelRingBuffer.setContext(context);
     waveformRingBuffer.setContext(context);
   }
@@ -56,19 +47,25 @@ struct SharedData final
       return false;
     if (!unplug::serialization(waveformRingBuffer, streamer))
       return false;
-    if (!unplug::serialization(oversampling, streamer))
-      return false;
     return true;
   }
 
 private:
-  unplug::UpdateLatency updateLatency;
-
   static oversimple::OversamplingSettings oversamplingSettings()
   {
     auto settings = oversimple::OversamplingSettings{};
-    settings.requirements.numScalarToScalarUpsamplers = 1;
-    settings.requirements.numScalarToScalarDownsamplers = 1;
+    settings.maxOrder = 5;
+    settings.numDownSampledChannels = 2;
+    settings.numUpSampledChannels = 2;
+    settings.maxNumInputSamples = 128;
+    settings.upSampleOutputBufferType = oversimple::BufferType::plain;
+    settings.upSampleInputBufferType = oversimple::BufferType::plain;
+    settings.downSampleOutputBufferType = oversimple::BufferType::plain;
+    settings.downSampleInputBufferType = oversimple::BufferType::plain;
+    settings.order = 1;
+    settings.isUsingLinearPhase = false;
+    settings.fftBlockSize = 512;
+    settings.firTransitionBand = 4.0;
     return settings;
   }
 };

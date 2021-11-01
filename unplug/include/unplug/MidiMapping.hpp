@@ -96,7 +96,7 @@ namespace detail {
 class MidiMappingSingleChannel final
 {
 public:
-  static constexpr auto unmapped = ParamIndex{ -1 };
+  static constexpr auto unmapped = ParamIndex{ std::numeric_limits<ParamIndex>::max() };
 
   MidiMappingSingleChannel();
 

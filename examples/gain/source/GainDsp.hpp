@@ -76,7 +76,7 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
     state.metering.levels.resize(numOutputChannels);
     auto& sharedData = *state.pluginState.sharedData;
     unplug::sendToRingBuffer(
-      sharedData.levelRingBuffer.get(),
+      sharedData.levelRingBuffer,
       outputs,
       numOutputChannels,
       0,
@@ -91,7 +91,7 @@ void levelMetering(State& state, IO<SampleType> io, Index numSamples)
       [&](auto accumulatedValue, auto elementValue) { return accumulatedValue + elementValue; },
       [](auto weightedValue) { return std::max(-90.f, unplug::linearToDB(weightedValue)); });
 
-    unplug::sendToWaveformRingBuffer(sharedData.waveformRingBuffer.get(), outputs, numOutputChannels, 0, numSamples);
+    unplug::sendToWaveformRingBuffer(sharedData.waveformRingBuffer, outputs, numOutputChannels, 0, numSamples);
   }
   auto const level =
     std::reduce(state.metering.levels.begin(), state.metering.levels.end()) * state.metering.invNumChannels;
@@ -169,20 +169,15 @@ void automatedProcessing(State& state,
 template<class SampleType>
 Index upsampling(State& state, IO<SampleType> io, Index numSamples)
 {
-  auto& upsampler = state.pluginState.sharedData->oversampling.get().get<SampleType>().scalarToScalarUpsamplers[0];
-  return upsampler->processBlock(io.getIn(0).buffers, io.getIn(0).numChannels, numSamples);
+  return state.pluginState.sharedData->oversampling.template upSample(io.getIn(0).buffers, numSamples);
 }
 
 template<class SampleType>
 void downsampling(State& state, IO<SampleType> io, Index numUpsampledSamples, Index requiredOutputSamples)
 {
-  auto& downsampler = state.pluginState.sharedData->oversampling.get().get<SampleType>().scalarToScalarDownsamplers[0];
-  auto& upsampler = state.pluginState.sharedData->oversampling.get().get<SampleType>().scalarToScalarUpsamplers[0];
-  downsampler->processBlock(upsampler->getOutput().get(),
-                            io.getOut(0).buffers,
-                            io.getOut(0).numChannels,
-                            numUpsampledSamples,
-                            requiredOutputSamples);
+  auto& oversampling = state.pluginState.sharedData->oversampling;
+  auto& upSampled = oversampling.template getUpSampleOutput<SampleType>();
+  oversampling.template downSample(upSampled.get(), numUpsampledSamples, io.getOut(0).buffers, requiredOutputSamples);
 }
 
 template<class SampleType>
@@ -191,14 +186,13 @@ void staticProcessingOversampled(State& state, IO<SampleType> io, Index numSampl
   bool const bypass = state.pluginState.parameters.get(Param::bypass) > 0.0;
   if (bypass)
     return;
-  auto& oversampling = state.pluginState.sharedData->oversampling.get().get<SampleType>();
-  auto& upsampler = oversampling.scalarToScalarUpsamplers[0];
+  auto& oversampling = state.pluginState.sharedData->oversampling;
+  auto& upSampled = oversampling.template getUpSampleOutput<SampleType>();
   auto const gain = state.pluginState.parameters.get(Param::gain);
-  auto buffer = upsampler->getOutput().get();
-  auto const numChannels = oversampling.getNumChannels();
+  auto const numChannels = upSampled.getNumChannels();
   for (Index channelIndex = 0; channelIndex < numChannels; ++channelIndex) {
     for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex) {
-      buffer[channelIndex][sampleIndex] = gain * buffer[channelIndex][sampleIndex];
+      upSampled[channelIndex][sampleIndex] = gain * upSampled[channelIndex][sampleIndex];
     }
   }
 }
@@ -213,14 +207,13 @@ void automatedProcessingOversampled(State& state,
   bool const bypass = automation.parameters[Param::bypass].currentValue > 0.0;
   if (bypass)
     return;
-  auto& oversampling = state.pluginState.sharedData->oversampling.get().get<SampleType>();
-  auto& upsampler = oversampling.scalarToScalarUpsamplers[0];
-  auto buffer = upsampler->getOutput().get();
-  auto const numChannels = oversampling.getNumChannels();
+  auto& oversampling = state.pluginState.sharedData->oversampling;
+  auto& upSampled = oversampling.template getUpSampleOutput<SampleType>();
+  auto const numChannels = upSampled.getNumChannels();
   for (Index sampleIndex = startSample; sampleIndex < endSample; ++sampleIndex) {
     for (Index channelIndex = 0; channelIndex < numChannels; ++channelIndex) {
       auto const gain = automation.next(Param::gain);
-      buffer[channelIndex][sampleIndex] = gain * buffer[channelIndex][sampleIndex];
+      upSampled[channelIndex][sampleIndex] = gain * upSampled[channelIndex][sampleIndex];
     }
   }
 }

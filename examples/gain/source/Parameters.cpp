@@ -16,10 +16,16 @@
 
 namespace unplug {
 
-std::vector<ParameterDescription> getParameterDescriptions() {
+std::vector<ParameterDescription> getParameterDescriptions()
+{
   auto parameters = std::vector<ParameterDescription>();
   parameters.push_back(ParameterDescription::makeBypassParameter(Param::bypass));
   parameters.push_back(ParameterDescription(Param::gain, "Gain", -90.0, 6.0, 0.0).ControlledByDecibels());
+  parameters.push_back(
+    ParameterDescription(Param::oversamplingOrder, "OverSampling", { "1x", "2x", "4x", "8x", "16x", "32x" })
+      .EditPolicy(ParamEditPolicy::notAutomatableAndMayChangeLatencyOnEdit));
+  parameters.push_back(ParameterDescription(Param::oversamplingLinearPhase, "Linear Phase", 0, 1, 0)
+                         .EditPolicy(ParamEditPolicy::notAutomatableAndMayChangeLatencyOnEdit));
   return parameters;
 }
 

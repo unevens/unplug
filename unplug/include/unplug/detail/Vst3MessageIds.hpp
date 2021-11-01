@@ -25,7 +25,9 @@ inline constexpr auto sharedDataStorageId = "unplug shared data storage";
 inline constexpr auto userInterfaceChangedId = "unplug user interface message";
 inline constexpr auto userInterfaceStateId = "unplug user interface state";
 
-inline constexpr auto latencyChangedId = "unplug latency changed";
+inline constexpr auto updateLatencyId = "unplug update latency";
+inline constexpr auto udateLatencyParamChangedTagId = "unplug update latency param id";
+inline constexpr auto udateLatencyParamChangedValueId = "unplug update latency param value";
 
 
 } // namespace unplug::vst3

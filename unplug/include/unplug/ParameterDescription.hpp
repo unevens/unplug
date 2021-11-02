@@ -28,6 +28,13 @@ static_assert(std::atomic<float>::is_always_lock_free, "At least atomic<float> s
 /**
  * A struct that describes a parameter. It is used to create the parameter.
  * */
+enum class ParamEditPolicy
+{
+  automatable,
+  notAutomatable,
+  notAutomatableAndMayChangeLatencyOnEdit
+};
+
 struct ParameterDescription
 {
   enum class Type
@@ -35,12 +42,13 @@ struct ParameterDescription
     numeric,
     list
   };
+
   Type type;
   ParamIndex index;
   std::string name;
   std::string shortName;
   std::string measureUnit;
-  bool canBeAutomated = true;
+  ParamEditPolicy editPolicy = ParamEditPolicy::automatable;
   ParameterValueType min;
   ParameterValueType max;
   ParameterValueType defaultValue;
@@ -82,7 +90,7 @@ struct ParameterDescription
   /**
    * Makes the parameter automatable
    * */
-  ParameterDescription Automatable(bool isAutomatable);
+  ParameterDescription EditPolicy(ParamEditPolicy editPolicy_);
 
   /**
    * Sets the parameter short name. May be used by the host where there is not much space to show the name of the
@@ -125,6 +133,10 @@ struct ParameterDescription
    * @return true if the parameter has a nonlinear scaling
    * */
   bool isNonlinear() const;
+
+  bool isAutomatable() const;
+
+  bool mayChangeLatencyOnEdit() const;
 };
 
 } // namespace unplug

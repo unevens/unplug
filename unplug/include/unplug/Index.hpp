@@ -12,11 +12,11 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include <cstddef>
+#include <cstdint>
 
 namespace unplug {
 
-using Index = int;
+using Index = uint32_t;
 using ParamIndex = Index;
 using MeterIndex = Index;
 

@@ -18,9 +18,14 @@
 #include "unplug/detail/EditRegister.hpp"
 #include "unplug/detail/ParameterFromUserInterfaceCoordinates.hpp"
 
+namespace Steinberg::Vst {
+class UnplugController;
+}
+
 namespace unplug::vst3 {
 
-using EditControllerEx1 = Steinberg::Vst::EditControllerEx1;
+using UnplugController = Steinberg::Vst::UnplugController;
+using MidiMapping = ::unplug::detail::MidiMapping;
 using ParamValue = Steinberg::Vst::ParamValue;
 using ParameterInfo = Steinberg::Vst::ParameterInfo;
 using TChar = Steinberg::Vst::TChar;
@@ -245,12 +250,9 @@ public:
    * Inform the host of a change inside the plugin that needs to be serialized. There is no need to call this when
    * editing the parameters. It is exposed here to be used by widgets that controls custom data.
    * */
-  void setDirty()
-  {
-    controller.setDirty(true);
-  }
+  void setDirty();
 
-  ParameterAccess(EditControllerEx1& controller, detail::MidiMapping& midiMapping);
+  ParameterAccess(UnplugController& controller, MidiMapping& midiMapping);
 
   ~ParameterAccess();
 
@@ -275,8 +277,8 @@ private:
   bool isProgramChange(ParamIndex index, bool& result);
 
 private:
-  EditControllerEx1& controller;
-  detail::MidiMapping& midiMapping;
+  UnplugController& controller;
+  MidiMapping& midiMapping;
   unplug::detail::ParameterEditRegister editRegister;
   unplug::detail::ParameterFromUserInterfaceCoordinates parameterFinder;
   inline static thread_local ParameterAccess* current = nullptr;

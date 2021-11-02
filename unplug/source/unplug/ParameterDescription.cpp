@@ -27,6 +27,7 @@ unplug::ParameterDescription::ParameterDescription(ParamIndex index,
   , defaultValue{ static_cast<ParameterValueType>(defaultValue) }
 {
   numSteps = static_cast<int>(labels.size()) - 1;
+  min = 0;
   max = static_cast<ParameterValueType>(numSteps);
 }
 
@@ -45,9 +46,9 @@ ParameterDescription::ParameterDescription(ParamIndex index,
   , name{ std::move(name_) }
 {}
 
-ParameterDescription ParameterDescription::Automatable(bool isAutomatable)
+ParameterDescription ParameterDescription::EditPolicy(ParamEditPolicy editPolicy_)
 {
-  canBeAutomated = isAutomatable;
+  editPolicy = editPolicy_;
   return *this;
 }
 
@@ -114,6 +115,16 @@ ParameterDescription ParameterDescription::Nonlinear(std::function<double(double
 bool ParameterDescription::isNonlinear() const
 {
   return linearToNonlinear != nullptr && nonlinearToLinear != nullptr;
+}
+
+bool ParameterDescription::isAutomatable() const
+{
+  return editPolicy == ParamEditPolicy::automatable;
+}
+
+bool ParameterDescription::mayChangeLatencyOnEdit() const
+{
+  return editPolicy == ParamEditPolicy::notAutomatableAndMayChangeLatencyOnEdit;
 }
 
 } // namespace unplug

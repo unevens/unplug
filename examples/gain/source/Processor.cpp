@@ -33,12 +33,36 @@ bool Processor::onSetup(ContextInfo const& context)
 tresult PLUGIN_API Processor::setProcessing(TBool state)
 {
   dspState.metering.reset();
+  sharedDataWrapped->get().oversampling.reset();
   return kResultOk;
 }
 
 UnplugProcessor::Index Processor::getOversamplingRate() const
 {
-  return sharedDataWrapped->get().oversampling.getProcessorOnUiThread().getRate();
+  return 1 << static_cast<uint32_t>(std::round(pluginState.parameters.get(Param::oversamplingOrder)));
+}
+
+void Processor::updateLatency(unplug::ParamIndex paramIndex, ParamValue value)
+{
+  auto oversamplingOrder = pluginState.parameters.get(Param::oversamplingOrder);
+  auto oversamplingLinearPhase = pluginState.parameters.get(Param::oversamplingLinearPhase);
+  switch (paramIndex) {
+    case Param::oversamplingOrder:
+      oversamplingOrder = value;
+      break;
+    case Param::oversamplingLinearPhase:
+      oversamplingLinearPhase = value;
+      break;
+    default:
+      return;
+  }
+  if (oversamplingLinearPhase > 0.5) {
+    auto const latency = sharedDataWrapped->get().oversampling.getLatency(oversamplingOrder);
+    setLatency(static_cast<uint32_t>(latency));
+  }
+  else {
+    setLatency(0);
+  }
 }
 
 } // namespace Steinberg::Vst

@@ -22,8 +22,14 @@
 #include "unplug/MidiMapping.hpp"
 #include "unplug/detail/Vst3View.hpp"
 #include <memory>
+#include <unordered_set>
+
+namespace unplug {
+using UpdateLatencyOnParamChange = std::function<void(unplug::ParamIndex paramId, double parameterValue)>;
+}
 
 namespace Steinberg::Vst {
+
 
 class UnplugController
   : public EditControllerEx1
@@ -35,6 +41,7 @@ public:
   using MidiMapping = unplug::detail::MidiMapping;
   using View = unplug::vst3::detail::Vst3View;
   using Version = unplug::Version;
+  using UpdateLatencyOnParamChange = unplug::UpdateLatencyOnParamChange;
 
   virtual bool onNotify(IMessage* message);
 
@@ -59,10 +66,7 @@ public:
 
   void onViewClosed();
 
-  MidiMapping midiMapping;
-  std::array<int, 2> lastViewSize{ { -1, -1 } };
-  std::shared_ptr<unplug::MeterStorage> meters;
-  std::shared_ptr<unplug::SharedDataWrapped> sharedData;
+//  bool setValueNormalizedFormUserInterface(ParamID tag, ParamValue value);
 
 protected:
   template<unplug::Serialization::Action action>
@@ -70,7 +74,16 @@ protected:
 
 private:
   void applyPreset(int presetIndex);
+  void restart();
 
+public:
+  MidiMapping midiMapping;
+  std::array<int, 2> lastViewSize{ { -1, -1 } };
+  std::shared_ptr<unplug::MeterStorage> meters;
+  std::shared_ptr<unplug::SharedDataWrapped> sharedData;
+  std::unordered_set<ParamID> parametersWithLatencyUpdate;
+
+private:
   DEFINE_INTERFACES
   DEF_INTERFACE(IMidiMapping)
   END_DEFINE_INTERFACES(EditControllerEx1)

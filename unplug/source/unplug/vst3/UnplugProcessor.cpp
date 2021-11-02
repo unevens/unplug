@@ -46,7 +46,7 @@ tresult PLUGIN_API UnplugProcessor::initialize(FUnknown* context)
 
   ioCache.resize(1, 1);
 
-  sharedDataWrapped = std::make_shared<SharedDataWrapped>(getSetupPluginInterface());
+  sharedDataWrapped = std::make_shared<SharedDataWrapped>();
   pluginState.sharedData = &(sharedDataWrapped->get());
   pluginState.meters = std::make_shared<MeterStorage>();
 
@@ -61,6 +61,29 @@ tresult PLUGIN_API UnplugProcessor::terminate()
   return AudioEffect::terminate();
 }
 
+void UnplugProcessor::updateNotAutomatableParameters(ProcessData& data)
+{
+  if (pluginState.parameters.getNumNotAutomatableParameters() == 0)
+    return;
+  if (data.inputParameterChanges) {
+    int32 numParamsChanged = data.inputParameterChanges->getParameterCount();
+    for (int32 index = 0; index < numParamsChanged; index++) {
+      if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
+        int32 numPoints = paramQueue->getPointCount();
+        if (numPoints > 0) {
+          ParamValue value;
+          int32 sampleOffset;
+          paramQueue->getPoint(numPoints - 1, sampleOffset, value);
+          auto const parameterTag = paramQueue->getParameterId();
+          auto const isAutomatable = pluginState.parameters.isParameterAutomatable(parameterTag);
+          if (!isAutomatable) {
+            pluginState.parameters.setNormalized(static_cast<ParamIndex>(parameterTag), value);
+          }
+        }
+      }
+    }
+  }
+}
 void UnplugProcessor::updateParametersToLastPoint(ProcessData& data)
 {
   if (data.inputParameterChanges) {
@@ -177,6 +200,20 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
       return kResultFalse;
     }
   }
+  else if (FIDStringsEqual(message->getMessageID(), updateLatencyId)) {
+    int64 paramId;
+    if (kResultTrue != message->getAttributes()->getInt(vst3::messageId::updateLatencyParamChangedTagId, paramId)) {
+      return kResultFalse;
+    }
+    double paramValue;
+    if (kResultTrue !=
+        message->getAttributes()->getFloat(vst3::messageId::updateLatencyParamChangedValueId, paramValue)) {
+      return kResultFalse;
+    }
+    pluginState.parameters.set(paramId, paramValue);
+    updateLatency((ParamIndex)paramId, paramValue);
+    return kResultOk;
+  }
   else
     return onNotify(message) ? kResultOk : kResultFalse;
 }
@@ -257,7 +294,8 @@ unplug::NumIO UnplugProcessor::updateNumIO()
     bool const gotOutputInfoOk = output->getInfo(outputInfo);
     assert(gotOutputInfoOk);
     if (gotInputInfoOk && gotOutputInfoOk) {
-      return { inputInfo.channelCount, outputInfo.channelCount };
+      return { static_cast<unplug::Index>(inputInfo.channelCount),
+               static_cast<unplug::Index>(outputInfo.channelCount) };
     }
   }
   return { 0, 0 };
@@ -305,13 +343,6 @@ tresult UnplugProcessor::connect(IConnectionPoint* other)
   return onConnect(other) ? kResultTrue : kResultFalse;
 }
 
-void UnplugProcessor::sendLatencyChangedMessage()
-{
-  auto message = owned(allocateMessage());
-  message->setMessageID(vst3::messageId::latencyChangedId);
-  sendMessage(message);
-}
-
 bool UnplugProcessor::setup()
 {
   contextInfo.oversamplingRate = getOversamplingRate();
@@ -319,22 +350,19 @@ bool UnplugProcessor::setup()
   return onSetup(contextInfo);
 }
 
-void UnplugProcessor::updateLatency(Index dspUnitIndex, uint64_t dspUnitLatency)
+void UnplugProcessor::setLatency(uint32_t value)
 {
-  latencies.resize(std::max(latencies.size(), static_cast<std::size_t>(dspUnitIndex + 1)), 0);
-  if (latencies[dspUnitIndex] != dspUnitLatency) {
-    latencies[dspUnitIndex] = dspUnitLatency;
-    latency.store(std::reduce(latencies.begin(), latencies.end()), std::memory_order_release);
-    sendLatencyChangedMessage();
+  if (latency != value) {
+    latency = value;
+    auto message = owned(allocateMessage());
+    message->setMessageID(vst3::messageId::updateLatencyId);
+    sendMessage(message);
   }
 }
 
-UnplugProcessor::UnplugProcessor()
-  : AudioEffect()
-  , setupPluginInterface{ [this] { setup(); },
-                          [this](Index dspUnitIndex, uint32_t dspUnitLatency) {
-                            updateLatency(dspUnitIndex, dspUnitLatency);
-                          } }
-{}
+void UnplugProcessor::setOversamplingRate(int oversamplingRate)
+{
+  contextInfo.oversamplingRate = oversamplingRate;
+}
 
 } // namespace Steinberg::Vst

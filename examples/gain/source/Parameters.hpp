@@ -18,6 +18,8 @@ enum
 {
   bypass,
   gain,
+  oversamplingOrder,
+  oversamplingLinearPhase,
   numParams
 };
 }

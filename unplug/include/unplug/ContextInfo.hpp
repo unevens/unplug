@@ -30,11 +30,11 @@ enum class FloatingPointPrecision
  */
 struct ContextInfo final
 {
+  NumIO numIO;
   float sampleRate = 44100;
   Index oversamplingRate = 1;
   float userInterfaceRefreshRate = 30;
   Index maxAudioBlockSize = 128;
-  NumIO numIO;
   FloatingPointPrecision precision = FloatingPointPrecision::float32;
 
   float getOversampledSampleRate() const

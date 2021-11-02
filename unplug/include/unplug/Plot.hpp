@@ -15,6 +15,7 @@
 #include "implot.h"
 #include "unplug/Color.hpp"
 #include "unplug/RingBuffer.hpp"
+#include <functional>
 
 namespace unplug {
 
@@ -135,22 +136,6 @@ bool PlotRingBuffer(const char* name,
 }
 
 /**
- * Plots a simple ring buffer, suitable for ring buffers holding continuous numeric data.
- * */
-template<class ElementType, class Allocator>
-bool PlotRingBuffer(const char* name,
-                    lockfree::RealtimeObject<RingBuffer<ElementType, Allocator>>& rtRingBuffer,
-                    std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
-                      makeStereoOrGenericPlotChannelLegend())
-{
-  auto ringBuffer = rtRingBuffer.getOnNonRealtimeThread();
-  if (ringBuffer) {
-    return PlotRingBuffer(name, *ringBuffer, getChannelLegend);
-  }
-  return false;
-}
-
-/**
  * Plots a waveform ring buffer.
  * */
 template<class ElementType, class Allocator>
@@ -185,23 +170,6 @@ bool PlotWaveformRingBuffer(const char* name,
       ImPlot::PlotLine(channelLegend.label.c_str(), rawData + 2 * offset + 1, count, xScale, x0, 0, stride);
       ImPlot::PopStyleColor(ImPlotCol_Line);
     });
-}
-
-/**
- * Plots a waveform ring buffer.
- * */
-template<class ElementType, class Allocator>
-bool PlotWaveformRingBuffer(const char* name,
-                            lockfree::RealtimeObject<WaveformRingBuffer<ElementType, Allocator>>& rtRingBuffer,
-                            float alpha = 0.5f,
-                            std::function<PlotChannelLegend(Index channel, Index numChannels)> const& getChannelLegend =
-                              makeStereoOrGenericPlotChannelLegend())
-{
-  auto ringBuffer = rtRingBuffer.getOnNonRealtimeThread();
-  if (ringBuffer) {
-    return PlotWaveformRingBuffer(name, *ringBuffer, alpha, getChannelLegend);
-  }
-  return false;
 }
 
 } // namespace unplug

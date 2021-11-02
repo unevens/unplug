@@ -17,6 +17,7 @@
 #include "unplug/ParameterDescription.hpp"
 #include <array>
 #include <atomic>
+#include <unordered_set>
 
 #ifdef UNPLUG_VST3
 namespace Steinberg::Vst {
@@ -97,6 +98,16 @@ public:
 
   TParameterStorage& operator=(TParameterStorage const&) = delete;
 
+  bool isParameterAutomatable(ParamIndex paramIndex) const
+  {
+    return !notAutomatalbeParameters.contains(paramIndex);
+  }
+
+  uint32_t getNumNotAutomatableParameters() const
+  {
+    return notAutomatalbeParameters.size();
+  }
+
 private:
   void initialize(std::vector<ParameterDescription> const& parameterDescriptions);
 
@@ -104,7 +115,10 @@ private:
 
   void initializeDefaultValues(std::vector<ParameterDescription> const& parameterDescriptions);
 
+  void initializeHiddenParameters(std::vector<ParameterDescription> const& parameterDescriptions);
+
   std::array<StoredParameter, numParameters> parameters;
+  std::unordered_set<ParamIndex> notAutomatalbeParameters;
 };
 
 using ParameterStorage = TParameterStorage<NumParameters::value>;
@@ -143,6 +157,7 @@ void TParameterStorage<numParameters>::initialize(const std::vector<ParameterDes
 {
   initializeConversions(parameterDescriptions);
   initializeDefaultValues(parameterDescriptions);
+  initializeHiddenParameters(parameterDescriptions);
 }
 
 template<int numParameters>
@@ -169,6 +184,18 @@ void TParameterStorage<numParameters>::initializeDefaultValues(
     parameters[i].value.store(defaultValue);
   }
 }
+
+template<int numParameters>
+void TParameterStorage<numParameters>::initializeHiddenParameters(
+  const std::vector<ParameterDescription>& parameterDescriptions)
+{
+  for (auto& description : parameterDescriptions) {
+    if (description.editPolicy == ParamEditPolicy::notAutomatableAndMayChangeLatencyOnEdit) {
+      notAutomatalbeParameters.insert(description.index);
+    }
+  }
+}
+
 template<int numParameters>
 ParameterValueType TParameterStorage<numParameters>::valueFromNormalized(ParamIndex paramIndex,
                                                                          ParameterValueType valueNormalized)

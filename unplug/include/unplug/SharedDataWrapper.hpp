@@ -12,7 +12,6 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "unplug/SetupPluginFromDsp.hpp"
 
 namespace unplug {
 
@@ -46,9 +45,7 @@ public:
     return data;
   }
 
-  explicit SharedDataWrapper(unplug::SetupPluginFromDsp const& setupPlugin)
-    : data(setupPlugin)
-  {}
+  SharedDataWrapper() = default;
 
   SharedDataWrapper(SharedDataWrapper const&) = delete;
 

@@ -17,7 +17,7 @@ namespace unplug {
 
 PlotChannelLegend getStereoPlotChannelLegend(Index channel, Index numChannels)
 {
-  assert(channel > -1 && channel < 2 && numChannels == 2);
+  assert(channel < 2 && numChannels == 2);
   if (channel == 0)
     return { "Left", { 0.f, 0.5f, 1.f, 1.f } };
   if (channel == 1)
@@ -27,7 +27,7 @@ PlotChannelLegend getStereoPlotChannelLegend(Index channel, Index numChannels)
 
 PlotChannelLegend getMidSidePlotChannelLegend(Index channel, Index numChannels)
 {
-  assert(channel > -1 && channel < 2 && numChannels == 2);
+  assert(channel < 2 && numChannels == 2);
   if (channel == 0)
     return { "Mid", { 0.f, 0.5f, 1.f, 1.f } };
   if (channel == 1)

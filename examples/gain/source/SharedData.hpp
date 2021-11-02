@@ -12,57 +12,40 @@
 //------------------------------------------------------------------------
 
 #pragma once
-#include "lockfree/RealtimeObject.hpp"
+#include "oversimple/Oversampling.hpp"
 #include "unplug/ContextInfo.hpp"
 #include "unplug/IO.hpp"
 #include "unplug/NumIO.hpp"
-#include "unplug/Oversampling.hpp"
 #include "unplug/RingBuffer.hpp"
 #include "unplug/Serialization.hpp"
 #include "unplug/SharedDataWrapper.hpp"
 
 struct SharedData final
 {
-  lockfree::RealtimeObject<unplug::RingBuffer<float>> levelRingBuffer;
-  lockfree::RealtimeObject<unplug::WaveformRingBuffer<float>> waveformRingBuffer;
-  unplug::RealtimeOversampling oversampling;
+  oversimple::Oversampling oversampling;
+  unplug::RingBuffer<float> levelRingBuffer;
+  unplug::WaveformRingBuffer<float> waveformRingBuffer;
 
-  explicit SharedData(unplug::SetupPluginFromDsp const& setupPlugin)
-    : levelRingBuffer{ std::make_unique<unplug::RingBuffer<float>>() }
-    , waveformRingBuffer{ std::make_unique<unplug::WaveformRingBuffer<float>>() }
-    , oversampling{ unplug::SetupPluginFromDspUnit(setupPlugin, 0), [] {
-                     auto settings = unplug::RealtimeOversampling::Settings{};
-                     settings.requirements.numScalarToScalarUpsamplers = 1;
-                     settings.requirements.numScalarToScalarDownsamplers = 1;
-                     return settings;
-                   }() }
+  SharedData()
+    : oversampling{ oversamplingSettings() }
   {}
 
   void setup(unplug::ContextInfo const& context)
   {
-    oversampling.setup(context.numIO.numOuts, context.maxAudioBlockSize, context.precision);
-    unplug::setup(levelRingBuffer, context, [](unplug::RingBuffer<float>& ringBuffer) { ringBuffer.reset(0.f); });
-    unplug::setup(waveformRingBuffer, context, [](unplug::WaveformRingBuffer<float>& ringBuffer) {
-      ringBuffer.reset(unplug::WaveformElement<float>{ 0.f, 0.f });
-    });
-  }
-
-  void receiveChangesOnAudioThread()
-  {
-    oversampling.receiveChangesOnAudioThread();
-    levelRingBuffer.receiveChangesOnRealtimeThread();
-    waveformRingBuffer.receiveChangesOnRealtimeThread();
+    oversampling.setNumChannelsToDownSample(context.numIO.numOuts);
+    oversampling.setNumChannelsToUpSample(context.numIO.numIns);
+    oversampling.prepareBuffers(context.maxAudioBlockSize);
+    levelRingBuffer.setContext(context);
+    waveformRingBuffer.setContext(context);
   }
 
   template<unplug::Serialization::Action action>
   bool serialization(unplug::Serialization::Streamer<action>& streamer)
   {
     using namespace unplug;
-    if (!ringBufferSettingsSerialization(levelRingBuffer, streamer))
+    if (!unplug::serialization(levelRingBuffer, streamer))
       return false;
-    if (!ringBufferSettingsSerialization(waveformRingBuffer, streamer))
-      return false;
-    if (!oversampling.serialization(streamer))
+    if (!unplug::serialization(waveformRingBuffer, streamer))
       return false;
     return true;
   }
@@ -71,8 +54,18 @@ private:
   static oversimple::OversamplingSettings oversamplingSettings()
   {
     auto settings = oversimple::OversamplingSettings{};
-    settings.requirements.numScalarToScalarUpsamplers = 1;
-    settings.requirements.numScalarToScalarDownsamplers = 1;
+    settings.maxOrder = 5;
+    settings.numDownSampledChannels = 2;
+    settings.numUpSampledChannels = 2;
+    settings.maxNumInputSamples = 128;
+    settings.upSampleOutputBufferType = oversimple::BufferType::plain;
+    settings.upSampleInputBufferType = oversimple::BufferType::plain;
+    settings.downSampleOutputBufferType = oversimple::BufferType::plain;
+    settings.downSampleInputBufferType = oversimple::BufferType::plain;
+    settings.order = 1;
+    settings.isUsingLinearPhase = false;
+    settings.fftBlockSize = 512;
+    settings.firTransitionBand = 4.0;
     return settings;
   }
 };

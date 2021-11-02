@@ -53,8 +53,9 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
     auto pShortTitle = shortTitle.empty() ? nullptr : shortTitle.c_str();
 
     int32 const flags = [&] {
-      int32 flags = description.isAutomatable() ? ParameterInfo::kCanAutomate
-                                                : ParameterInfo::kIsReadOnly | ParameterInfo::kIsHidden;
+      // without kCanAutomate some hosts do not prompt to save if the parameter has been changed
+      // int32 flags = description.isAutomatable() ? ParameterInfo::kCanAutomate : ParameterInfo::kNoFlags;
+      int32 flags = ParameterInfo::kCanAutomate;
       if (description.isBypass)
         flags |= ParameterInfo::kIsBypass;
       return flags;
@@ -251,6 +252,19 @@ tresult UnplugController::getMidiControllerAssignment(int32 busIndex,
   return kResultFalse;
 }
 
+// bool UnplugController::setValueNormalizedFormUserInterface(ParamID tag, ParamValue value)
+//{
+//   auto const maybeLatencyUpdate = parametersWithLatencyUpdate.find(tag);
+//   auto const canUpdateLatency = maybeLatencyUpdate != parametersWithLatencyUpdate.end();
+//   bool const setOk = setParamNormalized(tag, value) == kResultTrue;
+//   if (setOk && !canUpdateLatency) {
+//     return performEdit(tag, value) == kResultTrue;
+//   }
+//   else {
+//     return false;
+//   }
+// }
+
 tresult UnplugController::setParamNormalized(ParamID tag, ParamValue value)
 {
   if (Parameter* parameter = getParameterObject(tag)) {
@@ -263,10 +277,9 @@ tresult UnplugController::setParamNormalized(ParamID tag, ParamValue value)
         parameter->setNormalized(value);
         auto message = owned(allocateMessage());
         message->setMessageID(vst3::messageId::updateLatencyId);
-        message->getAttributes()->setInt(vst3::messageId::udateLatencyParamChangedTagId, (int64)tag);
-        message->getAttributes()->setFloat(vst3::messageId::udateLatencyParamChangedValueId, plainValue);
+        message->getAttributes()->setInt(vst3::messageId::updateLatencyParamChangedTagId, (int64)tag);
+        message->getAttributes()->setFloat(vst3::messageId::updateLatencyParamChangedValueId, plainValue);
         sendMessage(message);
-        restart();
       }
       return kResultTrue;
     }
@@ -320,6 +333,10 @@ tresult PLUGIN_API UnplugController::notify(IMessage* message)
     sharedData = *reinterpret_cast<std::shared_ptr<SharedDataWrapped>*>(getAddress(sharedDataStorageId));
     return kResultOk;
   }
+  else if (FIDStringsEqual(message->getMessageID(), updateLatencyId)) {
+    restart();
+    return kResultOk;
+  }
   else
     return onNotify(message) ? kResultOk : kResultFalse;
 }
@@ -340,9 +357,12 @@ bool UnplugController::onNotify(IMessage* message)
 void UnplugController::restart()
 {
   auto handler = getComponentHandler();
-  assert(handler);
   if (handler) {
     handler->restartComponent(kRoutingInfoChanged);
+  }
+  else {
+    // no handler? it happens in the VST3 tests.
+    //  assert(false);
   }
 }
 

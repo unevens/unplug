@@ -101,6 +101,7 @@ protected:
 
   /** updates the parameters to the last values received by the host  */
   void updateParametersToLastPoint(ProcessData& data);
+  void updateNotAutomatableParameters(ProcessData& data);
 
   /** helper function to accept common bus arrangements  */
   tresult acceptSimpleBusArrangement(
@@ -116,6 +117,8 @@ protected:
   {
     return contextInfo;
   }
+
+  void setOversamplingRate(int oversamplingRate);
 
   /** Override this function to let unplug know about the oversampling rate used by your processing call */
   virtual Index getOversamplingRate() const
@@ -172,10 +175,7 @@ protected:
     return latency;
   }
 
-  void setLatency(uint32_t value)
-  {
-    latency = value;
-  }
+  void setLatency(uint32_t value);
 
 private:
   template<unplug::Serialization::Action>
@@ -238,11 +238,9 @@ void UnplugProcessor::staticProcessing(ProcessData& data,
   updateParametersToLastPoint(data);
   bool const isNotFlushing = !io.isFlushing();
   if (isNotFlushing) {
-    auto const oversamplingRate = getContextInfo().oversamplingRate;
-    auto const numSamples = data.numSamples * oversamplingRate;
-    auto const numUpsampledSamples = upsampling(io, numSamples);
+    auto const numUpsampledSamples = upsampling(io, data.numSamples);
     staticProcessing_(io, numUpsampledSamples);
-    downsampling(io, numSamples, numUpsampledSamples);
+    downsampling(io, numUpsampledSamples, data.numSamples);
   }
 }
 
@@ -293,10 +291,13 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
               if (sampleOffset > 0) {
                 sampleOffset *= oversamplingRate;
                 auto const parameterId = paramQueue->getParameterId();
-                value = pluginState.parameters.valueFromNormalized(parameterId, value);
-                auto const prevValue = pluginState.parameters.get(parameterId);
-                setParameterAutomation(automation, AutomationEvent(parameterId, -1, prevValue, sampleOffset, value));
-                automationPointsHandled[index] = 1;
+                auto const isAutomatable = pluginState.parameters.isParameterAutomatable(parameterId);
+                if (isAutomatable) {
+                  value = pluginState.parameters.valueFromNormalized(parameterId, value);
+                  auto const prevValue = pluginState.parameters.get(parameterId);
+                  setParameterAutomation(automation, AutomationEvent(parameterId, -1, prevValue, sampleOffset, value));
+                  automationPointsHandled[index] = 1;
+                }
                 --numChangesToHandle;
               }
             }
@@ -310,64 +311,71 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
             if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
               int32 const numPoints = paramQueue->getPointCount();
               auto const parameterId = paramQueue->getParameterId();
-              for (int32 point = automationPointsHandled[index]; point < numPoints; ++point) {
-                ParamValue value;
-                int32 sampleOffset;
-                paramQueue->getPoint(point, sampleOffset, value);
-                bool const onEnd = sampleOffset == data.numSamples;
-                if (onEnd) {
-                  --numChangesToHandle;
-                  ++automationPointsHandled[index];
-                  break;
-                }
-                sampleOffset *= oversamplingRate;
-                const bool startsAtCurrentSample = sampleOffset == currentSample;
-                if (startsAtCurrentSample) {
-                  value = pluginState.parameters.valueFromNormalized(parameterId, value);
-                  ParamValue nextValue;
-                  int32 nextSampleOffset;
-                  // get the end
-                  auto const endPoint = point + 1;
-                  if (endPoint < numPoints) {
-                    paramQueue->getPoint(endPoint, nextSampleOffset, nextValue);
-                    nextSampleOffset *= oversamplingRate;
-                    nextValue = pluginState.parameters.valueFromNormalized(parameterId, nextValue);
+              auto const isAutomatable = pluginState.parameters.isParameterAutomatable(parameterId);
+              if (!isAutomatable) {
+                --numChangesToHandle;
+              }
+              else {
+                for (int32 point = automationPointsHandled[index]; point < numPoints; ++point) {
+                  ParamValue value;
+                  int32 sampleOffset;
+                  paramQueue->getPoint(point, sampleOffset, value);
+                  bool const onEnd = sampleOffset == data.numSamples;
+                  if (onEnd) {
+                    --numChangesToHandle;
+                    ++automationPointsHandled[index];
+                    break;
                   }
-                  else {
-                    nextSampleOffset = numSamples;
-                    nextValue = value;
-                  }
-                  bool const isJump = sampleOffset == nextSampleOffset;
-                  if (isJump) {
-                    ParamValue nextValueAfterJump;
-                    int32 nextSampleOffsetAfterJump;
+                  sampleOffset *= oversamplingRate;
+                  const bool startsAtCurrentSample = sampleOffset == currentSample;
+                  if (startsAtCurrentSample) {
+                    value = pluginState.parameters.valueFromNormalized(parameterId, value);
+                    ParamValue nextValue;
+                    int32 nextSampleOffset;
                     // get the end
-                    auto const endPointAfterJump = endPoint + 1;
-                    if (endPointAfterJump < numPoints) {
-                      paramQueue->getPoint(endPointAfterJump, nextSampleOffsetAfterJump, nextValueAfterJump);
-                      nextSampleOffsetAfterJump *= oversamplingRate;
-                      nextValueAfterJump = pluginState.parameters.valueFromNormalized(parameterId, nextValueAfterJump);
+                    auto const endPoint = point + 1;
+                    if (endPoint < numPoints) {
+                      paramQueue->getPoint(endPoint, nextSampleOffset, nextValue);
+                      nextSampleOffset *= oversamplingRate;
+                      nextValue = pluginState.parameters.valueFromNormalized(parameterId, nextValue);
                     }
                     else {
-                      nextSampleOffsetAfterJump = numSamples;
-                      nextValueAfterJump = nextValue;
+                      nextSampleOffset = numSamples;
+                      nextValue = value;
                     }
-                    setParameterAutomation(
-                      automation,
-                      AutomationEvent(
-                        parameterId, sampleOffset, nextValue, nextSampleOffsetAfterJump, nextValueAfterJump));
-                    nextSample = std::min(nextSample, nextSampleOffsetAfterJump);
+                    bool const isJump = sampleOffset == nextSampleOffset;
+                    if (isJump) {
+                      ParamValue nextValueAfterJump;
+                      int32 nextSampleOffsetAfterJump;
+                      // get the end
+                      auto const endPointAfterJump = endPoint + 1;
+                      if (endPointAfterJump < numPoints) {
+                        paramQueue->getPoint(endPointAfterJump, nextSampleOffsetAfterJump, nextValueAfterJump);
+                        nextSampleOffsetAfterJump *= oversamplingRate;
+                        nextValueAfterJump =
+                          pluginState.parameters.valueFromNormalized(parameterId, nextValueAfterJump);
+                      }
+                      else {
+                        nextSampleOffsetAfterJump = numSamples;
+                        nextValueAfterJump = nextValue;
+                      }
+                      setParameterAutomation(
+                        automation,
+                        AutomationEvent(
+                          parameterId, sampleOffset, nextValue, nextSampleOffsetAfterJump, nextValueAfterJump));
+                      nextSample = std::min(nextSample, nextSampleOffsetAfterJump);
+                    }
+                    else {
+                      setParameterAutomation(
+                        automation, AutomationEvent(parameterId, sampleOffset, value, nextSampleOffset, nextValue));
+                      nextSample = std::min(nextSample, nextSampleOffset);
+                    }
+                    --numChangesToHandle;
+                    ++automationPointsHandled[index];
                   }
                   else {
-                    setParameterAutomation(
-                      automation, AutomationEvent(parameterId, sampleOffset, value, nextSampleOffset, nextValue));
-                    nextSample = std::min(nextSample, nextSampleOffset);
+                    nextSample = std::min(nextSample, sampleOffset);
                   }
-                  --numChangesToHandle;
-                  ++automationPointsHandled[index];
-                }
-                else {
-                  nextSample = std::min(nextSample, sampleOffset);
                 }
               }
             }

@@ -66,6 +66,8 @@ public:
 
   void onViewClosed();
 
+//  bool setValueNormalizedFormUserInterface(ParamID tag, ParamValue value);
+
 protected:
   template<unplug::Serialization::Action action>
   bool serialization(IBStreamer& ibStreamer);

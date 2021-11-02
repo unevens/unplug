@@ -12,6 +12,7 @@
 //------------------------------------------------------------------------
 
 #include "unplug/detail/Vst3ParameterAccess.hpp"
+#include "unplug/UnplugController.hpp"
 #include <cassert>
 #include <utility>
 
@@ -24,7 +25,7 @@ double ParameterAccess::getValue(ParamIndex index)
   return valuePlain;
 }
 
-ParameterAccess::ParameterAccess(EditControllerEx1& controller, unplug::detail::MidiMapping& midiMapping)
+ParameterAccess::ParameterAccess(UnplugController& controller, MidiMapping& midiMapping)
   : controller(controller)
   , midiMapping(midiMapping)
 {
@@ -410,6 +411,11 @@ void ParameterAccess::addParameterRectangle(ParamIndex index, int left, int top,
 void ParameterAccess::clearParameterRectangles()
 {
   parameterFinder.clear();
+}
+
+void ParameterAccess::setDirty()
+{
+  controller.setDirty(true);
 }
 
 namespace {

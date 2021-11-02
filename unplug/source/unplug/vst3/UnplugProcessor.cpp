@@ -61,6 +61,29 @@ tresult PLUGIN_API UnplugProcessor::terminate()
   return AudioEffect::terminate();
 }
 
+void UnplugProcessor::updateNotAutomatableParameters(ProcessData& data)
+{
+  if (pluginState.parameters.getNumNotAutomatableParameters() == 0)
+    return;
+  if (data.inputParameterChanges) {
+    int32 numParamsChanged = data.inputParameterChanges->getParameterCount();
+    for (int32 index = 0; index < numParamsChanged; index++) {
+      if (auto* paramQueue = data.inputParameterChanges->getParameterData(index)) {
+        int32 numPoints = paramQueue->getPointCount();
+        if (numPoints > 0) {
+          ParamValue value;
+          int32 sampleOffset;
+          paramQueue->getPoint(numPoints - 1, sampleOffset, value);
+          auto const parameterTag = paramQueue->getParameterId();
+          auto const isAutomatable = pluginState.parameters.isParameterAutomatable(parameterTag);
+          if (!isAutomatable) {
+            pluginState.parameters.setNormalized(static_cast<ParamIndex>(parameterTag), value);
+          }
+        }
+      }
+    }
+  }
+}
 void UnplugProcessor::updateParametersToLastPoint(ProcessData& data)
 {
   if (data.inputParameterChanges) {
@@ -179,14 +202,15 @@ tresult PLUGIN_API UnplugProcessor::notify(IMessage* message)
   }
   else if (FIDStringsEqual(message->getMessageID(), updateLatencyId)) {
     int64 paramId;
-    if (kResultTrue != message->getAttributes()->getInt(vst3::messageId::udateLatencyParamChangedTagId, paramId)) {
+    if (kResultTrue != message->getAttributes()->getInt(vst3::messageId::updateLatencyParamChangedTagId, paramId)) {
       return kResultFalse;
     }
     double paramValue;
-    if (kResultTrue != message->getAttributes()->getFloat(vst3::messageId::udateLatencyParamChangedValueId, paramValue))
-    {
+    if (kResultTrue !=
+        message->getAttributes()->getFloat(vst3::messageId::updateLatencyParamChangedValueId, paramValue)) {
       return kResultFalse;
     }
+    pluginState.parameters.set(paramId, paramValue);
     updateLatency((ParamIndex)paramId, paramValue);
     return kResultOk;
   }
@@ -324,6 +348,21 @@ bool UnplugProcessor::setup()
   contextInfo.oversamplingRate = getOversamplingRate();
   pluginState.sharedData->setup(contextInfo);
   return onSetup(contextInfo);
+}
+
+void UnplugProcessor::setLatency(uint32_t value)
+{
+  if (latency != value) {
+    latency = value;
+    auto message = owned(allocateMessage());
+    message->setMessageID(vst3::messageId::updateLatencyId);
+    sendMessage(message);
+  }
+}
+
+void UnplugProcessor::setOversamplingRate(int oversamplingRate)
+{
+  contextInfo.oversamplingRate = oversamplingRate;
 }
 
 } // namespace Steinberg::Vst

@@ -15,6 +15,7 @@
 #include "implot.h"
 #include "unplug/Color.hpp"
 #include "unplug/RingBuffer.hpp"
+#include <functional>
 
 namespace unplug {
 

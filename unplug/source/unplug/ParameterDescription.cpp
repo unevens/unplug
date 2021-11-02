@@ -27,6 +27,7 @@ unplug::ParameterDescription::ParameterDescription(ParamIndex index,
   , defaultValue{ static_cast<ParameterValueType>(defaultValue) }
 {
   numSteps = static_cast<int>(labels.size()) - 1;
+  min = 0;
   max = static_cast<ParameterValueType>(numSteps);
 }
 

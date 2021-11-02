@@ -45,10 +45,11 @@ bool Combo(ParamIndex paramIndex, ShowLabel showLabel)
   bool const isList = parameters.isList(paramIndex);
   assert(isList);
 
-  double const value = parameters.getValue(paramIndex);
+  double const valueNormalized = parameters.getValueNormalized(paramIndex);
+  double const value = parameters.valueFromNormalized(paramIndex, valueNormalized);
   auto const parameterName = parameters.getName(paramIndex);
 
-  auto const valueAsText = parameters.convertToText(paramIndex, value);
+  auto const valueAsText = parameters.convertToText(paramIndex, valueNormalized);
 
   auto const numSteps = parameters.getNumSteps(paramIndex);
 
@@ -66,7 +67,8 @@ bool Combo(ParamIndex paramIndex, ShowLabel showLabel)
   for (int i = 0; i < numItems; i++) {
     PushID((void*)(intptr_t)i);
     const bool selectedItem = (i == newValue);
-    auto const itemText = parameters.convertToText(paramIndex, (double)i);
+    auto const normalized = parameters.normalizeValue(paramIndex, (double)i);
+    auto const itemText = parameters.convertToText(paramIndex, normalized);
     if (Selectable(itemText.c_str(), selectedItem)) {
       hasValueChanged = true;
       newValue = i;
@@ -80,9 +82,8 @@ bool Combo(ParamIndex paramIndex, ShowLabel showLabel)
   if (hasValueChanged) {
     ImGuiContext const& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
-    auto const controlId = window->IDStack.back();
     parameters.beginEdit(paramIndex, controlName);
-    parameters.setValueNormalized(paramIndex, newValue);
+    parameters.setValue(paramIndex, newValue);
     parameters.endEdit(paramIndex);
     MarkItemEdited(g.LastItemData.ID);
   }
@@ -101,7 +102,6 @@ bool Checkbox(ParamIndex paramIndex, ShowLabel showLabel)
     return ControlOutput{ controlName, isChecked ? 1.f : 0.f, isActive };
   });
 }
-
 
 void TextCentered(std::string const& text, float height)
 {
@@ -454,7 +454,6 @@ void DifferenceLevelMeterRaw(float rawValue,
                              ImVec2 size,
                              DifferenceLevelMeterSettings settings)
 {
-
   assert(settings.minValue < settings.centerValue);
   assert(settings.maxValue > settings.centerValue);
   auto const scaledValue = settings.scaling(rawValue);
@@ -528,7 +527,6 @@ namespace detail {
 
 void applyRangedParameters(ParameterAccess& parameters, ParamIndex paramIndex, EditingState editingState, float value)
 {
-
   if (editingState.isParameterBeingEdited) {
     auto const controlDoingTheEditing = parameters.getEditingControl(paramIndex);
     if (editingState.controlName != controlDoingTheEditing) {
@@ -614,7 +612,7 @@ bool EditableScalar(const char* label,
   const ImGuiID id = window->GetID(label);
   const float w = CalcItemWidth();
 
-  const ImVec2 label_size = CalcTextSize(label, NULL, true);
+  const ImVec2 label_size = CalcTextSize(label, nullptr, true);
   const ImRect frame_bb(window->DC.CursorPos,
                         window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2.0f));
   const ImRect total_bb(
@@ -648,9 +646,9 @@ bool EditableScalar(const char* label,
 
   if (temp_input_is_active) {
     // Only clamp CTRL+Click input when ImGuiSliderFlags_AlwaysClamp is set
-    const bool is_clamp_input = (p_min == NULL || p_max == NULL || DataTypeCompare(data_type, p_min, p_max) < 0);
+    const bool is_clamp_input = (p_min == nullptr || p_max == nullptr || DataTypeCompare(data_type, p_min, p_max) < 0);
     return TempInputScalar(
-      frame_bb, id, label, data_type, p_data, format, is_clamp_input ? p_min : NULL, is_clamp_input ? p_max : NULL);
+      frame_bb, id, label, data_type, p_data, format, is_clamp_input ? p_min : nullptr, is_clamp_input ? p_max : nullptr);
   }
 
   // Draw frame
@@ -668,7 +666,7 @@ bool EditableScalar(const char* label,
     value_buf + DataTypeFormatString(value_buf, IM_ARRAYSIZE(value_buf), data_type, p_data, format);
   if (g.LogEnabled)
     LogSetNextTextDecoration("{", "}");
-  RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, NULL, ImVec2(0.5f, 0.5f));
+  RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, nullptr, ImVec2(0.5f, 0.5f));
 
   if (label_size.x > 0.0f)
     RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label);

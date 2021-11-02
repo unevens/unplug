@@ -169,7 +169,7 @@ void automatedProcessing(State& state,
 template<class SampleType>
 Index upsampling(State& state, IO<SampleType> io, Index numSamples)
 {
-  return state.pluginState.sharedData->oversampling.template upSample(io.getIn(0).buffers, numSamples);
+  return state.pluginState.sharedData->oversampling.upSample(io.getIn(0).buffers, numSamples);
 }
 
 template<class SampleType>
@@ -177,7 +177,7 @@ void downsampling(State& state, IO<SampleType> io, Index numUpsampledSamples, In
 {
   auto& oversampling = state.pluginState.sharedData->oversampling;
   auto& upSampled = oversampling.template getUpSampleOutput<SampleType>();
-  oversampling.template downSample(upSampled.get(), numUpsampledSamples, io.getOut(0).buffers, requiredOutputSamples);
+  oversampling.downSample(upSampled.get(), numUpsampledSamples, io.getOut(0).buffers, requiredOutputSamples);
 }
 
 template<class SampleType>
@@ -191,7 +191,7 @@ void staticProcessingOversampled(State& state, IO<SampleType> io, Index numSampl
   auto const gain = state.pluginState.parameters.get(Param::gain);
   auto const numChannels = upSampled.getNumChannels();
   for (Index channelIndex = 0; channelIndex < numChannels; ++channelIndex) {
-    for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex) {
+    for (Index sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex) {
       upSampled[channelIndex][sampleIndex] = gain * upSampled[channelIndex][sampleIndex];
     }
   }

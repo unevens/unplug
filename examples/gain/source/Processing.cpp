@@ -29,14 +29,27 @@ tresult PLUGIN_API Processor::process(ProcessData& data)
 template<class SampleType>
 void Processor::TProcess(ProcessData& data)
 {
-  //todo the oversampling parameters should be updated after having read the incoming param queue
-  auto const oversamplingOrder = static_cast<uint32_t>(std::round(pluginState.parameters.get(Param::oversamplingOrder)));
+  updateNotAutomatableParameters(data);
+  constexpr bool wantsSamplePreciseAutomation = true;
+  auto const oversamplingOrder =
+    static_cast<uint32_t>(std::round(pluginState.parameters.get(Param::oversamplingOrder)));
   auto const oversamplingLinearPhase = pluginState.parameters.get(Param::oversamplingLinearPhase) > 0.5;
   bool const hasLatency = oversamplingLinearPhase && oversamplingOrder > 0;
-  bool const useSamplePreciseAutomation = !hasLatency;
+  bool const useSamplePreciseAutomation = !hasLatency && wantsSamplePreciseAutomation;
 
-  pluginState.sharedData->oversampling.setOrder(oversamplingOrder);
-  pluginState.sharedData->oversampling.setUseLinearPhase(oversamplingLinearPhase);
+  // todo improve/redesign the api regarding the oversampling
+  setOversamplingRate(1 << oversamplingOrder);
+
+  if (oversamplingOrder > 0) {
+    auto& oversampling = pluginState.sharedData->oversampling;
+    if (oversampling.getOversamplingOrder() != oversamplingOrder ||
+        oversampling.isUsingLinearPhase() != oversamplingLinearPhase)
+    {
+      oversampling.setOrder(oversamplingOrder);
+      oversampling.setUseLinearPhase(oversamplingLinearPhase);
+      oversampling.reset();
+    }
+  }
 
   bool const isOversamplingEnabled = oversamplingOrder > 0;
   if (isOversamplingEnabled) {
@@ -50,8 +63,8 @@ void Processor::TProcess(ProcessData& data)
         },
         [&](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); },
         [&](IO<SampleType> io, Index numSamples) { return GainDsp::upsampling(dspState, io, numSamples); },
-        [&](IO<SampleType> io, Index numUpsampledSamples, Index requiredOutputSamples) {
-          GainDsp::downsampling(dspState, io, numUpsampledSamples, requiredOutputSamples);
+        [&](IO<SampleType> io, Index numUpSampledSamples, Index requiredOutputSamples) {
+          GainDsp::downsampling(dspState, io, numUpSampledSamples, requiredOutputSamples);
         });
     }
     else {
@@ -59,8 +72,8 @@ void Processor::TProcess(ProcessData& data)
         data,
         [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessingOversampled(dspState, io, numSamples); },
         [&](IO<SampleType> io, Index numSamples) { return GainDsp::upsampling(dspState, io, numSamples); },
-        [&](IO<SampleType> io, Index numUpsampledSamples, Index requiredOutputSamples) {
-          GainDsp::downsampling(dspState, io, numUpsampledSamples, requiredOutputSamples);
+        [&](IO<SampleType> io, Index numUpSampledSamples, Index requiredOutputSamples) {
+          GainDsp::downsampling(dspState, io, numUpSampledSamples, requiredOutputSamples);
         });
     }
   }

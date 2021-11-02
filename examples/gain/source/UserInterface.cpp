@@ -36,7 +36,7 @@ void paint()
   MeterValueLabelCentered(Meter::level, "Level: ");
   LevelMeter(Meter::level, "LevelMeter", { widgetWidth, levelMeterHeight });
   Combo(Param::oversamplingOrder);
-  Checkbox(Param::oversamplingLinearPhase);
+//  Checkbox(Param::oversamplingLinearPhase);
   ImGui::EndGroup();
 
   ImGui::SameLine();

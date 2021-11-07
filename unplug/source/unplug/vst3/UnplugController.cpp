@@ -357,7 +357,7 @@ void UnplugController::restart()
 {
   auto handler = getComponentHandler();
   if (handler) {
-    handler->restartComponent(kRoutingInfoChanged);
+    handler->restartComponent(kLatencyChanged);
   }
   else {
     // no handler? it happens in the VST3 tests.

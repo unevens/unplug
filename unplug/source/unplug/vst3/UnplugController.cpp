@@ -264,8 +264,8 @@ tresult UnplugController::setParamNormalized(ParamID tag, ParamValue value)
         parameter->setNormalized(value);
         auto message = owned(allocateMessage());
         message->setMessageID(vst3::messageId::updateLatencyId);
-        message->getAttributes()->setInt(vst3::messageId::udateLatencyParamChangedTagId, (int64)tag);
-        message->getAttributes()->setFloat(vst3::messageId::udateLatencyParamChangedValueId, plainValue);
+        message->getAttributes()->setInt(vst3::messageId::updateLatencyParamChangedTagId, (int64)tag);
+        message->getAttributes()->setFloat(vst3::messageId::updateLatencyParamChangedValueId, plainValue);
         sendMessage(message);
         restart();
       }

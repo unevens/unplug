@@ -27,6 +27,19 @@ bool Processor::onSetup(ContextInfo const& context)
   dspState.metering.setNumChannels(context.numIO.numOuts);
   auto const oversampledSampleRate = context.getOversampledSampleRate();
   dspState.metering.setSampleRate(oversampledSampleRate);
+
+  auto oversamplingOrder = pluginState.parameters.get(Param::oversamplingOrder);
+  auto oversamplingLinearPhase = pluginState.parameters.get(Param::oversamplingLinearPhase);
+
+  if (oversamplingLinearPhase > 0.5) {
+    auto const latency = sharedDataWrapped->get().oversampling.getLatency(
+      static_cast<uint32_t>(oversamplingOrder), static_cast<uint32_t>(oversamplingLinearPhase));
+    setLatency(static_cast<uint32_t>(latency));
+  }
+  else {
+    setLatency(0);
+  }
+
   return true;
 }
 
@@ -57,7 +70,8 @@ void Processor::updateLatency(unplug::ParamIndex paramIndex, ParamValue value)
       return;
   }
   if (oversamplingLinearPhase > 0.5) {
-    auto const latency = sharedDataWrapped->get().oversampling.getLatency(oversamplingOrder);
+    auto const latency = sharedDataWrapped->get().oversampling.getLatency(
+      static_cast<uint32_t>(oversamplingOrder), static_cast<uint32_t>(oversamplingLinearPhase));
     setLatency(static_cast<uint32_t>(latency));
   }
   else {

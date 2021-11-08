@@ -25,8 +25,7 @@ Processor::Processor()
 bool Processor::onSetup(ContextInfo const& context)
 {
   dspState.metering.setNumChannels(context.numIO.numOuts);
-  auto const oversampledSampleRate = context.getOversampledSampleRate();
-  dspState.metering.setSampleRate(oversampledSampleRate);
+  dspState.metering.setSampleRate(context.sampleRate);
   return true;
 }
 
@@ -35,11 +34,6 @@ tresult PLUGIN_API Processor::setProcessing(TBool state)
   dspState.metering.reset();
   sharedDataWrapped->get().oversampling.reset();
   return kResultOk;
-}
-
-UnplugProcessor::Index Processor::getOversamplingRate() const
-{
-  return 1 << static_cast<uint32_t>(std::round(pluginState.parameters.get(Param::oversamplingOrder)));
 }
 
 void Processor::updateLatency(unplug::ParamIndex paramIndex, ParamValue value)

@@ -345,7 +345,6 @@ tresult UnplugProcessor::connect(IConnectionPoint* other)
 
 bool UnplugProcessor::setup()
 {
-  contextInfo.oversamplingRate = getOversamplingRate();
   pluginState.sharedData->setup(contextInfo);
   return onSetup(contextInfo);
 }
@@ -358,11 +357,6 @@ void UnplugProcessor::setLatency(uint32_t value)
     message->setMessageID(vst3::messageId::updateLatencyId);
     sendMessage(message);
   }
-}
-
-void UnplugProcessor::setOversamplingRate(int oversamplingRate)
-{
-  contextInfo.oversamplingRate = oversamplingRate;
 }
 
 } // namespace Steinberg::Vst

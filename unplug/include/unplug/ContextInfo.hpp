@@ -32,15 +32,10 @@ struct ContextInfo final
 {
   NumIO numIO;
   float sampleRate = 44100;
-  Index oversamplingRate = 1;
   float userInterfaceRefreshRate = 30;
   Index maxAudioBlockSize = 128;
   FloatingPointPrecision precision = FloatingPointPrecision::float32;
 
-  float getOversampledSampleRate() const
-  {
-    return sampleRate * static_cast<float>(oversamplingRate);
-  }
 
   bool operator==(ContextInfo const& other) const noexcept = default;
 };

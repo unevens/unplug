@@ -75,7 +75,8 @@ protected:
                                           AutomatedProcessing automatedProcessing,
                                           SetParameterAutomation setParameterAutomation,
                                           Upsampling upsampling,
-                                          Downsampling downsampling);
+                                          Downsampling downsampling,
+                                          float oversamplingRate = 1.f);
 
   /** helper function for processing with sample precise automation */
   template<class SampleType,
@@ -116,14 +117,6 @@ protected:
   ContextInfo const& getContextInfo() const
   {
     return contextInfo;
-  }
-
-  void setOversamplingRate(int oversamplingRate);
-
-  /** Override this function to let unplug know about the oversampling rate used by your processing call */
-  virtual Index getOversamplingRate() const
-  {
-    return 1;
   }
 
   /** Called from initialize, at first after constructor */
@@ -257,14 +250,14 @@ void UnplugProcessor::processWithSamplePreciseAutomation(ProcessData& data,
                                                          AutomatedProcessing automatedProcessing,
                                                          SetParameterAutomation setParameterAutomation,
                                                          Upsampling upsampling,
-                                                         Downsampling downsampling)
+                                                         Downsampling downsampling,
+                                                         float oversamplingRate)
 {
   using AutomationEvent = unplug::AutomationEvent<SampleType>;
   unplug::detail::setupIO<SampleType>(ioCache, data);
   auto io = IO<SampleType>(ioCache);
   bool const isNotFlushing = !io.isFlushing();
   if (isNotFlushing) {
-    auto const oversamplingRate = getContextInfo().oversamplingRate;
     auto const numSamples = data.numSamples * oversamplingRate;
     auto const numUpsampledSamples = upsampling(io, data.numSamples);
     // this implementation of sample precise automation does not support linear phase oversampling, so

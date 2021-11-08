@@ -37,8 +37,7 @@ void Processor::TProcess(ProcessData& data)
   bool const hasLatency = oversamplingLinearPhase && oversamplingOrder > 0;
   bool const useSamplePreciseAutomation = !hasLatency && wantsSamplePreciseAutomation;
 
-  // todo improve/redesign the api regarding the oversampling
-  setOversamplingRate(1 << oversamplingOrder);
+  auto const oversamplingRate = static_cast<float>(1 << oversamplingOrder);
 
   if (oversamplingOrder > 0) {
     auto& oversampling = pluginState.sharedData->oversampling;
@@ -65,7 +64,7 @@ void Processor::TProcess(ProcessData& data)
         [this](IO<SampleType> io, Index numSamples) { return GainDsp::upsampling(dspState, io, numSamples); },
         [this](IO<SampleType> io, Index numUpSampledSamples, Index requiredOutputSamples) {
           GainDsp::downsampling(dspState, io, numUpSampledSamples, requiredOutputSamples);
-        });
+          }, oversamplingRate);
     }
     else {
       staticProcessing<SampleType>(
@@ -77,7 +76,7 @@ void Processor::TProcess(ProcessData& data)
         });
     }
   }
-  else {
+  else { // no oversampling
     if (useSamplePreciseAutomation) {
       processWithSamplePreciseAutomation<SampleType>(
         data,

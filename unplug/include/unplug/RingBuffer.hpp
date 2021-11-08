@@ -143,12 +143,6 @@ public:
     return settings.context;
   }
 
-  void setUseOversampledSampleRate(bool value)
-  {
-    useOversampledSampleRate = value;
-    resize();
-  }
-
   explicit RingBuffer(RingBufferSettings settings = {})
     : settings{ settings }
   {
@@ -175,8 +169,7 @@ private:
     auto const& contextInfo = settings.context;
     numChannels = choseNumChannels(contextInfo.numIO);
     accumulator.resize(numChannels);
-    auto actualSampleRate = useOversampledSampleRate ? contextInfo.getOversampledSampleRate() : contextInfo.sampleRate;
-    samplesPerPoint = actualSampleRate / settings.pointsPerSecond;
+    samplesPerPoint = contextInfo.sampleRate / settings.pointsPerSecond;
     pointsPerSample = 1.f / samplesPerPoint;
     auto const maxWriteIncrementPerAudioBlock = pointsPerSample * static_cast<float>(contextInfo.maxAudioBlockSize);
     readBlockSize = static_cast<int>(std::ceil(settings.durationInSeconds * settings.pointsPerSecond));
@@ -260,7 +253,6 @@ private:
   float samplesPerPoint = 1;
   RingBufferSettings settings;
   float secondsPerPoint;
-  bool useOversampledSampleRate = false;
   Buffer buffer;
 };
 
@@ -298,11 +290,12 @@ void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
                       Preprocess preprocess,
                       Weight weight,
                       Accumulate accumulate,
-                      Postprocess postprocess)
+                      Postprocess postprocess,
+                      float oversamplingRate = 1.f)
 {
   auto const currentWritePosition = ringBuffer.getWritePosition();
-  auto const samplesPerPoint = ringBuffer.getSamplesPerPoint();
-  auto const pointsPerSample = ringBuffer.getPointsPerSample();
+  auto const samplesPerPoint = ringBuffer.getSamplesPerPoint() * oversamplingRate;
+  auto const pointsPerSample = ringBuffer.getPointsPerSample() / oversamplingRate;
   auto pointIndex = currentWritePosition;
   auto fistSampleOfPoint = startSample;
   while (true) {
@@ -359,7 +352,8 @@ void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
                       SampleType** buffers,
                       Index numChannels,
                       Index startSample,
-                      Index endSample)
+                      Index endSample,
+                      float oversamplingRate = 1.f)
 {
   sendToRingBuffer(
     ringBuffer,
@@ -370,7 +364,8 @@ void sendToRingBuffer(RingBuffer<ElementType, Allocator>& ringBuffer,
     [](ElementType value, Index channel) { return value; },
     [](ElementType value, float weight) { return value * weight; },
     [](ElementType accumulatedValue, SampleType value) { return accumulatedValue + static_cast<ElementType>(value); },
-    [](ElementType value) { return value; });
+    [](ElementType value) { return value; },
+    oversamplingRate);
 }
 
 /**
@@ -404,7 +399,8 @@ void sendToWaveformRingBuffer(WaveformRingBuffer<WaveformSampleType, Allocator>&
                               SampleType** buffers,
                               Index numChannels,
                               Index startSample,
-                              Index endSample)
+                              Index endSample,
+                              float oversamplingRate = 1.f)
 {
   sendToRingBuffer(
     ringBuffer,
@@ -419,7 +415,8 @@ void sendToWaveformRingBuffer(WaveformRingBuffer<WaveformSampleType, Allocator>&
       accumulatedValue.negative = std::min(accumulatedValue.negative, static_cast<WaveformSampleType>(value));
       return accumulatedValue;
     },
-    [](WaveformElement<WaveformSampleType> value) { return value; });
+    [](WaveformElement<WaveformSampleType> value) { return value; },
+    oversamplingRate);
 }
 
 } // namespace unplug

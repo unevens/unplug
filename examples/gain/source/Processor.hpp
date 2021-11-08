@@ -35,7 +35,6 @@ public:
   bool onSetup(ContextInfo const& context) override;
 
 private:
-  Index getOversamplingRate() const override;
 
   template<class SampleType>
   void TProcess(ProcessData& data);

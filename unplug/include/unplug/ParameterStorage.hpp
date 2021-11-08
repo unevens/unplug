@@ -115,7 +115,7 @@ private:
 
   void initializeDefaultValues(std::vector<ParameterDescription> const& parameterDescriptions);
 
-  void initializeHiddenParameters(std::vector<ParameterDescription> const& parameterDescriptions);
+  void initializeNotAutomatableParameters(std::vector<ParameterDescription> const& parameterDescriptions);
 
   std::array<StoredParameter, numParameters> parameters;
   std::unordered_set<ParamIndex> notAutomatalbeParameters;
@@ -157,7 +157,7 @@ void TParameterStorage<numParameters>::initialize(const std::vector<ParameterDes
 {
   initializeConversions(parameterDescriptions);
   initializeDefaultValues(parameterDescriptions);
-  initializeHiddenParameters(parameterDescriptions);
+  initializeNotAutomatableParameters(parameterDescriptions);
 }
 
 template<int numParameters>
@@ -186,11 +186,11 @@ void TParameterStorage<numParameters>::initializeDefaultValues(
 }
 
 template<int numParameters>
-void TParameterStorage<numParameters>::initializeHiddenParameters(
+void TParameterStorage<numParameters>::initializeNotAutomatableParameters(
   const std::vector<ParameterDescription>& parameterDescriptions)
 {
   for (auto& description : parameterDescriptions) {
-    if (description.editPolicy == ParamEditPolicy::notAutomatableAndMayChangeLatencyOnEdit) {
+    if (description.editPolicy != ParamEditPolicy::automatable) {
       notAutomatalbeParameters.insert(description.index);
     }
   }

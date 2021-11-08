@@ -81,7 +81,7 @@ public:
   std::array<int, 2> lastViewSize{ { -1, -1 } };
   std::shared_ptr<unplug::MeterStorage> meters;
   std::shared_ptr<unplug::SharedDataWrapped> sharedData;
-  std::unordered_set<ParamID> parametersWithLatencyUpdate;
+  std::unordered_map<ParamID, unplug::ParamEditPolicy> notAutomatableParameters;
 
 private:
   DEFINE_INTERFACES

@@ -113,8 +113,8 @@ tresult PLUGIN_API UnplugController::initialize(FUnknown* context)
       }
     }
 
-    if (description.mayChangeLatencyOnEdit()) {
-      parametersWithLatencyUpdate.insert(description.index);
+    if (description.editPolicy != ParamEditPolicy::automatable) {
+      notAutomatableParameters[description.index] = description.editPolicy;
     }
   }
 
@@ -256,18 +256,20 @@ tresult UnplugController::setParamNormalized(ParamID tag, ParamValue value)
 {
   if (Parameter* parameter = getParameterObject(tag)) {
 
-    auto maybeLatencyUpdate = parametersWithLatencyUpdate.find(tag);
-    if (maybeLatencyUpdate != parametersWithLatencyUpdate.end()) {
+    auto const maybeNotAutomatable = notAutomatableParameters.find(tag);
+    if (maybeNotAutomatable != notAutomatableParameters.end()) {
       bool const hasChanged = parameter->getNormalized() != value;
       if (hasChanged) {
         auto const plainValue = parameter->toPlain(value);
         parameter->setNormalized(value);
-        auto message = owned(allocateMessage());
-        message->setMessageID(vst3::messageId::updateLatencyId);
-        message->getAttributes()->setInt(vst3::messageId::updateLatencyParamChangedTagId, (int64)tag);
-        message->getAttributes()->setFloat(vst3::messageId::updateLatencyParamChangedValueId, plainValue);
-        sendMessage(message);
-        restart();
+        if (maybeNotAutomatable->second == ParamEditPolicy::notAutomatableAndMayChangeLatencyOnEdit) {
+          auto message = owned(allocateMessage());
+          message->setMessageID(vst3::messageId::updateLatencyId);
+          message->getAttributes()->setInt(vst3::messageId::updateLatencyParamChangedTagId, (int64)tag);
+          message->getAttributes()->setFloat(vst3::messageId::updateLatencyParamChangedValueId, plainValue);
+          sendMessage(message);
+          restart();
+        }
       }
       return kResultTrue;
     }

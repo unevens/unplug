@@ -48,7 +48,7 @@ public:
     return buffer[numChannels * pointIndex + channel];
   }
 
-  Index wrapIndex(Index index) const
+  Index wrapIndex(int index) const
   {
     auto const bufferSize = static_cast<int>(bufferCapacity);
     auto const wrapped = (((index) % bufferSize) + bufferSize) % bufferSize;
@@ -64,7 +64,7 @@ public:
 
   Index getReadPosition() const
   {
-    return wrapIndex(getWritePosition() - readBlockSize);
+    return wrapIndex(static_cast<int>(getWritePosition()) - static_cast<int>(readBlockSize));
   }
 
   Index getReadBlockSize() const

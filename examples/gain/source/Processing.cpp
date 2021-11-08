@@ -61,9 +61,9 @@ void Processor::TProcess(ProcessData& data)
         [&](auto& automation, IO<SampleType> io, Index startSample, Index endSample) {
           GainDsp::automatedProcessingOversampled(dspState, automation, io, startSample, endSample);
         },
-        [&](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); },
-        [&](IO<SampleType> io, Index numSamples) { return GainDsp::upsampling(dspState, io, numSamples); },
-        [&](IO<SampleType> io, Index numUpSampledSamples, Index requiredOutputSamples) {
+        [](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); },
+        [this](IO<SampleType> io, Index numSamples) { return GainDsp::upsampling(dspState, io, numSamples); },
+        [this](IO<SampleType> io, Index numUpSampledSamples, Index requiredOutputSamples) {
           GainDsp::downsampling(dspState, io, numUpSampledSamples, requiredOutputSamples);
         });
     }
@@ -71,8 +71,8 @@ void Processor::TProcess(ProcessData& data)
       staticProcessing<SampleType>(
         data,
         [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessingOversampled(dspState, io, numSamples); },
-        [&](IO<SampleType> io, Index numSamples) { return GainDsp::upsampling(dspState, io, numSamples); },
-        [&](IO<SampleType> io, Index numUpSampledSamples, Index requiredOutputSamples) {
+        [this](IO<SampleType> io, Index numSamples) { return GainDsp::upsampling(dspState, io, numSamples); },
+        [this](IO<SampleType> io, Index numUpSampledSamples, Index requiredOutputSamples) {
           GainDsp::downsampling(dspState, io, numUpSampledSamples, requiredOutputSamples);
         });
     }
@@ -83,10 +83,10 @@ void Processor::TProcess(ProcessData& data)
         data,
         [this](IO<SampleType> io, Index numSamples) { GainDsp::staticProcessing(dspState, io, numSamples); },
         [this]() { return GainDsp::prepareAutomation<SampleType>(dspState); },
-        [&](auto& automation, IO<SampleType> io, Index startSample, Index endSample) {
+        [this](auto& automation, IO<SampleType> io, Index startSample, Index endSample) {
           GainDsp::automatedProcessing(dspState, automation, io, startSample, endSample);
         },
-        [&](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); });
+        [](auto& automation, auto automationEvent) { unplug::setParameterAutomation(automation, automationEvent); });
     }
     else {
       staticProcessing<SampleType>(
